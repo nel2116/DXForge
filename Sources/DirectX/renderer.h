@@ -28,6 +28,7 @@ private:	// プライベート関数
 
 private:	// メンバ変数
 	// DirectX12の初期化
+
 	// デバイス
 	ID3D12Device* m_dev;
 	IDXGIFactory6* m_dxgiFactory;

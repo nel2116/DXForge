@@ -17,6 +17,13 @@ Renderer::Renderer()
 Renderer::~Renderer()
 {
 	// 解放処理
+
+
+	// バックバッファの解放
+	for (auto bb : m_backBuffers)
+	{
+		SAFE_RELEASE(bb);
+	}
 	// フェンスの解放
 	SAFE_RELEASE(m_fence);
 	// レンダーターゲットビューの解放
@@ -136,7 +143,7 @@ bool Renderer::CreateDevice()
 	HRESULT result = S_OK;
 	if (FAILED(CreateDXGIFactory2(DXGI_CREATE_FACTORY_DEBUG, IID_PPV_ARGS(&m_dxgiFactory))))
 	{
-		if (FAILED(CreateDXGIFactory2(DXGI_CREATE_FACTORY_DEBUG, IID_PPV_ARGS(&m_dxgiFactory))))
+		if (FAILED(CreateDXGIFactory2(0, IID_PPV_ARGS(&m_dxgiFactory))))
 		{
 			MessageBox(nullptr, "CreateDXGIFactory2 Failed.", "Error", MB_OK);
 			return false;
@@ -188,6 +195,12 @@ bool Renderer::CreateDevice()
 	{
 		MessageBox(nullptr, "D3D12CreateDevice Failed.", "Error", MB_OK);
 		return false;
+	}
+
+	// アダプターの解放
+	for (auto adpt : adapters)
+	{
+		SAFE_RELEASE(adpt);
 	}
 
 	return true;

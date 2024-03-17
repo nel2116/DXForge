@@ -1,0 +1,15 @@
+diff a/Sources/DirectX/renderer.h b/Sources/DirectX/renderer.h	(rejected hunks)
+@@ -28,6 +28,13 @@
+ 
+ private:	// �����o�ϐ�
+ 	// DirectX12�̏�����
++#ifdef _DEBUG
++
++	ID3D12DebugDevice* m_debug;
++
++#endif // _DEBUG
++
++
+ 	// �f�o�C�X
+ 	ID3D12Device* m_dev;
+ 	IDXGIFactory6* m_dxgiFactory;
