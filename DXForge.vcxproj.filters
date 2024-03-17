@@ -39,4 +39,8 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="Sources\HLSL\VertexShader\VS_Basic.hlsl" />
+    <FxCompile Include="Sources\HLSL\PixelShader\PS_Basic.hlsl" />
+  </ItemGroup>
 </Project>

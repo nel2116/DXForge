@@ -2,8 +2,14 @@
 // ====== インクルード部 ======
 #include <d3d12.h>
 #include <dxgi1_6.h>
+#include <DirectXMath.h>
+#include <d3dcompiler.h>
 #pragma comment(lib, "d3d12.lib")
 #pragma comment(lib, "dxgi.lib")
+#pragma comment(lib, "d3dcompiler.lib")
+
+// ====== 名前空間定義 ======
+using namespace DirectX;
 
 // ====== クラス定義 ======
 class Renderer
@@ -18,12 +24,14 @@ public:		// パブリック関数
 	void Draw();
 
 private:	// プライベート関数
-	void EnableDebugLayer();	// デバッグレイヤーの有効化
-	bool CreateDevice();	// デバイスの作成
-	bool CreateCommandList();	// コマンドリストの作成
-	bool CreateSwapChain();	// スワップチェインの作成
+	void EnableDebugLayer();	    // デバッグレイヤーの有効化
+	bool CreateDevice();	        // デバイスの作成
+	bool CreateCommandList();	    // コマンドリストの作成
+	bool CreateSwapChain();	        // スワップチェインの作成
 	bool CreateRenderTargetView();	// レンダーターゲットビューの作成
-	bool CreateFence();	// フェンスの作成
+	bool CreateFence();	            // フェンスの作成
+	bool CreateVertexBuffer();	    // 頂点バッファの作成
+	bool CreateShader();	        // シェーダーの作成
 
 
 private:	// メンバ変数
@@ -46,5 +54,13 @@ private:	// メンバ変数
 	// フェンス
 	ID3D12Fence* m_fence;
 	UINT64 m_fenceVal;
+
+	// 頂点情報
+	XMFLOAT3 m_vertices[3];	        // 頂点座標
+	ID3D12Resource* m_vertexBuff;	// 頂点バッファ
+
+	// シェーダー
+	ID3DBlob* m_vsBlob;
+	ID3DBlob* m_psBlob;
 
 };

@@ -11,6 +11,7 @@ Renderer::Renderer()
 	, m_pRTV(nullptr)
 	, m_fence(nullptr)
 	, m_fenceVal(0)
+	, m_vertexBuff(nullptr)
 {
 }
 
@@ -18,7 +19,11 @@ Renderer::~Renderer()
 {
 	// 解放処理
 
-
+	// VS, PSの解放
+	SAFE_RELEASE(m_vsBlob);
+	SAFE_RELEASE(m_psBlob);
+	// 頂点バッファの解放
+	SAFE_RELEASE(m_vertexBuff);
 	// バックバッファの解放
 	for (auto bb : m_backBuffers)
 	{
@@ -64,6 +69,10 @@ bool Renderer::Init()
 	if (!CreateRenderTargetView()) { return false; }
 	// フェンスの作成
 	if (!CreateFence()) { return false; }
+	// 頂点バッファの作成
+	if (!CreateVertexBuffer()) { return false; }
+	// シェーダーの作成
+	if (!CreateShader()) { return false; }
 
 	// 正常に初期化できた
 	return true;
@@ -321,6 +330,125 @@ bool Renderer::CreateFence()
 {
 	// フェンスの生成
 	auto hr = m_dev->CreateFence(m_fenceVal, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_fence));
+
+	return true;
+}
+
+bool Renderer::CreateVertexBuffer()
+{
+	// 頂点情報の設定
+	// 時計回りに三角形を作る
+	m_vertices[0] = XMFLOAT3(-1.0f, -1.0f, 0.0f);	// 左下
+	m_vertices[1] = XMFLOAT3(-1.0f, 1.0f, 0.0f);	// 左上
+	m_vertices[2] = XMFLOAT3(1.0f, -1.0f, 0.0f);	// 右下
+
+	// バッファの設定
+	D3D12_HEAP_PROPERTIES heapProp = {};
+	heapProp.Type = D3D12_HEAP_TYPE_UPLOAD;	                    // アップロードヒープ
+	heapProp.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;	// CPUページプロパティ
+	heapProp.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;	// メモリプールの設定
+
+	// リソースの設定
+	D3D12_RESOURCE_DESC resDesc = {};
+	resDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;	// リソースの次元
+	resDesc.Width = sizeof(m_vertices);	                    // 頂点が入るだけのサイズ
+	resDesc.Height = 1;	                                    // 高さ
+	resDesc.DepthOrArraySize = 1;	                        // デプス
+	resDesc.MipLevels = 1;	                                // ミップマップ
+	resDesc.Format = DXGI_FORMAT_UNKNOWN;	                // フォーマット
+	resDesc.SampleDesc.Count = 1;	                        // サンプル数
+	resDesc.Flags = D3D12_RESOURCE_FLAG_NONE;	            // フラグ
+	resDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;	    // テクスチャのレイアウト
+
+	// リソースの生成
+	auto hr = m_dev->CreateCommittedResource(&heapProp, D3D12_HEAP_FLAG_NONE, &resDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&m_vertexBuff));
+	if (FAILED(hr))
+	{
+		MessageBox(nullptr, "CreateCommittedResource Failed.", "Error", MB_OK);
+		return false;
+	}
+
+	// バッファにデータをコピー
+	void* p = nullptr;
+	m_vertexBuff->Map(0, nullptr, &p);
+	memcpy(p, m_vertices, sizeof(m_vertices));
+	m_vertexBuff->Unmap(0, nullptr);
+
+	// バッファビューの設定
+	D3D12_VERTEX_BUFFER_VIEW vbView = {};
+	vbView.BufferLocation = m_vertexBuff->GetGPUVirtualAddress();	// バッファの仮想アドレス
+	vbView.SizeInBytes = sizeof(m_vertices);	                    // バッファのサイズ
+	vbView.StrideInBytes = sizeof(XMFLOAT3);	                    // ストライド
+
+	return true;
+}
+
+bool Renderer::CreateShader()
+{
+	// シェーダーのコンパイル
+
+	ID3D10Blob* errorBlob = nullptr;
+
+	// VSのコンパイル
+	auto hr = D3DCompileFromFile(
+		L"Sources/HLSL/VertexShader/VS_Basic.hlsl",	        // シェーダーファイル
+		nullptr,			                                // マクロはなし
+		D3D_COMPILE_STANDARD_FILE_INCLUDE,	                // インクルードファイルの指定,今回は標準
+		"VS_Main", "vs_5_0",	                            // エントリーポイントとバージョン
+		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,	// デバッグ用、最適化はスキップ
+		0,	                                                // フラグ
+		&m_vsBlob,	                                        // コンパイル後のデータ
+		&errorBlob	                                        // エラーメッセージ
+	);
+	if (FAILED(hr))
+	{
+		// エラーメッセージの表示
+		string errStr;	// 受取用の文字列
+		errStr.resize(errorBlob->GetBufferSize());	// エラーメッセージのサイズを取得
+
+		// データコピー
+		copy_n(static_cast<char*>(errorBlob->GetBufferPointer()), errorBlob->GetBufferSize(), errStr.begin());
+		errStr += "\n";
+
+		// エラーメッセージの表示
+		MessageBoxA(nullptr, errStr.c_str(), "Error", MB_OK);
+		OutputDebugStringA(errStr.c_str());
+		errorBlob->Release();
+
+		return false;
+	}
+
+	// PSのコンパイル
+	hr = D3DCompileFromFile(
+		L"Sources/HLSL/PixelShader/PS_Basic.hlsl",	        // シェーダーファイル
+		nullptr,			                                // マクロはなし
+		D3D_COMPILE_STANDARD_FILE_INCLUDE,	                // インクルードファイルの指定,今回は標準
+		"PS_Main", "ps_5_0",	                            // エントリーポイントとバージョン
+		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,	// デバッグ用、最適化はスキップ
+		0,	                                                // フラグ
+		&m_psBlob,	                                        // コンパイル後のデータ
+		&errorBlob	                                        // エラーメッセージ
+	);
+	if (FAILED(hr))
+	{
+		// エラーメッセージの表示
+		string errStr;	// 受取用の文字列
+		errStr.resize(errorBlob->GetBufferSize());	// エラーメッセージのサイズを取得
+
+		// データコピー
+		copy_n(static_cast<char*>(errorBlob->GetBufferPointer()), errorBlob->GetBufferSize(), errStr.begin());
+		errStr += "\n";
+
+		// エラーメッセージの表示
+		MessageBoxA(nullptr, errStr.c_str(), "Error", MB_OK);
+		OutputDebugStringA(errStr.c_str());
+		errorBlob->Release();
+
+		return false;
+	}
+
+
+
 
 	return true;
 }
