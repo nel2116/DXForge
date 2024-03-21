@@ -12,6 +12,17 @@ Renderer::Renderer()
 	, m_fence(nullptr)
 	, m_fenceVal(0)
 	, m_vertexBuff(nullptr)
+	, m_vertexBuffView()
+	, m_indexBuff(nullptr)
+	, m_indexBuffView()
+	, m_vsBlob(nullptr)
+	, m_psBlob(nullptr)
+	, m_backBuffers()
+	, m_inputLayout{ nullptr }
+	, m_rootSignature(nullptr)
+	, m_pipelineState(nullptr)
+	, m_viewport()
+	, m_scissorRect()
 {
 }
 
@@ -19,11 +30,17 @@ Renderer::~Renderer()
 {
 	// 解放処理
 
+	// ルートシグネチャの解放
+	SAFE_RELEASE(m_rootSignature);
+	// パイプラインステートの解放
+	SAFE_RELEASE(m_pipelineState);
 	// VS, PSの解放
 	SAFE_RELEASE(m_vsBlob);
 	SAFE_RELEASE(m_psBlob);
 	// 頂点バッファの解放
 	SAFE_RELEASE(m_vertexBuff);
+	// インデックスバッファの解放
+	SAFE_RELEASE(m_indexBuff);
 	// バックバッファの解放
 	for (auto bb : m_backBuffers)
 	{
@@ -73,6 +90,14 @@ bool Renderer::Init()
 	if (!CreateVertexBuffer()) { return false; }
 	// シェーダーの作成
 	if (!CreateShader()) { return false; }
+	// インプットレイアウトの作成
+	if (!CreateInputLayout()) { return false; }
+	// ルートシグネチャの作成
+	if (!CreateRootSignature()) { return false; }
+	// パイプラインステートの作成
+	if (!CreatePipelineState()) { return false; }
+	// ビューポートの作成
+	if (!CreateViewport()) { return false; }
 
 	// 正常に初期化できた
 	return true;
@@ -92,6 +117,9 @@ void Renderer::Draw()
 	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;	        //
 	m_cmdList->ResourceBarrier(1, &barrier);	                                // リソースバリアの設定
 
+	// パイプラインステートの設定
+	m_cmdList->SetPipelineState(m_pipelineState);	                        // パイプラインステートの設定
+
 	// レンダーターゲットを指定
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_pRTV->GetCPUDescriptorHandleForHeapStart();
 	rtvHandle.ptr += m_dev->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV) * bbIdx;
@@ -100,6 +128,16 @@ void Renderer::Draw()
 	// 画面クリア
 	float clearColor[] = { 1.0f, 1.0f, 0.0f, 1.0f };	// 黄色
 	m_cmdList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+
+
+	// ----- 描画命令を挟む -----
+	m_cmdList->RSSetViewports(1, &m_viewport);	                            // ビューポートの設定
+	m_cmdList->RSSetScissorRects(1, &m_scissorRect);	                    // シザリング矩形の設定
+	m_cmdList->SetGraphicsRootSignature(m_rootSignature);	                // ルートシグネチャの設定
+	m_cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);	// プリミティブトポロジの設定
+	m_cmdList->IASetVertexBuffers(0, 1, &m_vertexBuffView);	                // 頂点バッファの設定
+	m_cmdList->IASetIndexBuffer(&m_indexBuffView);	                        // インデックスバッファの設定
+	m_cmdList->DrawIndexedInstanced(6, 1, 0, 0, 0);	                        // 描画命令
 
 	// レンダーターゲットの状態遷移
 	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;	//
@@ -337,10 +375,13 @@ bool Renderer::CreateFence()
 bool Renderer::CreateVertexBuffer()
 {
 	// 頂点情報の設定
-	// 時計回りに三角形を作る
-	m_vertices[0] = XMFLOAT3(-1.0f, -1.0f, 0.0f);	// 左下
-	m_vertices[1] = XMFLOAT3(-1.0f, 1.0f, 0.0f);	// 左上
-	m_vertices[2] = XMFLOAT3(1.0f, -1.0f, 0.0f);	// 右下
+	XMFLOAT3 vertices[4] =
+	{
+		{-0.4f, -0.7f, 0.0f},	// 左下
+		{-0.4f, 0.7f, 0.0f},	// 左上
+		{0.4f, -0.7f, 0.0f},	// 右下
+		{0.4f, 0.7f, 0.0f},		// 右上
+	};
 
 	// バッファの設定
 	D3D12_HEAP_PROPERTIES heapProp = {};
@@ -351,7 +392,7 @@ bool Renderer::CreateVertexBuffer()
 	// リソースの設定
 	D3D12_RESOURCE_DESC resDesc = {};
 	resDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;	// リソースの次元
-	resDesc.Width = sizeof(m_vertices);	                    // 頂点が入るだけのサイズ
+	resDesc.Width = sizeof(vertices);	                    // 頂点が入るだけのサイズ
 	resDesc.Height = 1;	                                    // 高さ
 	resDesc.DepthOrArraySize = 1;	                        // デプス
 	resDesc.MipLevels = 1;	                                // ミップマップ
@@ -371,14 +412,37 @@ bool Renderer::CreateVertexBuffer()
 	// バッファにデータをコピー
 	void* p = nullptr;
 	m_vertexBuff->Map(0, nullptr, &p);
-	memcpy(p, m_vertices, sizeof(m_vertices));
+	memcpy(p, vertices, sizeof(vertices));
 	m_vertexBuff->Unmap(0, nullptr);
 
 	// バッファビューの設定
-	D3D12_VERTEX_BUFFER_VIEW vbView = {};
-	vbView.BufferLocation = m_vertexBuff->GetGPUVirtualAddress();	// バッファの仮想アドレス
-	vbView.SizeInBytes = sizeof(m_vertices);	                    // バッファのサイズ
-	vbView.StrideInBytes = sizeof(XMFLOAT3);	                    // ストライド
+	m_vertexBuffView.BufferLocation = m_vertexBuff->GetGPUVirtualAddress();	// バッファの仮想アドレス
+	m_vertexBuffView.SizeInBytes = sizeof(vertices);	                    // バッファのサイズ
+	m_vertexBuffView.StrideInBytes = sizeof(XMFLOAT3);	                    // ストライド
+
+	// インデックスの設定
+	unsigned short indices[6] = { 0, 1, 2, 2, 1, 3 };
+
+	// 設定は、バッファサイズ以外は頂点バッファと同じ
+	resDesc.Width = sizeof(indices);	// インデックスが入るだけのサイズ
+
+	// リソースの生成
+	hr = m_dev->CreateCommittedResource(&heapProp, D3D12_HEAP_FLAG_NONE, &resDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&m_indexBuff));
+	if (FAILED(hr))
+	{
+		MessageBox(nullptr, "CreateCommittedResource Failed.", "Error", MB_OK);
+		return false;
+	}
+
+	// バッファにデータをコピー
+	m_indexBuff->Map(0, nullptr, &p);
+	memcpy(p, indices, sizeof(indices));
+	m_indexBuff->Unmap(0, nullptr);
+
+	// バッファビューの設定
+	m_indexBuffView.BufferLocation = m_indexBuff->GetGPUVirtualAddress();	// バッファの仮想アドレス
+	m_indexBuffView.Format = DXGI_FORMAT_R16_UINT;	                        // インデックスのフォーマット
+	m_indexBuffView.SizeInBytes = sizeof(indices);	                        // バッファのサイズ
 
 	return true;
 }
@@ -386,8 +450,7 @@ bool Renderer::CreateVertexBuffer()
 bool Renderer::CreateShader()
 {
 	// シェーダーのコンパイル
-
-	ID3D10Blob* errorBlob = nullptr;
+	ID3DBlob* errorBlob = nullptr;
 
 	// VSのコンパイル
 	auto hr = D3DCompileFromFile(
@@ -446,9 +509,134 @@ bool Renderer::CreateShader()
 
 		return false;
 	}
+	return true;
+}
 
+bool Renderer::CreateInputLayout()
+{
+	// インプットレイアウトの設定
+	m_inputLayout[0].SemanticName = "POSITION";	                                    // セマンティック名
+	m_inputLayout[0].SemanticIndex = 0;	                                            // セマンティックインデックス
+	m_inputLayout[0].Format = DXGI_FORMAT_R32G32B32_FLOAT;	                        // フォーマット
+	m_inputLayout[0].InputSlot = 0;	                                                // 入力スロット
+	m_inputLayout[0].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;	            // オフセット
+	m_inputLayout[0].InputSlotClass = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA;	// 入力スロットのクラス
+	m_inputLayout[0].InstanceDataStepRate = 0;	                                    // インスタンスデータのステップレート
 
+	return true;
+}
 
+bool Renderer::CreateRootSignature()
+{
+	// ルートシグネチャの設定
+	D3D12_ROOT_SIGNATURE_DESC rootSigDesc = {};
+	rootSigDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;	// 入力アセンブラ入力レイアウトを許可
+
+	// バイナリコードの作成
+	ID3DBlob* errorBlob = nullptr;
+	ID3DBlob* signatureBlob = nullptr;
+	auto hr = D3D12SerializeRootSignature(
+		&rootSigDesc,					// ルートシグネチャの設定
+		D3D_ROOT_SIGNATURE_VERSION_1_0,	// ルートシグネチャバージョン
+		&signatureBlob,				// バイナリデータ
+		&errorBlob						// エラーメッセージ
+	);
+	if (FAILED(hr))
+	{
+		// エラーメッセージの表示
+		string errStr;	// 受取用の文字列
+		errStr.resize(errorBlob->GetBufferSize());	// エラーメッセージのサイズを取得
+
+		// データコピー
+		copy_n(static_cast<char*>(errorBlob->GetBufferPointer()), errorBlob->GetBufferSize(), errStr.begin());
+		errStr += "\n";
+
+		// エラーメッセージの表示
+		MessageBoxA(nullptr, errStr.c_str(), "Error", MB_OK);
+		OutputDebugStringA(errStr.c_str());
+		errorBlob->Release();
+
+		return false;
+	}
+
+	// ルートシグネチャの生成
+	hr = m_dev->CreateRootSignature(
+		0,									// ノードマスク。0で良い	
+		signatureBlob->GetBufferPointer(),	// バイナリデータ
+		signatureBlob->GetBufferSize(),		// バイナリデータのサイズ
+		IID_PPV_ARGS(&m_rootSignature));	// ルートシグネチャ
+
+	if (FAILED(hr))
+	{
+		MessageBox(nullptr, "CreateRootSignature Failed.", "Error", MB_OK);
+		signatureBlob->Release();
+		return false;
+	}
+	signatureBlob->Release();	// バイナリデータの解放
+	return true;
+}
+
+bool Renderer::CreatePipelineState()
+{
+	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
+	psoDesc.pRootSignature = m_rootSignature;	// ルートシグネチャ
+	// シェーダーの設定
+	psoDesc.VS.pShaderBytecode = m_vsBlob->GetBufferPointer();	// VSのバイトコード
+	psoDesc.VS.BytecodeLength = m_vsBlob->GetBufferSize();	    // VSのバイトコードのサイズ
+	psoDesc.PS.pShaderBytecode = m_psBlob->GetBufferPointer();	// PSのバイトコード
+	psoDesc.PS.BytecodeLength = m_psBlob->GetBufferSize();	    // PSのバイトコードのサイズ
+	// サンプルマスクとラスタライザステートの設定
+	psoDesc.SampleMask = D3D12_DEFAULT_SAMPLE_MASK;	            // サンプルマスク
+	psoDesc.RasterizerState.MultisampleEnable = false;	        // アンチエイリアスは使わないのでfalse
+	psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;	// カリングモード
+	psoDesc.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;	// 中身を塗りつぶす
+	psoDesc.RasterizerState.DepthClipEnable = true;	            // 深度クリッピングを有効にする
+	// ブレンドステートの設定
+	psoDesc.BlendState.AlphaToCoverageEnable = false;	        // アルファツーカバレッジは使わない
+	psoDesc.BlendState.IndependentBlendEnable = false;	        // 独立ブレンドは使わない
+	// レンダーターゲットの設定
+	D3D12_RENDER_TARGET_BLEND_DESC rtBlendDesc = {};
+	rtBlendDesc.BlendEnable = false;				                    // ブレンドしない
+	rtBlendDesc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;	// すべてのカラーチャンネルを書き込む
+	psoDesc.BlendState.RenderTarget[0] = rtBlendDesc;	                // レンダーターゲットの設定
+	psoDesc.NumRenderTargets = 1;	                                    // レンダーターゲットの数
+	psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;					// レンダーターゲットのフォーマット
+	// インプットレイアウトの設定
+	psoDesc.InputLayout.pInputElementDescs = m_inputLayout;		// インプットレイアウト
+	psoDesc.InputLayout.NumElements = _countof(m_inputLayout);	// インプットレイアウトの数
+	psoDesc.IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED;	// カットなし
+	// プリミティブトポロジの設定
+	psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;	// 三角形リスト
+	// アンチエイリアシングのためのサンプル係数の設定
+	psoDesc.SampleDesc.Count = 1;	// サンプリングは1ピクセルにつき1回
+	psoDesc.SampleDesc.Quality = 0;	// クオリティは最低
+
+	// パイプラインステートの生成
+	auto hr = m_dev->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pipelineState));
+	if (FAILED(hr))
+	{
+		MessageBox(nullptr, "CreateGraphicsPipelineState Failed.", "Error", MB_OK);
+		return false;
+	}
+
+	return true;
+}
+
+bool Renderer::CreateViewport()
+{
+	// ビューポートの設定
+	m_viewport.Width = static_cast<float>(WINDOW_WIDTH);	    // ウィンドウの幅
+	m_viewport.Height = static_cast<float>(WINDOW_HEIGHT);	    // ウィンドウの高さ
+	m_viewport.TopLeftX = 0;	                                // 出力先の左上のX座標
+	m_viewport.TopLeftY = 0;	                                // 出力先の左上のY座標
+	m_viewport.MaxDepth = 1.0f;	                                // 深度値の最大値
+	m_viewport.MinDepth = 0.0f;	                                // 深度値の最小値
+
+	// シザリング矩形の設定
+	m_scissorRect.top = 0;	                                    // 切り抜き矩形の上端
+	m_scissorRect.left = 0;	                                    // 切り抜き矩形の左端
+	m_scissorRect.right = m_scissorRect.left + WINDOW_WIDTH;	// 切り抜き矩形の右端
+	m_scissorRect.bottom = m_scissorRect.top + WINDOW_HEIGHT;	// 切り抜き矩形の下端
 
 	return true;
 }

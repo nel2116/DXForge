@@ -11,6 +11,9 @@
 // ====== 名前空間定義 ======
 using namespace DirectX;
 
+// ====== 定数定義 ======
+const int kInputLayoutNum = 1;	// インプットレイアウトの数
+
 // ====== クラス定義 ======
 class Renderer
 {
@@ -32,6 +35,10 @@ private:	// プライベート関数
 	bool CreateFence();	            // フェンスの作成
 	bool CreateVertexBuffer();	    // 頂点バッファの作成
 	bool CreateShader();	        // シェーダーの作成
+	bool CreateInputLayout();	    // インプットレイアウトの作成
+	bool CreateRootSignature();	    // ルートシグネチャの作成
+	bool CreatePipelineState();	    // パイプラインステートの作成
+	bool CreateViewport();	        // ビューポートの作成
 
 
 private:	// メンバ変数
@@ -56,11 +63,26 @@ private:	// メンバ変数
 	UINT64 m_fenceVal;
 
 	// 頂点情報
-	XMFLOAT3 m_vertices[3];	        // 頂点座標
-	ID3D12Resource* m_vertexBuff;	// 頂点バッファ
+	ID3D12Resource* m_vertexBuff;	            // 頂点バッファ
+	D3D12_VERTEX_BUFFER_VIEW m_vertexBuffView;	// 頂点バッファビュー
+	ID3D12Resource* m_indexBuff;	            // インデックスバッファ
+	D3D12_INDEX_BUFFER_VIEW m_indexBuffView;	// インデックスバッファビュー
 
 	// シェーダー
 	ID3DBlob* m_vsBlob;
 	ID3DBlob* m_psBlob;
+
+	// インプットレイアウト
+	D3D12_INPUT_ELEMENT_DESC m_inputLayout[kInputLayoutNum];
+
+	// ルートシグネチャ
+	ID3D12RootSignature* m_rootSignature;
+
+	// パイプラインステート
+	ID3D12PipelineState* m_pipelineState;
+
+	// ビューポート
+	D3D12_VIEWPORT m_viewport;
+	D3D12_RECT m_scissorRect;
 
 };
