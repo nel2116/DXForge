@@ -4,9 +4,11 @@
 #include <dxgi1_6.h>
 #include <DirectXMath.h>
 #include <d3dcompiler.h>
+#include "DirectXTex/DirectXTex.h"
 #pragma comment(lib, "d3d12.lib")
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "d3dcompiler.lib")
+#pragma comment(lib, "DirectXTex.lib")
 
 // ====== 名前空間定義 ======
 using namespace DirectX;
@@ -53,8 +55,9 @@ private:	// プライベート関数
 	bool CreatePipelineState();			// パイプラインステートの作成
 	bool CreateViewport();				// ビューポートの作成
 	bool CreateTestTexture();			// テストテクスチャの作成
-	bool CreateTextureBuffer();			// テクスチャバッファの作成
 	bool CreateShaderResourceView();	// シェーダーリソースビューの作成
+	bool CreateTexture();				// テクスチャの作成
+	bool CreateConstantBuffer();		// 定数バッファの作成
 
 private:	// メンバ変数
 	// DirectX12の初期化
@@ -103,5 +106,8 @@ private:	// メンバ変数
 	// テストテクスチャ
 	vector<TexRGBA> m_texData;
 	ID3D12Resource* m_texBuff;
-	ID3D12DescriptorHeap* m_pTexDescHeap;
+	ID3D12DescriptorHeap* m_pBasicDescHeap;
+
+	// 定数バッファ
+	ID3D12Resource* m_constBuff;
 };

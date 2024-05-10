@@ -23,6 +23,10 @@ Renderer::Renderer()
 	, m_pipelineState(nullptr)
 	, m_viewport()
 	, m_scissorRect()
+	, m_texData()
+	, m_texBuff(nullptr)
+	, m_pBasicDescHeap(nullptr)
+	, m_constBuff(nullptr)
 {
 }
 
@@ -30,8 +34,10 @@ Renderer::~Renderer()
 {
 	// 解放処理
 
+	// 定数バッファの解放
+	SAFE_RELEASE(m_constBuff);
 	// テストテクスチャの解放
-	SAFE_RELEASE(m_pTexDescHeap);
+	SAFE_RELEASE(m_pBasicDescHeap);
 	// テクスチャバッファの解放
 	SAFE_RELEASE(m_texBuff);
 	// ルートシグネチャの解放
@@ -103,11 +109,13 @@ bool Renderer::Init()
 	// ビューポートの作成
 	if (!CreateViewport()) { return false; }
 	// テストテクスチャの作成
-	if (!CreateTestTexture()) { return false; }
-	// テクスチャバッファの作成
-	if (!CreateTextureBuffer()) { return false; }
+	// if (!CreateTestTexture()) { return false; }
+	// テクスチャの作成
+	if (!CreateTexture()) { return false; }
 	// シェーダーリソースビューの作成
 	if (!CreateShaderResourceView()) { return false; }
+	// 定数バッファの作成
+	if (!CreateConstantBuffer()) { return false; }
 
 	// 正常に初期化できた
 	return true;
@@ -148,10 +156,10 @@ void Renderer::Draw()
 	m_cmdList->IASetVertexBuffers(0, 1, &m_vertexBuffView);	                // 頂点バッファの設定
 	m_cmdList->IASetIndexBuffer(&m_indexBuffView);	                        // インデックスバッファの設定
 	m_cmdList->SetGraphicsRootSignature(m_rootSignature);	                // ルートシグネチャの設定
-	m_cmdList->SetDescriptorHeaps(1, &m_pTexDescHeap);	                    // ディスクリプタヒープの設定
+	m_cmdList->SetDescriptorHeaps(1, &m_pBasicDescHeap);	                    // ディスクリプタヒープの設定
 	m_cmdList->SetGraphicsRootDescriptorTable(
 		0,																	// ルートパラメーターインデックス 
-		m_pTexDescHeap->GetGPUDescriptorHandleForHeapStart());				// ヒープアドレス
+		m_pBasicDescHeap->GetGPUDescriptorHandleForHeapStart());				// ヒープアドレス
 	m_cmdList->DrawIndexedInstanced(6, 1, 0, 0, 0);	                        // 描画命令
 
 	// レンダーターゲットの状態遷移
@@ -364,6 +372,11 @@ bool Renderer::CreateRenderTargetView()
 	// レンダーターゲットビューのハンドルを取得
 	D3D12_CPU_DESCRIPTOR_HANDLE handle = m_pRTV->GetCPUDescriptorHandleForHeapStart();
 
+	// // SRGB レンダーターゲットビュー設定
+	// D3D12_RENDER_TARGET_VIEW_DESC rtvDesc = {};
+	// rtvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;	// SRGB フォーマット(ガンマ補正あり)
+	// rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;	// 2D テクスチャ
+
 	for (size_t idx = 0; idx < swcDesc.BufferCount; ++idx)
 	{
 		hr = m_swapChain->GetBuffer(static_cast<UINT>(idx), IID_PPV_ARGS(&m_backBuffers[idx]));
@@ -372,7 +385,7 @@ bool Renderer::CreateRenderTargetView()
 			MessageBox(nullptr, "GetBuffer Failed.", "Error", MB_OK);
 			return false;
 		}
-		m_dev->CreateRenderTargetView(m_backBuffers[idx], nullptr, handle);
+		m_dev->CreateRenderTargetView(m_backBuffers[idx], nullptr, handle); // ガンマ補正をかけたいときは第二引数にrtvDescを指定
 		handle.ptr += m_dev->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 	}
 
@@ -559,17 +572,30 @@ bool Renderer::CreateInputLayout()
 
 bool Renderer::CreateRootSignature()
 {
-	D3D12_DESCRIPTOR_RANGE descRange = {};
-	descRange.NumDescriptors = 1;	// テクスチャ一つ
-	descRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;	// 種別はテクスチャ
-	descRange.BaseShaderRegister = 0;	// 0番スロットから
-	descRange.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;	// オフセットは追加
+	// テクスチャ用レジスター0番
+	D3D12_DESCRIPTOR_RANGE descRange[2] = {};
+	descRange[0].NumDescriptors = 1;	// テクスチャ一つ
+	descRange[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;	// 種別はテクスチャ
+	descRange[0].BaseShaderRegister = 0;	// 0番スロットから
+	descRange[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;	// オフセットは追加
 
-	D3D12_ROOT_PARAMETER rootParam = {};
-	rootParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;	// ディスクリプタテーブル
-	rootParam.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;	            // ピクセルシェーダーから見える
-	rootParam.DescriptorTable.pDescriptorRanges = &descRange;
-	rootParam.DescriptorTable.NumDescriptorRanges = 1;	                    // ディスクリプタテーブルの数
+	// 定数バッファ用レジスター0番
+	descRange[1].NumDescriptors = 1;	// 定数バッファ一つ
+	descRange[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;	// 種別は定数バッファ
+	descRange[1].BaseShaderRegister = 0;	// 0番スロットから
+	descRange[1].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;	// オフセットは追加
+
+	// ルートパラメータの設定
+	D3D12_ROOT_PARAMETER rootParam[2] = {};
+	rootParam[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;	// ディスクリプタテーブル
+	rootParam[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;	            // ピクセルシェーダーから見える
+	rootParam[0].DescriptorTable.pDescriptorRanges = &descRange;
+	rootParam[0].DescriptorTable.NumDescriptorRanges = 1;	                    // ディスクリプタテーブルの数
+
+	rootParam[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+	rootParam[1].DescriptorTable.pDescriptorRanges = &descRange[1];
+	rootParam[1].DescriptorTable.NumDescriptorRanges = 1;						// レンジ数
+	rootParam[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;				// 頂点シェーダーから見える
 
 	D3D12_STATIC_SAMPLER_DESC samplerDesc = {};
 	samplerDesc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;					// 横方向の繰り返し
@@ -588,11 +614,11 @@ bool Renderer::CreateRootSignature()
 
 	// ルートパラメータの設定
 	rootSigDesc.pParameters = &rootParam;	// ルートパラメータの先頭アドレス
-	rootSigDesc.NumParameters = 1;	// ルートパラメータの数
+	rootSigDesc.NumParameters = 2;			// ルートパラメータの数
 
 	// サンプラーの設定
 	rootSigDesc.pStaticSamplers = &samplerDesc;	// サンプラーの設定
-	rootSigDesc.NumStaticSamplers = 1;	// サンプラーの数
+	rootSigDesc.NumStaticSamplers = 1;			// サンプラーの数
 
 	// バイナリコードの作成
 	ID3DBlob* errorBlob = nullptr;
@@ -715,11 +741,7 @@ bool Renderer::CreateTestTexture()
 		tex.b = rand() % 256;	// 青成分
 		tex.a = 255;	        // アルファ成分は1.0とする
 	}
-	return true;
-}
 
-bool Renderer::CreateTextureBuffer()
-{
 	// WriteToSubresourceで転送するためのヒープ設定
 	D3D12_HEAP_PROPERTIES heapProp = {};
 	// 特殊な設定なのでDEFAULTでもUPLOADでもない
@@ -781,25 +803,27 @@ bool Renderer::CreateTextureBuffer()
 	}
 
 	return true;
+
+	return true;
 }
 
 bool Renderer::CreateShaderResourceView()
 {
 	// ディスクリプタヒープの設定
-	m_pTexDescHeap = nullptr;
+	m_pBasicDescHeap = nullptr;
 	D3D12_DESCRIPTOR_HEAP_DESC descHeapDesc = {};
 
 	// シェーダーから見えるように
 	descHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	// マスクは0
 	descHeapDesc.NodeMask = 0;
-	// ビューは今のところ一つ
-	descHeapDesc.NumDescriptors = 1;
+	// SRVとCBVの2つ
+	descHeapDesc.NumDescriptors = 2;
 	// シェーダーリソースビュー用
 	descHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 
 	// 生成
-	auto hr = m_dev->CreateDescriptorHeap(&descHeapDesc, IID_PPV_ARGS(&m_pTexDescHeap));
+	auto hr = m_dev->CreateDescriptorHeap(&descHeapDesc, IID_PPV_ARGS(&m_pBasicDescHeap));
 	// エラーチェック
 	if (FAILED(hr))
 	{
@@ -815,8 +839,146 @@ bool Renderer::CreateShaderResourceView()
 	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;	// 2Dテクスチャ
 	srvDesc.Texture2D.MipLevels = 1;						// ミップマップは使わない
 
+	// ディスクリプタの先頭ハンドルを取得しておく
+	auto basicHeapHandle = m_pBasicDescHeap->GetCPUDescriptorHandleForHeapStart();
+
 	// シェーダーリソースビューの生成
-	m_dev->CreateShaderResourceView(m_texBuff, &srvDesc, m_pTexDescHeap->GetCPUDescriptorHandleForHeapStart());
+	m_dev->CreateShaderResourceView(m_texBuff, &srvDesc, basicHeapHandle);
+
+	// 次の場所に移動
+	basicHeapHandle.ptr += m_dev->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+	// 定数バッファビューの設定
+	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
+	cbvDesc.BufferLocation = m_constBuff->GetGPUVirtualAddress();	// バッファの仮想アドレス
+	cbvDesc.SizeInBytes = m_constBuff->GetDesc().Width;	    // バッファのサイズ
+
+	// 定数バッファビューの生成
+	m_dev->CreateConstantBufferView(&cbvDesc, basicHeapHandle);
+
+	return true;
+}
+
+bool Renderer::CreateTexture()
+{
+	TexMetadata meta = {};
+	ScratchImage img = {};
+
+	auto hr = LoadFromWICFile(L"Assets/Texture/field.jpg", WIC_FLAGS_NONE, &meta, img);
+	// エラーチェック
+	if (FAILED(hr))
+	{
+		MessageBox(nullptr, "LoadFromWICFile Failed.", "Error", MB_OK);
+		return false;
+	}
+
+	auto imgData = img.GetImage(0, 0, 0);	// 生データ抽出
+
+	// WriteToSubresourceで転送するためのヒープ設定
+	D3D12_HEAP_PROPERTIES heapProp = {};
+	// 特殊な設定なのでDEFAULTでもUPLOADでもない
+	heapProp.Type = D3D12_HEAP_TYPE_CUSTOM;
+	// ライトバック
+	heapProp.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_WRITE_BACK;
+	// 転送はL0、つまりCPu側から直接行う
+	heapProp.MemoryPoolPreference = D3D12_MEMORY_POOL_L0;
+
+	// 単一アダプタのため0
+	heapProp.CreationNodeMask = 0;
+	heapProp.VisibleNodeMask = 0;
+
+	// リソースの設定
+	D3D12_RESOURCE_DESC resDesc = {};
+
+	resDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;			// フォーマット
+	resDesc.Width = meta.width;								// 幅
+	resDesc.Height = meta.height;							// 高さ
+	resDesc.DepthOrArraySize = meta.arraySize;				// 2Dで配列もないので1
+	resDesc.SampleDesc.Count = 1;							// 通常テクスチャなのでアンチエイリアシングしない
+	resDesc.SampleDesc.Quality = 0;							// クオリティは最低
+	resDesc.MipLevels = meta.mipLevels;						// ミップレベル
+	resDesc.Dimension = static_cast<D3D12_RESOURCE_DIMENSION>(meta.dimension);
+	resDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;	        // レイアウトは決定しない
+	resDesc.Flags = D3D12_RESOURCE_FLAG_NONE;				// 特にフラグはなし
+
+	// リソースの生成
+	m_texBuff = nullptr;
+
+	hr = m_dev->CreateCommittedResource(
+		&heapProp,									// ヒープの設定
+		D3D12_HEAP_FLAG_NONE,						// 特にフラグはなし
+		&resDesc,									// リソースの設定
+		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,	// テクスチャ用指定
+		nullptr,									// クリア値
+		IID_PPV_ARGS(&m_texBuff)						// テクスチャバッファ
+	);
+	// エラーチェック
+	if (FAILED(hr))
+	{
+		MessageBox(nullptr, "CreateCommittedResource Failed.", "Error", MB_OK);
+		return false;
+	}
+
+	// データ転送
+	hr = m_texBuff->WriteToSubresource(
+		0,
+		nullptr,				// 全領域へのコピー
+		imgData->pixels,		// 元データアドレス
+		imgData->rowPitch,		// 1行分のサイズ
+		imgData->slicePitch		// 全データサイズ
+	);
+	// エラーチェック
+	if (FAILED(hr))
+	{
+		MessageBox(nullptr, "WriteToSubresource Failed.", "Error", MB_OK);
+		return false;
+	}
+
+	return true;
+}
+
+bool Renderer::CreateConstantBuffer()
+{
+	// ワールド行列の設定
+	XMMATRIX matrix = XMMatrixIdentity();
+
+	// バッファの設定
+	D3D12_HEAP_PROPERTIES heapProp = {};
+	heapProp.Type = D3D12_HEAP_TYPE_UPLOAD;	                    // アップロードヒープ
+	heapProp.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;	// CPUページプロパティ
+	heapProp.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;	// メモリプールの設定
+
+	D3D12_RESOURCE_DESC resDesc = {};
+	resDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;	// リソースの次元
+	resDesc.Width = (sizeof(matrix) + 0xff) & ~0xff;	    // 頂点が入るだけのサイズ
+	resDesc.Height = 1;	                                    // 高さ
+	resDesc.DepthOrArraySize = 1;	                        // デプス
+	resDesc.MipLevels = 1;	                                // ミップマップ
+	resDesc.Format = DXGI_FORMAT_UNKNOWN;	                // フォーマット
+	resDesc.SampleDesc.Count = 1;	                        // サンプル数
+	resDesc.Flags = D3D12_RESOURCE_FLAG_NONE;	            // フラグ
+	resDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;	    // テクスチャのレイアウト
+
+
+	auto hr = m_dev->CreateCommittedResource(
+		&heapProp,		// アップロードヒープ
+		D3D12_HEAP_FLAG_NONE,								// 特にフラグはなし
+		&resDesc,			// バッファの設定
+		D3D12_RESOURCE_STATE_GENERIC_READ,					// リソースの状態
+		nullptr,											// クリア値
+		IID_PPV_ARGS(&m_constBuff)							// バッファ
+	);
+	// エラーチェック
+	if (FAILED(hr))
+	{
+		MessageBox(nullptr, "CreateCommittedResource Failed.", "Error", MB_OK);
+		return false;
+	}
+
+	// バッファにデータをコピー
+	XMMATRIX* mapMatrix = nullptr;	// マップ先を示すポインター
+	hr = m_constBuff->Map(0, nullptr, (void**)&mapMatrix);
+	*mapMatrix = matrix;	// 行列の内容をコピー
 
 	return true;
 }
