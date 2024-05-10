@@ -12,11 +12,24 @@
 using namespace DirectX;
 
 // ====== 定数定義 ======
-const int kInputLayoutNum = 1;	// インプットレイアウトの数
+const int kInputLayoutNum = 2;	// インプットレイアウトの数
 
 // ====== クラス定義 ======
 class Renderer
 {
+public:	// 構造体定義
+	// 頂点情報
+	struct Vertex
+	{
+		XMFLOAT3 pos;	// 座標
+		XMFLOAT2 uv;	// テクスチャ座標
+	};
+
+	struct TexRGBA
+	{
+		unsigned char r, g, b, a;
+	};
+
 public:		// パブリック関数
 	Renderer();
 	~Renderer();
@@ -27,19 +40,21 @@ public:		// パブリック関数
 	void Draw();
 
 private:	// プライベート関数
-	void EnableDebugLayer();	    // デバッグレイヤーの有効化
-	bool CreateDevice();	        // デバイスの作成
-	bool CreateCommandList();	    // コマンドリストの作成
-	bool CreateSwapChain();	        // スワップチェインの作成
-	bool CreateRenderTargetView();	// レンダーターゲットビューの作成
-	bool CreateFence();	            // フェンスの作成
-	bool CreateVertexBuffer();	    // 頂点バッファの作成
-	bool CreateShader();	        // シェーダーの作成
-	bool CreateInputLayout();	    // インプットレイアウトの作成
-	bool CreateRootSignature();	    // ルートシグネチャの作成
-	bool CreatePipelineState();	    // パイプラインステートの作成
-	bool CreateViewport();	        // ビューポートの作成
-
+	void EnableDebugLayer();			// デバッグレイヤーの有効化
+	bool CreateDevice();				// デバイスの作成
+	bool CreateCommandList();			// コマンドリストの作成
+	bool CreateSwapChain();				// スワップチェインの作成
+	bool CreateRenderTargetView();		// レンダーターゲットビューの作成
+	bool CreateFence();					// フェンスの作成
+	bool CreateVertexBuffer();			// 頂点バッファの作成
+	bool CreateShader();				// シェーダーの作成
+	bool CreateInputLayout();			// インプットレイアウトの作成
+	bool CreateRootSignature();			// ルートシグネチャの作成
+	bool CreatePipelineState();			// パイプラインステートの作成
+	bool CreateViewport();				// ビューポートの作成
+	bool CreateTestTexture();			// テストテクスチャの作成
+	bool CreateTextureBuffer();			// テクスチャバッファの作成
+	bool CreateShaderResourceView();	// シェーダーリソースビューの作成
 
 private:	// メンバ変数
 	// DirectX12の初期化
@@ -85,4 +100,8 @@ private:	// メンバ変数
 	D3D12_VIEWPORT m_viewport;
 	D3D12_RECT m_scissorRect;
 
+	// テストテクスチャ
+	vector<TexRGBA> m_texData;
+	ID3D12Resource* m_texBuff;
+	ID3D12DescriptorHeap* m_pTexDescHeap;
 };

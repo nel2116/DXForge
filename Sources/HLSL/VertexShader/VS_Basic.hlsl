@@ -1,13 +1,10 @@
-struct VS_OUT
-{
-    float4 pos : POSITION;
-    float4 svpos : SV_POSITION;
-};
+#include "../Header/BasicShaderHeader.hlsli"
 
-VS_OUT VS_Main(float4 pos : POSITION)
+Output VS_Main(float4 pos : POSITION, float2 uv : TEXCOORD)
 {
-    VS_OUT vout;
-    vout.pos = pos;
-    vout.svpos = pos;
-    return vout;
+    Output output;
+    output.svpos = pos;
+    output.uv = uv;
+    
+    return output;
 }

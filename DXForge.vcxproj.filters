@@ -43,4 +43,7 @@
     <FxCompile Include="Sources\HLSL\VertexShader\VS_Basic.hlsl" />
     <FxCompile Include="Sources\HLSL\PixelShader\PS_Basic.hlsl" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Sources\HLSL\Header\BasicShaderHeader.hlsli" />
+  </ItemGroup>
 </Project>
