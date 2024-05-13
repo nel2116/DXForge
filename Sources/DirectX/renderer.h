@@ -38,7 +38,7 @@ public:		// パブリック関数
 
 	// 初期化
 	bool Init();
-
+	void Update();
 	void Draw();
 
 private:	// プライベート関数
@@ -110,4 +110,7 @@ private:	// メンバ変数
 
 	// 定数バッファ
 	ID3D12Resource* m_constBuff;
+
+	// 行列
+	XMMATRIX* m_pMapMat;
 };

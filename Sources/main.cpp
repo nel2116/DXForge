@@ -35,6 +35,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		}
 		if (msg.message == WM_QUIT) { break; }
 		// ƒQ[ƒ€‚Ìˆ—
+		renderer->Update();
 		renderer->Draw();
 	}
 

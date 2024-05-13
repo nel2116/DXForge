@@ -34,6 +34,8 @@ Renderer::~Renderer()
 {
 	// 解放処理
 
+	// 行列の解放
+	m_constBuff->Unmap(0, nullptr);
 	// 定数バッファの解放
 	SAFE_RELEASE(m_constBuff);
 	// テストテクスチャの解放
@@ -112,13 +114,37 @@ bool Renderer::Init()
 	// if (!CreateTestTexture()) { return false; }
 	// テクスチャの作成
 	if (!CreateTexture()) { return false; }
-	// シェーダーリソースビューの作成
-	if (!CreateShaderResourceView()) { return false; }
 	// 定数バッファの作成
 	if (!CreateConstantBuffer()) { return false; }
+	// シェーダーリソースビューの作成
+	if (!CreateShaderResourceView()) { return false; }
 
 	// 正常に初期化できた
 	return true;
+}
+
+void Renderer::Update()
+{
+	// 定数バッファの設定
+	XMMATRIX world = XMMatrixIdentity();
+	XMMATRIX view = XMMatrixLookAtLH(
+		XMVectorSet(0.0f, 0.0f, -5.0f, 0.0f),
+		XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f),
+		XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)
+	);
+	XMMATRIX proj = XMMatrixPerspectiveFovLH(
+		XM_PIDIV4,
+		static_cast<float>(WINDOW_WIDTH) / static_cast<float>(WINDOW_HEIGHT),
+		1.0f,
+		10.0f
+	);
+
+	static float angle;
+	angle += 0.1f;
+	world = XMMatrixRotationY(angle);
+	// ワールドビュープロジェクション行列
+	XMMATRIX wvp = world * view * proj;
+	*m_pMapMat = wvp;
 }
 
 void Renderer::Draw()
@@ -405,10 +431,10 @@ bool Renderer::CreateVertexBuffer()
 	// 頂点情報の設定
 	Vertex vertices[] =
 	{
-		{ { -0.4f, -0.7f, 0.0f}, { 0.0f, 1.0f } },	// 左下
-		{ { -0.4f, 0.7f, 0.0f }, { 0.0f, 0.0f } },	// 左上
-		{ { 0.4f, -0.7f, 0.0f }, { 1.0f, 1.0f } },	// 右下
-		{ { 0.4f, 0.7f, 0.0f }, { 1.0f, 0.0f } },	// 右上
+		{ { -1.0f, -1.0f, 0.0f}, { 0.0f, 1.0f } },	// 左下
+		{ { -1.0f, 1.0f, 0.0f }, { 0.0f, 0.0f } },	// 左上
+		{ { 1.0f, -1.0f, 0.0f }, { 1.0f, 1.0f } },	// 右下
+		{ { 1.0f, 1.0f, 0.0f }, { 1.0f, 0.0f } },	// 右上
 	};
 
 	// バッファの設定
@@ -586,16 +612,14 @@ bool Renderer::CreateRootSignature()
 	descRange[1].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;	// オフセットは追加
 
 	// ルートパラメータの設定
-	D3D12_ROOT_PARAMETER rootParam[2] = {};
-	rootParam[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;	// ディスクリプタテーブル
-	rootParam[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;	            // ピクセルシェーダーから見える
-	rootParam[0].DescriptorTable.pDescriptorRanges = &descRange;
-	rootParam[0].DescriptorTable.NumDescriptorRanges = 1;	                    // ディスクリプタテーブルの数
-
-	rootParam[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	rootParam[1].DescriptorTable.pDescriptorRanges = &descRange[1];
-	rootParam[1].DescriptorTable.NumDescriptorRanges = 1;						// レンジ数
-	rootParam[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;				// 頂点シェーダーから見える
+	D3D12_ROOT_PARAMETER rootParam = {};
+	rootParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;	// ディスクリプタテーブル
+	// 配列先頭アドレス
+	rootParam.DescriptorTable.pDescriptorRanges = &descRange[0];
+	// ディスクリプタレンジ数
+	rootParam.DescriptorTable.NumDescriptorRanges = 2;
+	// すべてのシェーダーから見える
+	rootParam.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
 	D3D12_STATIC_SAMPLER_DESC samplerDesc = {};
 	samplerDesc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;					// 横方向の繰り返し
@@ -614,7 +638,7 @@ bool Renderer::CreateRootSignature()
 
 	// ルートパラメータの設定
 	rootSigDesc.pParameters = &rootParam;	// ルートパラメータの先頭アドレス
-	rootSigDesc.NumParameters = 2;			// ルートパラメータの数
+	rootSigDesc.NumParameters = 1;			// ルートパラメータの数
 
 	// サンプラーの設定
 	rootSigDesc.pStaticSamplers = &samplerDesc;	// サンプラーの設定
@@ -941,6 +965,12 @@ bool Renderer::CreateConstantBuffer()
 {
 	// ワールド行列の設定
 	XMMATRIX matrix = XMMatrixIdentity();
+	XMMATRIX world = XMMatrixRotationY(XMConvertToRadians(45.0f));
+	XMFLOAT3 eye(0, 0, -5);
+	XMFLOAT3 target(0, 0, 0);
+	XMFLOAT3 up(0, 1, 0);
+	XMMATRIX view = XMMatrixLookAtLH(XMLoadFloat3(&eye), XMLoadFloat3(&target), XMLoadFloat3(&up));
+	XMMATRIX proj = XMMatrixPerspectiveFovLH(XMConvertToRadians(90.0f), static_cast<float>(WINDOW_WIDTH) / static_cast<float>(WINDOW_HEIGHT), 1.0f, 10.0f);
 
 	// バッファの設定
 	D3D12_HEAP_PROPERTIES heapProp = {};
@@ -976,9 +1006,18 @@ bool Renderer::CreateConstantBuffer()
 	}
 
 	// バッファにデータをコピー
-	XMMATRIX* mapMatrix = nullptr;	// マップ先を示すポインター
-	hr = m_constBuff->Map(0, nullptr, (void**)&mapMatrix);
-	*mapMatrix = matrix;	// 行列の内容をコピー
+	m_pMapMat = nullptr;	// マップ先を示すポインター
+	hr = m_constBuff->Map(0, nullptr, (void**)&m_pMapMat);
+	// エラーチェック
+	if (FAILED(hr))
+	{
+		MessageBox(nullptr, "Map Failed.", "Error", MB_OK);
+		return false;
+	}
+
+	// 行列の合成
+	matrix = world * view * proj;
+	*m_pMapMat = matrix;	// 行列の内容をコピー
 
 	return true;
 }
