@@ -14,7 +14,8 @@
 using namespace DirectX;
 
 // ====== 定数定義 ======
-const int kInputLayoutNum = 2;	// インプットレイアウトの数
+const int kInputLayoutNum = 6;	// インプットレイアウトの数
+const size_t pmdvertex_size = 38;	// 頂点１つあたりのサイズ
 
 // ====== クラス定義 ======
 class Renderer
@@ -31,6 +32,25 @@ public:	// 構造体定義
 	{
 		unsigned char r, g, b, a;
 	};
+
+	// PMDヘッダー構造体
+	struct PMDHeader
+	{
+		float version;			// 例: 00 00 80 3F == 1.00
+		char model_name[20];	// モデル名
+		char comment[256];		// モデルコメント
+	};
+
+	// PMD頂点構造体
+	struct PMDVertex
+	{
+		XMFLOAT3 pos;	// 頂点座標：12バイト
+		XMFLOAT3 normal;	// 法線ベクトル：12バイト
+		XMFLOAT2 uv;	// UV座標：8バイト
+		unsigned short bone_No[2];	// ボーン番号：2 * 2バイト
+		unsigned char bone_weight;	// ボーンの重み：1バイト
+		unsigned char edge_flag;	// エッジフラグ：1バイト
+	};	// 合計：38バイト
 
 public:		// パブリック関数
 	Renderer();
@@ -58,6 +78,7 @@ private:	// プライベート関数
 	bool CreateShaderResourceView();	// シェーダーリソースビューの作成
 	bool CreateTexture();				// テクスチャの作成
 	bool CreateConstantBuffer();		// 定数バッファの作成
+	bool LoadModel();					// モデルの読み込み
 
 private:	// メンバ変数
 	// DirectX12の初期化
@@ -113,4 +134,9 @@ private:	// メンバ変数
 
 	// 行列
 	XMMATRIX* m_pMapMat;
+
+	// モデル
+	PMDHeader m_pmdHeader;
+	unsigned int vertNum;	// 頂点数
+	vector<unsigned char> vertices;	// 頂点データ
 };

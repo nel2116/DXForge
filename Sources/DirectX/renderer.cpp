@@ -1,5 +1,6 @@
-#include <Precompils/stdafx.h>
+#include <stdafx.h>
 #include "renderer.h"
+#include <d3dx12.h>
 
 Renderer::Renderer()
 	: m_dev(nullptr)
@@ -112,6 +113,8 @@ bool Renderer::Init()
 	if (!CreateViewport()) { return false; }
 	// テストテクスチャの作成
 	// if (!CreateTestTexture()) { return false; }
+	// モデルの読み込み
+	if (!LoadModel()) { return false; }
 	// テクスチャの作成
 	if (!CreateTexture()) { return false; }
 	// 定数バッファの作成
@@ -125,26 +128,26 @@ bool Renderer::Init()
 
 void Renderer::Update()
 {
-	// 定数バッファの設定
-	XMMATRIX world = XMMatrixIdentity();
-	XMMATRIX view = XMMatrixLookAtLH(
-		XMVectorSet(0.0f, 0.0f, -5.0f, 0.0f),
-		XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f),
-		XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)
-	);
-	XMMATRIX proj = XMMatrixPerspectiveFovLH(
-		XM_PIDIV4,
-		static_cast<float>(WINDOW_WIDTH) / static_cast<float>(WINDOW_HEIGHT),
-		1.0f,
-		10.0f
-	);
+	//// 定数バッファの設定
+	//XMMATRIX world = XMMatrixIdentity();
+	//XMMATRIX view = XMMatrixLookAtLH(
+	//	XMVectorSet(0.0f, 0.0f, -5.0f, 0.0f),
+	//	XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f),
+	//	XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)
+	//);
+	//XMMATRIX proj = XMMatrixPerspectiveFovLH(
+	//	XM_PIDIV4,
+	//	static_cast<float>(WINDOW_WIDTH) / static_cast<float>(WINDOW_HEIGHT),
+	//	1.0f,
+	//	10.0f
+	//);
 
-	static float angle;
-	angle += 0.1f;
-	world = XMMatrixRotationY(angle);
-	// ワールドビュープロジェクション行列
-	XMMATRIX wvp = world * view * proj;
-	*m_pMapMat = wvp;
+	//static float angle;
+	//angle += 0.1f;
+	//world = XMMatrixRotationY(angle);
+	//// ワールドビュープロジェクション行列
+	//XMMATRIX wvp = world * view * proj;
+	//*m_pMapMat = wvp;
 }
 
 void Renderer::Draw()
@@ -170,7 +173,7 @@ void Renderer::Draw()
 	m_cmdList->OMSetRenderTargets(1, &rtvHandle, false, nullptr);
 
 	// 画面クリア
-	float clearColor[] = { 1.0f, 1.0f, 0.0f, 1.0f };	// 黄色
+	float clearColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };	// 白色
 	m_cmdList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 
 
@@ -184,9 +187,9 @@ void Renderer::Draw()
 	m_cmdList->SetGraphicsRootSignature(m_rootSignature);	                // ルートシグネチャの設定
 	m_cmdList->SetDescriptorHeaps(1, &m_pBasicDescHeap);	                    // ディスクリプタヒープの設定
 	m_cmdList->SetGraphicsRootDescriptorTable(
-		0,																	// ルートパラメーターインデックス 
+		0,																		// ルートパラメーターインデックス 
 		m_pBasicDescHeap->GetGPUDescriptorHandleForHeapStart());				// ヒープアドレス
-	m_cmdList->DrawIndexedInstanced(6, 1, 0, 0, 0);	                        // 描画命令
+	m_cmdList->DrawInstanced(vertNum, 1, 0, 0);								// 描画命令
 
 	// レンダーターゲットの状態遷移
 	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;	//
@@ -429,13 +432,13 @@ bool Renderer::CreateFence()
 bool Renderer::CreateVertexBuffer()
 {
 	// 頂点情報の設定
-	Vertex vertices[] =
-	{
-		{ { -1.0f, -1.0f, 0.0f}, { 0.0f, 1.0f } },	// 左下
-		{ { -1.0f, 1.0f, 0.0f }, { 0.0f, 0.0f } },	// 左上
-		{ { 1.0f, -1.0f, 0.0f }, { 1.0f, 1.0f } },	// 右下
-		{ { 1.0f, 1.0f, 0.0f }, { 1.0f, 0.0f } },	// 右上
-	};
+	//Vertex vertices[] =
+	//{
+	//	{ { -1.0f, -1.0f, 0.0f}, { 0.0f, 1.0f } },	// 左下
+	//	{ { -1.0f, 1.0f, 0.0f }, { 0.0f, 0.0f } },	// 左上
+	//	{ { 1.0f, -1.0f, 0.0f }, { 1.0f, 1.0f } },	// 右下
+	//	{ { 1.0f, 1.0f, 0.0f }, { 1.0f, 0.0f } },	// 右上
+	//};
 
 	// バッファの設定
 	D3D12_HEAP_PROPERTIES heapProp = {};
@@ -446,7 +449,7 @@ bool Renderer::CreateVertexBuffer()
 	// リソースの設定
 	D3D12_RESOURCE_DESC resDesc = {};
 	resDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;	// リソースの次元
-	resDesc.Width = sizeof(vertices);	                    // 頂点が入るだけのサイズ
+	resDesc.Width = vertices.size();	                    // 頂点が入るだけのサイズ
 	resDesc.Height = 1;	                                    // 高さ
 	resDesc.DepthOrArraySize = 1;	                        // デプス
 	resDesc.MipLevels = 1;	                                // ミップマップ
@@ -463,8 +466,13 @@ bool Renderer::CreateVertexBuffer()
 		return false;
 	}
 
+	// バッファビューの設定
+	m_vertexBuffView.BufferLocation = m_vertexBuff->GetGPUVirtualAddress();	// バッファの仮想アドレス
+	m_vertexBuffView.SizeInBytes = vertices.size();	                    // 全バイト数
+	m_vertexBuffView.StrideInBytes = pmdvertex_size;	                // 1頂点あたりのバイト数
+
 	// バッファにデータをコピー
-	Vertex* vertMap = nullptr;
+	unsigned char* vertMap = nullptr;
 	hr = m_vertexBuff->Map(0, nullptr, (void**)&vertMap);
 	// エラーチェック
 	if (FAILED(hr))
@@ -474,12 +482,6 @@ bool Renderer::CreateVertexBuffer()
 	}
 	std::copy(std::begin(vertices), std::end(vertices), vertMap);
 	m_vertexBuff->Unmap(0, nullptr);
-
-
-	// バッファビューの設定
-	m_vertexBuffView.BufferLocation = m_vertexBuff->GetGPUVirtualAddress();	// バッファの仮想アドレス
-	m_vertexBuffView.SizeInBytes = sizeof(vertices);	                    // バッファのサイズ
-	m_vertexBuffView.StrideInBytes = sizeof(Vertex);	                    // ストライド
 
 	// インデックスの設定
 	unsigned short indices[6] = { 0, 1, 2, 2, 1, 3 };
@@ -585,13 +587,45 @@ bool Renderer::CreateInputLayout()
 	m_inputLayout[0].InputSlotClass = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA;	// 入力スロットのクラス
 	m_inputLayout[0].InstanceDataStepRate = 0;	                                    // インスタンスデータのステップレート
 
-	m_inputLayout[1].SemanticName = "TEXCOORD";	                                    // セマンティック名
+	m_inputLayout[1].SemanticName = "NORMAL";	                                    // セマンティック名
 	m_inputLayout[1].SemanticIndex = 0;	                                            // セマンティックインデックス
-	m_inputLayout[1].Format = DXGI_FORMAT_R32G32_FLOAT;	                            // フォーマット
+	m_inputLayout[1].Format = DXGI_FORMAT_R32G32B32_FLOAT;                          // フォーマット
 	m_inputLayout[1].InputSlot = 0;	                                                // 入力スロット
 	m_inputLayout[1].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;	            // オフセット
 	m_inputLayout[1].InputSlotClass = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA;	// 入力スロットのクラス
 	m_inputLayout[1].InstanceDataStepRate = 0;	                                    // インスタンスデータのステップレート
+
+	m_inputLayout[2].SemanticName = "TEXCCORD";	                                    // セマンティック名
+	m_inputLayout[2].SemanticIndex = 0;	                                            // セマンティックインデックス
+	m_inputLayout[2].Format = DXGI_FORMAT_R32G32_FLOAT;		                        // フォーマット
+	m_inputLayout[2].InputSlot = 0;	                                                // 入力スロット
+	m_inputLayout[2].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;	            // オフセット
+	m_inputLayout[2].InputSlotClass = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA;	// 入力スロットのクラス
+	m_inputLayout[2].InstanceDataStepRate = 0;	                                    // インスタンスデータのステップレート
+
+	m_inputLayout[3].SemanticName = "BONE_NO";	                                    // セマンティック名
+	m_inputLayout[3].SemanticIndex = 0;	                                            // セマンティックインデックス
+	m_inputLayout[3].Format = DXGI_FORMAT_R16G16_UINT;		                        // フォーマット
+	m_inputLayout[3].InputSlot = 0;	                                                // 入力スロット
+	m_inputLayout[3].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;	            // オフセット
+	m_inputLayout[3].InputSlotClass = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA;	// 入力スロットのクラス
+	m_inputLayout[3].InstanceDataStepRate = 0;	                                    // インスタンスデータのステップレート
+
+	m_inputLayout[4].SemanticName = "WEIGHT";	                                    // セマンティック名
+	m_inputLayout[4].SemanticIndex = 0;	                                            // セマンティックインデックス
+	m_inputLayout[4].Format = DXGI_FORMAT_R8_UINT;			                        // フォーマット
+	m_inputLayout[4].InputSlot = 0;	                                                // 入力スロット
+	m_inputLayout[4].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;	            // オフセット
+	m_inputLayout[4].InputSlotClass = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA;	// 入力スロットのクラス
+	m_inputLayout[4].InstanceDataStepRate = 0;	                                    // インスタンスデータのステップレート
+
+	m_inputLayout[5].SemanticName = "EDGE_FLG";	                                    // セマンティック名
+	m_inputLayout[5].SemanticIndex = 0;	                                            // セマンティックインデックス
+	m_inputLayout[5].Format = DXGI_FORMAT_R8_UINT;			                        // フォーマット
+	m_inputLayout[5].InputSlot = 0;	                                                // 入力スロット
+	m_inputLayout[5].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;	            // オフセット
+	m_inputLayout[5].InputSlotClass = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA;	// 入力スロットのクラス
+	m_inputLayout[5].InstanceDataStepRate = 0;	                                    // インスタンスデータのステップレート
 
 	return true;
 }
@@ -966,11 +1000,11 @@ bool Renderer::CreateConstantBuffer()
 	// ワールド行列の設定
 	XMMATRIX matrix = XMMatrixIdentity();
 	XMMATRIX world = XMMatrixRotationY(XMConvertToRadians(45.0f));
-	XMFLOAT3 eye(0, 0, -5);
-	XMFLOAT3 target(0, 0, 0);
+	XMFLOAT3 eye(0, 10, -15);
+	XMFLOAT3 target(0, 10, 0);
 	XMFLOAT3 up(0, 1, 0);
 	XMMATRIX view = XMMatrixLookAtLH(XMLoadFloat3(&eye), XMLoadFloat3(&target), XMLoadFloat3(&up));
-	XMMATRIX proj = XMMatrixPerspectiveFovLH(XMConvertToRadians(90.0f), static_cast<float>(WINDOW_WIDTH) / static_cast<float>(WINDOW_HEIGHT), 1.0f, 10.0f);
+	XMMATRIX proj = XMMatrixPerspectiveFovLH(XMConvertToRadians(90.0f), static_cast<float>(WINDOW_WIDTH) / static_cast<float>(WINDOW_HEIGHT), 1.0f, 100.0f);
 
 	// バッファの設定
 	D3D12_HEAP_PROPERTIES heapProp = {};
@@ -1018,6 +1052,28 @@ bool Renderer::CreateConstantBuffer()
 	// 行列の合成
 	matrix = world * view * proj;
 	*m_pMapMat = matrix;	// 行列の内容をコピー
+
+	return true;
+}
+
+bool Renderer::LoadModel()
+{
+
+	// モデルの読み込み
+	char signature[3] = {};	// シグネチャ
+	FILE* fp = fopen("Assets/Model/初音ミク.pmd", "rb");
+
+	fread(signature, sizeof(signature), 1, fp);
+	fread(&m_pmdHeader, sizeof(m_pmdHeader), 1, fp);
+
+
+	fread(&vertNum, sizeof(vertNum), 1, fp);
+
+	vertices.resize(vertNum * pmdvertex_size);	// バッファーの確保
+	fread(vertices.data(), vertices.size(), 1, fp);	// 読み込み
+
+
+	fclose(fp);
 
 	return true;
 }
