@@ -165,6 +165,7 @@
     </Bscmake>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Sources\Actor\PMDActor.cpp" />
     <ClCompile Include="Sources\Application\Application.cpp" />
     <ClCompile Include="Sources\Precompils\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

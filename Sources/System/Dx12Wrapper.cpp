@@ -40,6 +40,7 @@ namespace
 	/// ファイル名から拡張子を取得する
 	/// @param filePath : ファイルパス
 	/// @return : ファイルの拡張子
+	/// </summary>
 	string GetExtension(const string& filePath)
 	{
 		int idx = filePath.rfind('.');
@@ -50,6 +51,7 @@ namespace
 	/// ファイル名から拡張子を取得する(ワイド文字版)
 	/// @param filePath : ファイルパス
 	/// @return : ファイルの拡張子
+	/// </summary>
 	wstring GetExtension(const wstring& filePath)
 	{
 		int idx = filePath.rfind(L'.');
@@ -61,6 +63,7 @@ namespace
 	/// @param texPath : テクスチャのパス
 	/// @param separator : 区切り文字
 	/// @return : 分離前後の文字列ペア
+	/// </summary>
 	pair<string, string> SplitFileName(const string& texPath, const char separator = '*')
 	{
 		int idx = texPath.rfind(separator);
@@ -74,6 +77,7 @@ namespace
 	/// string(マルチバイト文字)からwstring(ワイド文字)に変換する
 	/// @param str : 変換元の文字列
 	/// @return : 変換後の文字列
+	/// </summary>
 	wstring GetWideStringFromString(const string& str)
 	{
 		// 呼び出し一回目(文字列数を得る)

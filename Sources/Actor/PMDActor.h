@@ -39,8 +39,32 @@ private:	// 構造体定義
 	struct Transform
 	{
 		// 内部に持っているXMMATRIXメンバが16バイトアライメントであるため、
+		// Transformをnewするときには16バイト境界に確保する
+		void* operator new(size_t size);
+		DirectX::XMMATRIX world;
 	};
 
+public:	// パブリック関数
+	PMDActor(const char* path, PMDRenderer& renderer);
+	~PMDActor();
+	// クローンは頂点及びマテリアルは共通のバッファを見るようにする
+	PMDActor* Clone();
+	void Update();
+	void Draw();
+
+
+private:	// プライベート関数
+	// 読み込んだマテリアルを元にマテリアルバッファを作成
+	HRESULT CreateMaterialData();
+
+	// マテリアル＆テクスチャのビューを作成
+	HRESULT CreateMaterialAndTextureView();
+
+	// 座標変換行列のビューを作成
+	HRESULT CreateTransformView();
+
+	// PMDファイルの読み込み
+	HRESULT LoadPMDFile(const char* path);
 
 private:
 	PMDRenderer& m_renderer;
@@ -57,6 +81,19 @@ private:
 	ComPtr<ID3D12Resource> m_transformMat = nullptr;	// 座標変換行列(今はワールドのみ)
 	ComPtr<ID3D12DescriptorHeap> m_transfromHeap = nullptr;	// 座標変換ヒープ
 
+	Transform m_transform;
+	Transform* m_mappedTransform = nullptr;
+	ComPtr<ID3D12Resource> m_transformBuff = nullptr;	// 座標変換行列バッファ
 
+	// マテリアル関連
+	vector<Material> m_materials;
+	ComPtr<ID3D12Resource> m_materialBuff = nullptr;	// マテリアルバッファ
+	vector<ComPtr<ID3D12Resource>> m_textureResources;	// テクスチャバッファ
+	vector<ComPtr<ID3D12Resource>> m_sphResources;
+	vector<ComPtr<ID3D12Resource>> m_spaResources;
+	vector<ComPtr<ID3D12Resource>> m_toonResources;
 
+	ComPtr<ID3D12DescriptorHeap> m_materialHeap = nullptr;	// マテリアルヒープ(5個分)
+
+	float _angle; // テスト用y軸回転
 };
