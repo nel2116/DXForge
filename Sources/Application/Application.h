@@ -42,12 +42,9 @@ private:
 	// ウィンドウ周り
 	WNDCLASSEX m_windowClass;	// ウィンドウクラス
 	HWND m_hwnd;				// ウィンドウハンドル
-	shared_ptr<Dx12Wrapper> m_dx12;	// DirectX 12ラッパー
-	shared_ptr<PMDRenderer> m_pmdRenderer;	// PMDレンダラー
-	shared_ptr<PMDActor> m_pmdActor;	// PMDアクター
-
-	// ゲーム用ウィンドウの生成
-	void CreateGameWindow(HWND& hwnd, WNDCLASSEX& windowClass);
+	Dx12Wrapper* m_dx12;	// DirectX 12ラッパー
+	PMDRenderer* m_pmdRenderer;	// PMDレンダラー
+	PMDActor* m_pmdActor;	// PMDアクター
 
 	// シングルトン関連
 	Application();

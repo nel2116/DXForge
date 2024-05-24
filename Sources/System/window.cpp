@@ -1,8 +1,5 @@
 #include "window.h"
 
-// グローバル変数
-HWND hwnd;
-
 LRESULT WindowProcedure(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
 	// ウィンドウが破棄されたら呼ばれる
@@ -14,47 +11,30 @@ LRESULT WindowProcedure(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 	return DefWindowProc(hwnd, msg, wparam, lparam); // 既定の処理を行う
 }
 
-void CreateMainWindow(int w, int h, bool fullScreen)
+void CreateMainWindow(HWND& hwnd, WNDCLASSEX& windowClass)
 {
-	// ウィンドウクラスの定義
-	WNDCLASS windowClass = {
-		CS_HREDRAW | CS_VREDRAW,             // ウィンドウクラスのスタイル
-		WindowProcedure,                     // ウィンドウプロシージャのアドレス
-		0, 0,                                // 予備
-		GetModuleHandle(nullptr),            // このプログラムのインスタンスハンドル
-		LoadIcon(nullptr, IDI_APPLICATION),  // 組み込まれているアイコンのリソース名
-		LoadCursor(nullptr, IDC_ARROW),      // 組み込まれているカーソルのリソース名
-		(HBRUSH)GetStockObject(WHITE_BRUSH), // ウィンドウ背景のブラシのハンドル
-		nullptr,                             // メニューのリソース名
-		"MainWindow"                             // ウィンドウクラス名
-	};
+	HINSTANCE hInst = GetModuleHandle(nullptr); // インスタンスハンドルを取得
+	// ウィンドウクラス生成＆登録
+	windowClass.cbSize = sizeof(WNDCLASSEX); // 構造体のサイズ
+	windowClass.lpfnWndProc = (WNDPROC)WindowProcedure; // ウィンドウプロシージャのアドレス
+	windowClass.lpszClassName = "DXForgeTest"; // ウィンドウクラス名
+	windowClass.hInstance = GetModuleHandle(0); // ハンドルの取得
+	RegisterClassEx(&windowClass); // OSに登録
 
-	// ウィンドウクラスの登録
-	RegisterClass(&windowClass);
-
-	// ウィンドウの作成
-	DWORD style = WS_OVERLAPPEDWINDOW;
-	if (fullScreen)
-	{
-		style = WS_POPUP;
-	}
+	RECT wrc = { 0, 0, WINDOW_WIDTH, WINDOW_HEIGHT }; // ウィンドウサイズを決める
+	AdjustWindowRect(&wrc, WS_OVERLAPPEDWINDOW, false); // ウィンドウのサイズを調整
+	// ウィンドウ生成
 	hwnd = CreateWindow(
-		"MainWindow",                   // ウィンドウクラス名
-		WINDOW_NAME,                    // タイトルバーの文字列
-		style,                          // ウィンドウスタイル
-		CW_USEDEFAULT, CW_USEDEFAULT,	// 座標はOSに任せる
-		w, h,                           // ウィンドウの幅と高さ
-		nullptr,                        // 親ウィンドウのハンドル
-		nullptr,                        // メニューのハンドル
-		GetModuleHandle(nullptr),       // このプログラムのインスタンスハンドル
-		nullptr);                       // WM_CREATEメッセージのlparamパラメータ
+		windowClass.lpszClassName, // ウィンドウクラス名
+		WINDOW_NAME, // タイトルバーの文字
+		WS_OVERLAPPEDWINDOW,//タイトルバーと境界線があるウィンドウです
+		CW_USEDEFAULT,//表示X座標はOSにお任せします
+		CW_USEDEFAULT,//表示Y座標はOSにお任せします
+		wrc.right - wrc.left,//ウィンドウ幅
+		wrc.bottom - wrc.top,//ウィンドウ高
+		nullptr,//親ウィンドウハンドル
+		nullptr,//メニューハンドル
+		windowClass.hInstance,//呼び出しアプリケーションハンドル
+		nullptr);//追加パラメータ
 
-	// ウィンドウを表示
-	ShowWindow(hwnd, SW_SHOW);
-	UpdateWindow(hwnd);
-}
-
-HWND GetWindowHandle()
-{
-	return hwnd;
 }

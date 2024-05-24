@@ -66,7 +66,7 @@ namespace
 	/// </summary>
 	pair<string, string> SplitFileName(const string& texPath, const char separator = '*')
 	{
-		int idx = texPath.rfind(separator);
+		int idx = texPath.find(separator);
 		pair<string, string> ret;
 		ret.first = texPath.substr(0, idx);
 		ret.second = texPath.substr(idx + 1, texPath.length() - idx - 1);
@@ -137,6 +137,7 @@ Dx12Wrapper::Dx12Wrapper(HWND hwnd)
 
 Dx12Wrapper::~Dx12Wrapper()
 {
+
 }
 
 void Dx12Wrapper::Update()
@@ -148,8 +149,8 @@ void Dx12Wrapper::BeginDraw()
 	// Direct3Dの描画処理開始
 	// バックバッファのインデックスを取得
 	auto bbIdx = m_swapChain->GetCurrentBackBufferIndex();
-
-	m_cmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_backBuffers[bbIdx], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
+	D3D12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_backBuffers[bbIdx], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	m_cmdList->ResourceBarrier(1, &barrier);
 
 	// レンダーターゲットの指定
 	auto rtvH = m_rtvHeaps->GetCPUDescriptorHandleForHeapStart();
@@ -172,7 +173,8 @@ void Dx12Wrapper::BeginDraw()
 void Dx12Wrapper::EndDraw()
 {
 	auto bbIdx = m_swapChain->GetCurrentBackBufferIndex();
-	m_cmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_backBuffers[bbIdx], D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
+	D3D12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_backBuffers[bbIdx], D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+	m_cmdList->ResourceBarrier(1, &barrier);
 
 	// コマンドのクローズ
 	m_cmdList->Close();
@@ -479,10 +481,12 @@ HRESULT Dx12Wrapper::CreateSceneView()
 	}
 
 	// 定数バッファ作成
+	D3D12_HEAP_PROPERTIES heapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);	// アップロード用ヒープ
+	D3D12_RESOURCE_DESC resDesc = CD3DX12_RESOURCE_DESC::Buffer((sizeof(SceneData) + 0xff) & ~0xff);	// シーンデータのサイズ
 	hr = m_device->CreateCommittedResource(
-		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),	// アップロード用ヒープ
+		&heapProp,	// アップロード用ヒープ
 		D3D12_HEAP_FLAG_NONE,	// 特にフラグはなし
-		&CD3DX12_RESOURCE_DESC::Buffer((sizeof(SceneData) + 0xff) & ~0xff),
+		&resDesc,
 		D3D12_RESOURCE_STATE_GENERIC_READ,	// リソースの状態
 		nullptr,	// クリア値
 		IID_PPV_ARGS(m_sceneConstBuff.ReleaseAndGetAddressOf()));

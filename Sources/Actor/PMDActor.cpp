@@ -81,27 +81,211 @@ PMDActor* PMDActor::Clone()
 
 void PMDActor::Update()
 {
+	_angle += 0.03f;
+	m_transform.world = XMMatrixRotationY(_angle);
 }
 
 void PMDActor::Draw()
 {
+	m_dx12.GetCommandList()->IASetVertexBuffers(0, 1, &m_vbView);
+	m_dx12.GetCommandList()->IASetIndexBuffer(&m_ibView);
+
+	ID3D12DescriptorHeap* transheaps[] = { m_transfromHeap.Get() };
+	// トランスフォームヒープをセット
+	m_dx12.GetCommandList()->SetDescriptorHeaps(1, transheaps);
+	m_dx12.GetCommandList()->SetGraphicsRootDescriptorTable(1, m_transfromHeap->GetGPUDescriptorHandleForHeapStart());
+
+	ID3D12DescriptorHeap* mdh[] = { m_materialHeap.Get() };
+	// マテリアルヒープをセット
+	m_dx12.GetCommandList()->SetDescriptorHeaps(1, mdh);
+
+	auto materialH = m_materialHeap->GetGPUDescriptorHandleForHeapStart();
+	unsigned int idxOffset = 0;
+
+	auto cbvsrvIncSize = m_dx12.GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV) * 5;
+	for (auto& m : m_materials)
+	{
+		m_dx12.GetCommandList()->SetGraphicsRootDescriptorTable(2, materialH);
+		m_dx12.GetCommandList()->DrawIndexedInstanced(m.indicesNum, 1, idxOffset, 0, 0);
+		materialH.ptr += cbvsrvIncSize;
+		idxOffset += m.indicesNum;
+	}
 }
 
 HRESULT PMDActor::CreateMaterialData()
 {
-	return E_NOTIMPL;
+	// マテリアルバッファを作成
+	auto materialBuffSize = sizeof(MaterialForHlsl);
+	materialBuffSize = (materialBuffSize + 0xff) & ~0xff;
+	D3D12_HEAP_PROPERTIES heapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+	D3D12_RESOURCE_DESC resDesc = CD3DX12_RESOURCE_DESC::Buffer(materialBuffSize * m_materials.size());
+	auto hr = m_dx12.GetDevice()->CreateCommittedResource(
+		&heapProp,
+		D3D12_HEAP_FLAG_NONE,
+		&resDesc,
+		D3D12_RESOURCE_STATE_GENERIC_READ,
+		nullptr,
+		IID_PPV_ARGS(m_materialBuff.ReleaseAndGetAddressOf()));
+	if (FAILED(hr))
+	{
+		assert(SUCCEEDED(hr));
+		return hr;
+	}
+
+	// マップマテリアルにコピー
+	char* mapMaterial = nullptr;
+	hr = m_materialBuff->Map(0, nullptr, (void**)&mapMaterial);
+	if (FAILED(hr))
+	{
+		assert(SUCCEEDED(hr));
+		return hr;
+	}
+
+	for (auto& m : m_materials)
+	{
+		*((MaterialForHlsl*)mapMaterial) = m.material;	// コピー
+		mapMaterial += materialBuffSize;				// ポインタを進める
+	}
+	m_materialBuff->Unmap(0, nullptr);
+
+	return S_OK;
 }
 
 HRESULT PMDActor::CreateMaterialAndTextureView()
 {
-	return E_NOTIMPL;
+	D3D12_DESCRIPTOR_HEAP_DESC materialDescHeapDesc = {};
+	materialDescHeapDesc.NumDescriptors = m_materials.size() * 5;	// マテリアル数分(定数1つ、テクスチャ3つ)
+	materialDescHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+	materialDescHeapDesc.NodeMask = 0;
+	materialDescHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;	// デスクリプタヒープの種類
+	auto hr = m_dx12.GetDevice()->CreateDescriptorHeap(&materialDescHeapDesc, IID_PPV_ARGS(m_materialHeap.ReleaseAndGetAddressOf()));
+	// エラーチェック
+	if (FAILED(hr))
+	{
+		assert(SUCCEEDED(hr));
+		return hr;
+	}
+	auto materialBuffSize = sizeof(MaterialForHlsl);
+	materialBuffSize = (materialBuffSize + 0xff) & ~0xff;
+	D3D12_CONSTANT_BUFFER_VIEW_DESC matCBVDesc = {};
+	matCBVDesc.BufferLocation = m_materialBuff->GetGPUVirtualAddress();
+	matCBVDesc.SizeInBytes = materialBuffSize;
+
+	// マテリアルのビューを作成
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;	// 2Dテクスチャ
+	srvDesc.Texture2D.MipLevels = 1;						// ミップマップ数
+	CD3DX12_CPU_DESCRIPTOR_HANDLE matDescHeapH(m_materialHeap->GetCPUDescriptorHandleForHeapStart());
+	auto incSize = m_dx12.GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	for (int i = 0; i < m_materials.size(); ++i)
+	{
+		// マテリアル固定バッファビュー
+		m_dx12.GetDevice()->CreateConstantBufferView(&matCBVDesc, matDescHeapH);
+		matDescHeapH.ptr += incSize;
+		matCBVDesc.BufferLocation += materialBuffSize;
+		if (m_textureResources[i] == nullptr)
+		{
+			srvDesc.Format = m_renderer.m_whiteTex->GetDesc().Format;
+			m_dx12.GetDevice()->CreateShaderResourceView(m_renderer.m_whiteTex.Get(), &srvDesc, matDescHeapH);
+		}
+		else
+		{
+			srvDesc.Format = m_textureResources[i]->GetDesc().Format;
+			m_dx12.GetDevice()->CreateShaderResourceView(m_textureResources[i].Get(), &srvDesc, matDescHeapH);
+		}
+		matDescHeapH.Offset(incSize);
+
+		if (m_sphResources[i] == nullptr)
+		{
+			srvDesc.Format = m_renderer.m_whiteTex->GetDesc().Format;
+			m_dx12.GetDevice()->CreateShaderResourceView(m_renderer.m_whiteTex.Get(), &srvDesc, matDescHeapH);
+		}
+		else
+		{
+			srvDesc.Format = m_sphResources[i]->GetDesc().Format;
+			m_dx12.GetDevice()->CreateShaderResourceView(m_sphResources[i].Get(), &srvDesc, matDescHeapH);
+		}
+		matDescHeapH.ptr += incSize;
+
+		if (m_spaResources[i] == nullptr)
+		{
+			srvDesc.Format = m_renderer.m_whiteTex->GetDesc().Format;
+			m_dx12.GetDevice()->CreateShaderResourceView(m_renderer.m_blackTex.Get(), &srvDesc, matDescHeapH);
+		}
+		else
+		{
+			srvDesc.Format = m_spaResources[i]->GetDesc().Format;
+			m_dx12.GetDevice()->CreateShaderResourceView(m_spaResources[i].Get(), &srvDesc, matDescHeapH);
+		}
+		matDescHeapH.ptr += incSize;
+
+		if (m_toonResources[i] == nullptr)
+		{
+			srvDesc.Format = m_renderer.m_whiteTex->GetDesc().Format;
+			m_dx12.GetDevice()->CreateShaderResourceView(m_renderer.m_gradTex.Get(), &srvDesc, matDescHeapH);
+		}
+		else
+		{
+			srvDesc.Format = m_toonResources[i]->GetDesc().Format;
+			m_dx12.GetDevice()->CreateShaderResourceView(m_toonResources[i].Get(), &srvDesc, matDescHeapH);
+		}
+		matDescHeapH.ptr += incSize;
+	}
+
+	return S_OK;
 }
 
 HRESULT PMDActor::CreateTransformView()
 {
 	// GPUバッファ作成
 	auto buffSize = sizeof(Transform);
+	buffSize = (buffSize + 0xff) & ~0xff;
+	D3D12_HEAP_PROPERTIES heapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+	D3D12_RESOURCE_DESC resDesc = CD3DX12_RESOURCE_DESC::Buffer(buffSize);
+	auto hr = m_dx12.GetDevice()->CreateCommittedResource(
+		&heapProp,
+		D3D12_HEAP_FLAG_NONE,
+		&resDesc,
+		D3D12_RESOURCE_STATE_GENERIC_READ,
+		nullptr,
+		IID_PPV_ARGS(m_transformBuff.ReleaseAndGetAddressOf()));
+	if (FAILED(hr))
+	{
+		assert(SUCCEEDED(hr));
+		return hr;
+	}
 
+	// マップとコピー
+	hr = m_transformBuff->Map(0, nullptr, (void**)&m_mappedTransform);
+	if (FAILED(hr))
+	{
+		assert(SUCCEEDED(hr));
+		return hr;
+	}
+
+	*m_mappedTransform = m_transform;
+
+	// ビューの作成
+	D3D12_DESCRIPTOR_HEAP_DESC transformHeapDesc = {};
+	transformHeapDesc.NumDescriptors = 1;	// 
+	transformHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+	transformHeapDesc.NodeMask = 0;
+	transformHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;	// デスクリプタヒープの種類
+	hr = m_dx12.GetDevice()->CreateDescriptorHeap(&transformHeapDesc, IID_PPV_ARGS(m_transfromHeap.ReleaseAndGetAddressOf()));
+	// エラーチェック
+	if (FAILED(hr))
+	{
+		assert(SUCCEEDED(hr));
+		return hr;
+	}
+
+	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
+	cbvDesc.BufferLocation = m_transformBuff->GetGPUVirtualAddress();
+	cbvDesc.SizeInBytes = buffSize;
+	m_dx12.GetDevice()->CreateConstantBufferView(&cbvDesc, m_transfromHeap->GetCPUDescriptorHandleForHeapStart());
+
+	return S_OK;
 }
 
 HRESULT PMDActor::LoadPMDFile(const char* path)
@@ -144,7 +328,6 @@ HRESULT PMDActor::LoadPMDFile(const char* path)
 		DirectX::XMFLOAT3 ambient;	// アンビエント色
 		unsigned char toonIdx;		// トゥーン番号
 		unsigned char edgeFlg;		// マテリアルごとの輪郭フラグ
-		// 2バイトのパディングが発生
 		unsigned int indicesNum;	// 面頂点数
 		char texFilePath[20];		// テクスチャファイル名
 	};
@@ -258,7 +441,9 @@ HRESULT PMDActor::LoadPMDFile(const char* path)
 
 		if (strlen(pmdMaterials[i].texFilePath) == 0)
 		{
-			m_textureResources[i] = nullptr;
+			ID3D12Resource* tmp = nullptr;
+			m_textureResources[i].Swap(tmp);
+			SAFE_RELEASE(tmp);
 			continue;
 		}
 

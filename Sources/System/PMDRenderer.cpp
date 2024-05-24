@@ -108,7 +108,7 @@ ID3D12Resource* PMDRenderer::CreateGradationTexture()
 	unsigned int c = 0xff;
 	for (auto it = data.begin(); it != data.end(); it += 4)
 	{
-		auto col = (c << 0xff) | (c << 16) | (c << 8) | c;
+		auto col = (0xff << 24) | RGB(c, c, c);
 		fill(it, it + 4, col);
 		--c;
 	}
@@ -129,7 +129,7 @@ HRESULT PMDRenderer::CreateGraphicsPipelineForPMD()
 	auto hr = D3DCompileFromFile(
 		L"Sources/HLSL/VertexShader/VS_Basic.hlsl",
 		nullptr,
-		nullptr,
+		D3D_COMPILE_STANDARD_FILE_INCLUDE,
 		"VS_Main",
 		"vs_5_0",
 		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
@@ -147,7 +147,7 @@ HRESULT PMDRenderer::CreateGraphicsPipelineForPMD()
 	hr = D3DCompileFromFile(
 		L"Sources/HLSL/PixelShader/PS_Basic.hlsl",
 		nullptr,
-		nullptr,
+		D3D_COMPILE_STANDARD_FILE_INCLUDE,
 		"PS_Main",
 		"ps_5_0",
 		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
@@ -169,6 +169,7 @@ HRESULT PMDRenderer::CreateGraphicsPipelineForPMD()
 		// { "BONE_NO",0,DXGI_FORMAT_R16G16_UINT,0,D3D12_APPEND_ALIGNED_ELEMENT,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0 },
 		// { "WEIGHT",0,DXGI_FORMAT_R8_UINT,0,D3D12_APPEND_ALIGNED_ELEMENT,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0 },
 		// { "EDGE_FLG",0,DXGI_FORMAT_R8_UINT,0,D3D12_APPEND_ALIGNED_ELEMENT,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0 },
+		// { "PAD",0,DXGI_FORMAT_R8G8_UINT,0,D3D12_APPEND_ALIGNED_ELEMENT,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0 },
 	};
 
 	// パイプラインステートの設定
@@ -176,6 +177,8 @@ HRESULT PMDRenderer::CreateGraphicsPipelineForPMD()
 	gpipeline.pRootSignature = m_rootSignature.Get();
 	gpipeline.VS = CD3DX12_SHADER_BYTECODE(vsBlob.Get());
 	gpipeline.PS = CD3DX12_SHADER_BYTECODE(psBlob.Get());
+
+	gpipeline.SampleMask = D3D12_DEFAULT_SAMPLE_MASK; // 中身は0xffffffff
 
 	// ブレンドステートの設定
 	gpipeline.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
