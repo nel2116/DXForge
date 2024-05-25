@@ -1,53 +1,57 @@
+// _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 // [Application.h]
-// 作成日 : 2024/05/21 17:00
 // 作成者 : 田中ミノル
-// 概要   : Applicationクラスの定義
+// 作成日 : 2024/05/25 15:00
+// 概要   : アプリケーションクラスの定義
+// 更新履歴 : 2024/05/25 作成
+// _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 #pragma once
-#include "System/window.h"		// ウィンドウ関連の処理を行うため
-#include <tchar.h>				// _T()マクロを使用するため
-#include <d3d12.h>				// Direct3D 12 API
-#include <dxgi1_6.h>			// DXGI 1.6 API
-#include <DirectXMath.h>		// DirectXMath API
-#include <map>					// std::mapを使用するため
-#include <d3dcompiler.h>		// D3DCompile API
-#include <DirectXTex.h>			// DirectXTex API
-#include <DirectX/d3dx12.h>		// D3D12 APIの補助関数
-#include <wrl.h>				// Microsoft::WRLを使用するため
-#include <memory>				// std::unique_ptrを使用するため
+// ====== インクルード部 ======
+#include <System/window.h>
 
-class Dx12Wrapper;
-class PMDRenderer;
-class PMDActor;
+// ====== 定数定義 ======
+const float FPS = 60.0f;				// フレームレート
+const float FRAME_TIME = 1000.0f / FPS;	// フレーム時間
 
-// シングルトンクラス
+// ====== クラス定義 ======
 class Application
 {
-public:
-	// インスタンスの取得
-	static Application& Instance();
-
-	// 初期化
+public:		// パブリック関数
+	/// <summary>
+	/// アプリケーションの初期化
+	/// </summary>
+	/// <returns>初期化に成功したらtrue</returns>
 	bool Init();
 
-	// メインループ
+	/// <summary>
+	/// アプリケーションの実行
+	/// </summary>
 	void Run();
 
-	// 終了処理
-	void Terminate();
+	/// <summary>
+	/// アプリケーションの終了処理
+	/// </summary>
+	void Uninit();
 
-	SIZE GetWindowSize() const;
-	~Application();
 
-private:
-	// ウィンドウ周り
-	WNDCLASSEX m_windowClass;	// ウィンドウクラス
-	HWND m_hwnd;				// ウィンドウハンドル
-	Dx12Wrapper* m_dx12;	// DirectX 12ラッパー
-	PMDRenderer* m_pmdRenderer;	// PMDレンダラー
-	PMDActor* m_pmdActor;	// PMDアクター
+private:	// メンバ変数
+	Window m_window;
+	DWORD m_dwExecLastTime;
+	DWORD m_dwCurrentTime;
 
-	// シングルトン関連
-	Application();
+
+public:		// シングルトン関連
+	/// <summary>
+	/// Applicationクラスのインスタンスを取得
+	/// </summary>
+	/// <returns></returns>
+	static Application& Instance()
+	{
+		static Application instance;
+		return instance;
+	}
+private:	// シングルトン関連
+	Application() = default;
 	Application(const Application&) = delete;
-	void operator=(const Application&) = delete;
+	Application& operator=(const Application&) = delete;
 };

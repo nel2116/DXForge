@@ -1,101 +1,58 @@
+//_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+// [Application.cpp]
+// 作成者 : 田中ミノル
+// 作成日 : 2024/05/25 17:00
+// 概要   : アプリケーションクラスの実装
+// 更新履歴 : 2024/05/25 作成
+//_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+// ====== インクルード部 ======
 #include "stdafx.h"
 #include "Application.h"
-#include <System/Window.h>
-#include <System/Dx12Wrapper.h>
-#include <System/PMDRenderer.h>
-#include <Actor/PMDActor.h>
 
-Application& Application::Instance()
-{
-	static Application instance;
-	return instance;
-}
-
+// ====== メンバ関数 ======
 bool Application::Init()
 {
-	auto hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
-	if (FAILED(hr))
+	// COMの初期化
+	if (FAILED(CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED)))
 	{
+		MessageBox(nullptr, "COMの初期化に失敗しました。", "エラー", MB_OK);
+		assert(0 && "COMの初期化に失敗しました。");
 		return false;
 	}
-	CreateMainWindow(m_hwnd, m_windowClass);
 
-	// Dx12の初期化
-	m_dx12 = NEW Dx12Wrapper(m_hwnd);
-	m_pmdRenderer = NEW PMDRenderer(*m_dx12);
-	m_pmdActor = NEW PMDActor("Assets/Model/初音ミク.pmd", *m_pmdRenderer);
+	if (!m_window.Create(WINDOW_WIDTH, WINDOW_HEIGHT, CLASS_NAME, WINDOW_NAME))
+	{
+		assert(0 && "ウィンドウの作成に失敗しました。");
+		return false;
+	}
 
+	// タイマーの初期化
+	timeBeginPeriod(1);
+	m_dwExecLastTime = timeGetTime();
+	m_dwCurrentTime = m_dwExecLastTime;
 	return true;
 }
 
 void Application::Run()
 {
-	ShowWindow(m_hwnd, SW_SHOW);	// ウィンドウを表示する
-	float angle = 0.0f;
-	MSG msg = {};
-	unsigned int frame = 0;
 	while (true)
 	{
-		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
+		if (!m_window.ProcessMessage()) { break; }
+		m_dwCurrentTime = timeGetTime();
+		if ((m_dwCurrentTime - m_dwExecLastTime) >= FRAME_TIME)
 		{
-			TranslateMessage(&msg);	// キー入力メッセージを処理する
-			DispatchMessage(&msg);	// メッセージを処理する
+			m_dwExecLastTime = m_dwCurrentTime;
+			// ここにゲームの処理を書く
+			// ------ 更新処理 ------
+
+			// ------ 描画処理 ------
 		}
-		// もうApplicationが終わるってときにメッセージがWM_QUITになる
-		if (msg.message == WM_QUIT) { break; }
-
-		// 全体の描画準備
-		m_dx12->BeginDraw();
-
-		// PMD描画のパイプラインに合わせる
-		m_dx12->GetCommandList()->SetPipelineState(m_pmdRenderer->GetPipelineState());
-		// ルートシグネチャーも設定
-		m_dx12->GetCommandList()->SetGraphicsRootSignature(m_pmdRenderer->GetRootSignature());
-
-		m_dx12->GetCommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-		m_dx12->SetScene();
-
-		// モデルの描画
-		m_pmdActor->Update();
-		m_pmdActor->Draw();
-
-		// 全体の描画終了
-		m_dx12->EndDraw();
-
-		// フリップ
-		m_dx12->GetSwapChain()->Present(1, 0);
 	}
 }
 
-void Application::Terminate()
+void Application::Uninit()
 {
-	// もうクラス使わんから登録解除してや
-	UnregisterClass(m_windowClass.lpszClassName, m_windowClass.hInstance);
-
-	// 解放処理
-	SAFE_DELETE(m_pmdActor);
-	SAFE_DELETE(m_pmdRenderer);
-
-	ID3D12DebugDevice* pDebugDevice = nullptr;
-	m_dx12->GetDevice()->QueryInterface(&pDebugDevice);
-	SAFE_DELETE(m_dx12);
-	pDebugDevice->ReportLiveDeviceObjects(D3D12_RLDO_DETAIL);
-	pDebugDevice->Release();
-}
-
-SIZE Application::GetWindowSize() const
-{
-	SIZE ret;
-	ret.cx = WINDOW_WIDTH;
-	ret.cy = WINDOW_HEIGHT;
-	return ret;
-}
-
-Application::Application()
-{
-}
-
-Application::~Application()
-{
+	timeEndPeriod(1);	// タイマーの終了処理
+	UnregisterClass(CLASS_NAME, m_window.GetHinstance());	// ウィンドウクラスの登録解除
+	CoUninitialize();	// COMの終了処理
 }

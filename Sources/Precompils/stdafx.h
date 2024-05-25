@@ -1,17 +1,64 @@
+// _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+// [stdfx.h]
+// 作成者 : 田中ミノル
+// 作成日 : 不明
+// 概要   : 共通ヘッダー
+// 更新履歴
+// 2024/05/25 リファクタリング
+// _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 #pragma once
 // ====== インクルード部 ======
-// windows標準ヘッダー
+// ------ 基本ヘッダー ------
+#pragma comment(lib, "winmm.lib")
+
+#define NOMINMAX
 #include <iostream>
 #include <crtdbg.h>
-#include <vector>
-#include <string>
-// DirectX12APIヘッダー
+#include <cassert>
+#include <wrl/client.h>
 
-// 自作ヘッダー
+// ------ SHL ------
+#include <map>
+#include <unordered_map>
+#include <unordered_set>
+#include <string>
+#include <array>
+#include <vector>
+#include <stack>
+#include <list>
+#include <iterator>
+#include <queue>
+#include <algorithm>
+#include <memory>
+#include <random>
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <functional>
+#include <thread>
+#include <atomic>
+#include <mutex>
+#include <future>
+#include <filesystem>
+#include <chrono>
+
+#define _USE_MATH_DEFINES
+#include <math.h>
+
+// ------ DirectX ------
+#pragma comment(lib, "d3d12.lib")
+#pragma comment(lib, "dxgi.lib")
+
+#include <d3d12.h>
+#include <dxgi1_6.h>
+#include <DirectXMath.h>
+
+// ------ プロジェクト固有 ------
 #include <System/window.h>
 
 // ====== 名前空間 ======
 using namespace std;
+using Microsoft::WRL::ComPtr;
 
 // ====== 定数定義 ======
 // 円周率
