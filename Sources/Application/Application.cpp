@@ -74,12 +74,14 @@ void Application::Terminate()
 	UnregisterClass(m_windowClass.lpszClassName, m_windowClass.hInstance);
 
 	// 解放処理
-	SAFE_DELETE(m_pmdActor);
-	SAFE_DELETE(m_pmdRenderer);
+	SAFE_DELETE(m_pmdActor);		// アクターの解放
+	SAFE_DELETE(m_pmdRenderer);	// レンダラーの解放
+
+	CoUninitialize();	// COMの終了処理
 
 	ID3D12DebugDevice* pDebugDevice = nullptr;
 	m_dx12->GetDevice()->QueryInterface(&pDebugDevice);
-	SAFE_DELETE(m_dx12);
+	SAFE_DELETE(m_dx12);	// Dx12の解放
 	pDebugDevice->ReportLiveDeviceObjects(D3D12_RLDO_DETAIL);
 	pDebugDevice->Release();
 }

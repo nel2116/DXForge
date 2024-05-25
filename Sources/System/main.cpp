@@ -9,7 +9,8 @@ int main(void)
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 #endif
 {
-	auto& app = Application::Instance();
+	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);	// メモリリーク検出
+	auto& app = Application::Instance();	// シングルトンのインスタンスを取得
 	if (!app.Init()) { return -1; }
 
 	app.Run();
