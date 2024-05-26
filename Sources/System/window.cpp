@@ -38,6 +38,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 // ウィンドウの作成
 bool Window::Create(int width, int height, const string& titleName, const string& className)
 {
+	// ウィンドウのサイズをメンバ変数に格納
+	m_width = width;
+	m_height = height;
+
 	// インスタンスハンドル取得
 	HINSTANCE hInstance = GetModuleHandle(0);
 
@@ -55,7 +59,7 @@ bool Window::Create(int width, int height, const string& titleName, const string
 	// ウィンドウクラスの登録
 	if (!RegisterClassEx(&wc)) { return false; }
 
-	RECT rc = { 0, 0, (LONG)width, (LONG)height };	// ウィンドウのサイズ
+	RECT rc = { 0, 0, (LONG)m_width, (LONG)m_height };	// ウィンドウのサイズ
 
 	// ウィンドウの作成
 	m_hwnd = CreateWindowEx(

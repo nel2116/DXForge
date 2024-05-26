@@ -26,6 +26,12 @@ bool Application::Init()
 		return false;
 	}
 
+	if (!Renderer::Instance().Init(&m_window))
+	{
+		assert(0 && "Rendererの初期化に失敗しました。");
+		return false;
+	}
+
 	// タイマーの初期化
 	timeBeginPeriod(1);
 	m_dwExecLastTime = timeGetTime();
@@ -46,12 +52,18 @@ void Application::Run()
 			// ------ 更新処理 ------
 
 			// ------ 描画処理 ------
+			Renderer::Instance().BeginDraw();		// 描画開始
+
+			// ここに描画処理を書く
+
+			Renderer::Instance().EndDraw();			// 描画終了
 		}
 	}
 }
 
 void Application::Uninit()
 {
+	Renderer::Instance().Uninit();	// Rendererの終了処理
 	timeEndPeriod(1);	// タイマーの終了処理
 	UnregisterClass(CLASS_NAME, m_window.GetHinstance());	// ウィンドウクラスの登録解除
 	CoUninitialize();	// COMの終了処理

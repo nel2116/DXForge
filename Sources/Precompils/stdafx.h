@@ -55,10 +55,10 @@
 
 // ------ プロジェクト固有 ------
 #include <System/window.h>
+#include <Graphics/Renderer.h>
 
 // ====== 名前空間 ======
 using namespace std;
-using Microsoft::WRL::ComPtr;
 
 // ====== 定数定義 ======
 // 円周率

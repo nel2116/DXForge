@@ -171,6 +171,7 @@
   <ItemGroup>
     <ClCompile Include="Sources\Application\Application.cpp" />
     <ClCompile Include="Sources\Graphics\Renderer.cpp" />
+    <ClCompile Include="Sources\Graphics\RTVHeap\RTVHeap.cpp" />
     <ClCompile Include="Sources\Precompils\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
@@ -183,6 +184,7 @@
     <ClInclude Include="Sources\DirectXTex\DirectXTex.h" />
     <ClInclude Include="Sources\Graphics\Mesh\Mesh.h" />
     <ClInclude Include="Sources\Graphics\Renderer.h" />
+    <ClInclude Include="Sources\Graphics\RTVHeap\RTVHeap.h" />
     <ClInclude Include="Sources\Precompils\stdafx.h" />
     <ClInclude Include="Sources\System\texture.h" />
     <ClInclude Include="Sources\System\window.h" />

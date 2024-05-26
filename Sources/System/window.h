@@ -47,7 +47,12 @@ public:		// ƒƒ“ƒoŠÖ”
 
 	HINSTANCE GetHinstance() const { return m_windowClass.hInstance; }
 
+	int GetWidth() const { return m_width; }
+	int GetHeight() const { return m_height; }
+
 private:	// ƒƒ“ƒo•Ï”
 	HWND m_hwnd;
 	WNDCLASSEX m_windowClass;
+	int m_width;
+	int m_height;
 };
