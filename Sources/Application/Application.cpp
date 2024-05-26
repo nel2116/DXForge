@@ -8,6 +8,8 @@
 // ====== インクルード部 ======
 #include "stdafx.h"
 #include "Application.h"
+#include <Graphics/Mesh/Mesh.h>
+#include <Graphics/Shader/Shader.h>
 
 // ====== メンバ関数 ======
 bool Application::Init()
@@ -41,6 +43,20 @@ bool Application::Init()
 
 void Application::Run()
 {
+	Mesh mesh;
+	mesh.Create(&Renderer::Instance());
+
+	RenderingSetting setting = {};
+	setting.inputLayouts = { InputLayout::POSITION };
+	setting.Formats = { DXGI_FORMAT_R8G8B8A8_UNORM };
+	setting.isDepth = false;
+	setting.isDepthMask = false;
+	setting.cullMode = CullMode::None;
+
+	Shader shader;
+	string path = "Simple";
+	shader.Create(&Renderer::Instance(), path, setting, {});
+
 	while (true)
 	{
 		if (!m_window.ProcessMessage()) { break; }
@@ -48,13 +64,17 @@ void Application::Run()
 		if ((m_dwCurrentTime - m_dwExecLastTime) >= FRAME_TIME)
 		{
 			m_dwExecLastTime = m_dwCurrentTime;
-			// ここにゲームの処理を書く
+			// ====== ここにゲームの処理を書く ======
 			// ------ 更新処理 ------
 
 			// ------ 描画処理 ------
 			Renderer::Instance().BeginDraw();		// 描画開始
-
 			// ここに描画処理を書く
+
+			shader.Begin(m_window.GetWidth(), m_window.GetHeight());
+
+			shader.DrawMesh(mesh);
+
 
 			Renderer::Instance().EndDraw();			// 描画終了
 		}

@@ -33,6 +33,18 @@
     <ClCompile Include="Sources\Graphics\RTVHeap\RTVHeap.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Sources\Graphics\Mesh\Mesh.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Sources\Graphics\Shader\RootSignature\RootSignature.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Sources\Graphics\Shader\Pipeline\Pipeline.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Sources\Graphics\Shader\Shader.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Sources\Precompils\stdafx.h">
@@ -59,12 +71,18 @@
     <ClInclude Include="Sources\Graphics\RTVHeap\RTVHeap.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="Sources\Graphics\Shader\Shader.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Sources\Graphics\Shader\RootSignature\RootSignature.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Sources\Graphics\Shader\Pipeline\Pipeline.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="Sources\HLSL\VertexShader\VS_Basic.hlsl" />
-    <FxCompile Include="Sources\HLSL\PixelShader\PS_Basic.hlsl" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Sources\HLSL\Header\BasicShaderHeader.hlsli" />
+    <FxCompile Include="Sources\HLSL\PixelShader\PS_Simple.hlsl" />
+    <FxCompile Include="Sources\HLSL\VertexShader\VS_Simple.hlsl" />
   </ItemGroup>
 </Project>

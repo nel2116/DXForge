@@ -66,6 +66,19 @@ public:		// パブリック関数
 	/// </summary>
 	void WaitForCmdQueue();
 
+public:		// アクセサ関数
+	/// <summary>
+	/// デバイスの取得
+	/// </summary>
+	/// <returns>デバイスの参照</returns>
+	ID3D12Device8* GetDev() { return m_pDevice.Get(); }
+
+	/// <summary>
+	/// コマンドリストの取得
+	/// </summary>
+	/// <returns>コマンドリストの参照</returns>
+	ID3D12GraphicsCommandList6* GetCmdList() { return m_pCmdList.Get(); }
+
 	/// <summary>
 	/// クリアカラーの設定
 	/// </summary>

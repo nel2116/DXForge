@@ -244,7 +244,7 @@ bool Renderer::CreateDevice()
 
 	for (auto lv : levels)
 	{
-		if (D3D12CreateDevice(pSelectAdapter.Get(), lv, IID_PPV_ARGS(m_pDevice.ReleaseAndGetAddressOf())) == S_OK)
+		if (D3D12CreateDevice(nullptr, lv, IID_PPV_ARGS(m_pDevice.ReleaseAndGetAddressOf())) == S_OK)
 		{
 			m_featureLevel = lv;
 			break;
