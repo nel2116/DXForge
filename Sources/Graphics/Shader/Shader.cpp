@@ -75,7 +75,7 @@ void Shader::Begin(int w, int h)
 		break;
 
 	case D3D12_PRIMITIVE_TOPOLOGY_TYPE_PATCH:
-		m_pRenderer->GetCmdList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_3_CONTROL_POINT_PATCHLIST);
+		m_pRenderer->GetCmdList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_4_CONTROL_POINT_PATCHLIST);
 		break;
 	}
 
@@ -84,8 +84,14 @@ void Shader::Begin(int w, int h)
 	D3D12_RECT rect = {};
 	vp.Width = static_cast<float>(w);
 	vp.Height = static_cast<float>(h);
-	rect.right = w;
-	rect.bottom = h;
+	vp.TopLeftX = 0;
+	vp.TopLeftY = 0;
+	vp.MaxDepth = 1.0f;
+	vp.MinDepth = 0.0f;
+	rect.top = 0;
+	rect.left = 0;
+	rect.right = rect.left + w;
+	rect.bottom = rect.top + h;
 
 	m_pRenderer->GetCmdList()->RSSetViewports(1, &vp);
 	m_pRenderer->GetCmdList()->RSSetScissorRects(1, &rect);

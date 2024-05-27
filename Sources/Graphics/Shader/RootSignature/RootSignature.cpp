@@ -90,10 +90,10 @@ void RootSignature::Create(Renderer* pDev, std::vector<RangeType>& rangeType)
 	rootSignatureDesc.NumStaticSamplers = bSampler ? (UINT)samplerDescs.size() : 0;
 	rootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 	rootSignatureDesc.pParameters = rootParams.data();
-	rootSignatureDesc.NumParameters = (UINT)rootParams.size();
+	rootSignatureDesc.NumParameters = (int)rootParams.size();
 
 	ID3DBlob* pErrorBlob = nullptr;
-	auto hr = D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &m_pRootBlob, &pErrorBlob);
+	auto hr = D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1_0, &m_pRootBlob, &pErrorBlob);
 
 	if (FAILED(hr))
 	{
@@ -105,7 +105,7 @@ void RootSignature::Create(Renderer* pDev, std::vector<RangeType>& rangeType)
 		}
 	}
 
-	hr = m_pRenderer->GetDev()->CreateRootSignature(0, m_pRootBlob->GetBufferPointer(), m_pRootBlob->GetBufferSize(), IID_PPV_ARGS(&m_pRootSignature));
+	hr = m_pRenderer->GetDev()->CreateRootSignature(0, m_pRootBlob->GetBufferPointer(), m_pRootBlob->GetBufferSize(), IID_PPV_ARGS(m_pRootSignature.ReleaseAndGetAddressOf()));
 	if (FAILED(hr))
 	{
 		assert(0 && "ルートシグネチャの作成に失敗。");

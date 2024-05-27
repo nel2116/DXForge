@@ -96,7 +96,7 @@ void Renderer::BeginDraw()
 
 	// レンダーターゲットをセット
 	auto rtvH = m_pRTVHeap->GetRTVCPUHandle(bbIdx);
-	m_pCmdList->OMSetRenderTargets(1, &rtvH, false, nullptr);
+	m_pCmdList->OMSetRenderTargets(1, &rtvH, true, nullptr);
 
 	// レンダーターゲットのクリア
 	m_pCmdList->ClearRenderTargetView(rtvH, m_clearColor, 0, nullptr);

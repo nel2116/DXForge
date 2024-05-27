@@ -52,6 +52,7 @@ void Application::Run()
 	setting.isDepth = false;
 	setting.isDepthMask = false;
 	setting.cullMode = CullMode::None;
+	setting.primitiveTopology = PrimitiveTopology::Triangle;
 
 	Shader shader;
 	string path = "Simple";

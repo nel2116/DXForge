@@ -16,9 +16,9 @@ void Mesh::Create(Renderer* pDev)
 	m_pRenderer = pDev;
 
 	// 頂点の座標
-	m_vertices[0] = { XMFLOAT3(-0.5f,-0.7f,0.0f) };
-	m_vertices[1] = { XMFLOAT3(0.0f,0.7f,0.0f) };
-	m_vertices[2] = { XMFLOAT3(0.5f,-0.7f,0.0f) };
+	m_vertices[0] = { XMFLOAT3(-1.0f,-1.0f,0.0f) };
+	m_vertices[1] = { XMFLOAT3(-1.0f,1.0f,0.0f) };
+	m_vertices[2] = { XMFLOAT3(1.0f,-1.0f,0.0f) };
 
 	// 頂点バッファの作成
 	D3D12_HEAP_PROPERTIES heapProp = {};
@@ -49,7 +49,7 @@ void Mesh::Create(Renderer* pDev)
 	if (FAILED(hr)) { assert(0 && "頂点バッファーの作成に失敗しました。"); }
 
 	m_vbView.BufferLocation = m_pVertexBuff->GetGPUVirtualAddress();
-	m_vbView.StrideInBytes = (UINT)resDesc.Width;
+	m_vbView.StrideInBytes = sizeof(m_vertices);
 	m_vbView.SizeInBytes = sizeof(m_vertices[0]);
 
 	// マップ

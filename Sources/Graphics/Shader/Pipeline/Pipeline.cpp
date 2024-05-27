@@ -57,6 +57,7 @@ void Pipeline::Create(std::vector<ID3DBlob*> pBlob, const std::vector<DXGI_FORMA
 	psoDesc.PS.BytecodeLength = pBlob[4]->GetBufferSize();
 
 	psoDesc.SampleMask = D3D12_DEFAULT_SAMPLE_MASK;
+	psoDesc.RasterizerState.MultisampleEnable = false;
 
 	// カリングモードを設定
 	psoDesc.RasterizerState.CullMode = static_cast<D3D12_CULL_MODE>(m_cullMode);
@@ -99,6 +100,8 @@ void Pipeline::Create(std::vector<ID3DBlob*> pBlob, const std::vector<DXGI_FORMA
 	psoDesc.InputLayout.pInputElementDescs = inputLayouts.data();	// レイアウト先頭アドレス
 	psoDesc.InputLayout.NumElements = (int)inputLayouts.size();		// レイアウト配列の要素数
 
+	// プリミティブトポロジを設定
+	psoDesc.IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED;
 	psoDesc.PrimitiveTopologyType = (pBlob[3] && pBlob[4]) ? D3D12_PRIMITIVE_TOPOLOGY_TYPE_PATCH : static_cast<D3D12_PRIMITIVE_TOPOLOGY_TYPE>(m_topologyType);
 
 	// RTVの数を設定
@@ -111,6 +114,7 @@ void Pipeline::Create(std::vector<ID3DBlob*> pBlob, const std::vector<DXGI_FORMA
 	}
 
 	psoDesc.SampleDesc.Count = 1;	// サンプリングは1ピクセルにつき1
+	psoDesc.SampleDesc.Quality = 0;	// クオリティは最低
 	psoDesc.pRootSignature = m_pRootSignature->GetRootSignature();	// ルートシグネチャを設定
 
 	// パイプラインステートを生成
@@ -140,7 +144,7 @@ void Pipeline::SetInputLayout(std::vector<D3D12_INPUT_ELEMENT_DESC>& inputElemen
 		}
 		else if (inputLayouts[i] == InputLayout::COLOR)
 		{
-			inputElements.emplace_back(D3D12_INPUT_ELEMENT_DESC{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 });
+			inputElements.emplace_back(D3D12_INPUT_ELEMENT_DESC{ "COLOR", 0, DXGI_FORMAT_R8G8B8A8_UNORM, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 });
 		}
 		else if (inputLayouts[i] == InputLayout::TANGENT)
 		{
@@ -148,7 +152,7 @@ void Pipeline::SetInputLayout(std::vector<D3D12_INPUT_ELEMENT_DESC>& inputElemen
 		}
 		else if (inputLayouts[i] == InputLayout::SKININDEX)
 		{
-			inputElements.emplace_back(D3D12_INPUT_ELEMENT_DESC{ "SKININDEX", 0, DXGI_FORMAT_R32G32B32A32_UINT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 });
+			inputElements.emplace_back(D3D12_INPUT_ELEMENT_DESC{ "SKININDEX", 0, DXGI_FORMAT_R16G16B16A16_UINT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 });
 		}
 		else if (inputLayouts[i] == InputLayout::SKINWEIGHT)
 		{
