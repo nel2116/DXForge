@@ -16,41 +16,56 @@ void Mesh::Create(Renderer* pDev)
 	m_pRenderer = pDev;
 
 	// 頂点の座標
-	m_vertices[0] = { XMFLOAT3(-1.0f,-1.0f,0.0f) };
-	m_vertices[1] = { XMFLOAT3(-1.0f,1.0f,0.0f) };
-	m_vertices[2] = { XMFLOAT3(1.0f,-1.0f,0.0f) };
+	{
+		// 頂点の座標
+		m_vertices.emplace_back(XMFLOAT3{ -0.75f,-0.75f, 0.0f });
+		m_vertices.emplace_back(XMFLOAT3{ -0.75f, 0.75f, 0.0f });
+		m_vertices.emplace_back(XMFLOAT3{ 0.75f, -0.75f, 0.0f });
+		m_vertices.emplace_back(XMFLOAT3{ 0.75f, 0.75f, 0.0f });
 
-	// 頂点バッファの作成
-	D3D12_HEAP_PROPERTIES heapProp = {};
-	heapProp.Type = D3D12_HEAP_TYPE_UPLOAD;
-	heapProp.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
-	heapProp.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+		// 頂点バッファの作成
+		D3D12_HEAP_PROPERTIES heapProp = {};
+		heapProp.Type = D3D12_HEAP_TYPE_UPLOAD;
+		heapProp.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+		heapProp.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
 
-	D3D12_RESOURCE_DESC resDesc = {};
-	resDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-	resDesc.Width = sizeof(m_vertices);
-	resDesc.Height = 1;
-	resDesc.DepthOrArraySize = 1;
-	resDesc.MipLevels = 1;
-	resDesc.Format = DXGI_FORMAT_UNKNOWN;
-	resDesc.SampleDesc.Count = 1;
-	resDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
-	resDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+		D3D12_RESOURCE_DESC resDesc = {};
+		resDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+		resDesc.Width = sizeof(XMFLOAT3) * m_vertices.size();
+		resDesc.Height = 1;
+		resDesc.DepthOrArraySize = 1;
+		resDesc.MipLevels = 1;
+		resDesc.Format = DXGI_FORMAT_UNKNOWN;
+		resDesc.SampleDesc.Count = 1;
+		resDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
+		resDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
 
-	auto hr = m_pRenderer->GetDev()->CreateCommittedResource(
-		&heapProp,
-		D3D12_HEAP_FLAG_NONE,
-		&resDesc,
-		D3D12_RESOURCE_STATE_GENERIC_READ,
-		nullptr,
-		IID_PPV_ARGS(&m_pVertexBuff)
-	);
+		auto hr = m_pRenderer->GetDev()->CreateCommittedResource(
+			&heapProp,
+			D3D12_HEAP_FLAG_NONE,
+			&resDesc,
+			D3D12_RESOURCE_STATE_GENERIC_READ,
+			nullptr,
+			IID_PPV_ARGS(&m_pVertexBuff)
+		);
 
-	if (FAILED(hr)) { assert(0 && "頂点バッファーの作成に失敗しました。"); }
+		if (FAILED(hr)) { assert(0 && "頂点バッファーの作成に失敗しました。"); }
 
-	m_vbView.BufferLocation = m_pVertexBuff->GetGPUVirtualAddress();
-	m_vbView.StrideInBytes = sizeof(m_vertices);
-	m_vbView.SizeInBytes = sizeof(m_vertices[0]);
+		m_vbView.BufferLocation = m_pVertexBuff->GetGPUVirtualAddress();
+		m_vbView.SizeInBytes = resDesc.Width;		// 頂点バッファ全体のバイト数
+		m_vbView.StrideInBytes = sizeof(XMFLOAT3);	// 1頂点あたりのバイト数
+	}
+
+	// インデックスデータ
+	{
+		m_indices.emplace_back(0);
+		m_indices.emplace_back(1);
+		m_indices.emplace_back(2);
+		m_indices.emplace_back(3);
+
+
+	}
+
 
 	// マップ
 	XMFLOAT3* vbMap = nullptr;
@@ -62,5 +77,5 @@ void Mesh::Create(Renderer* pDev)
 void Mesh::DrawInstanced() const
 {
 	m_pRenderer->GetCmdList()->IASetVertexBuffers(0, 1, &m_vbView);
-	m_pRenderer->GetCmdList()->DrawInstanced(3, 1, 0, 0);
+	m_pRenderer->GetCmdList()->DrawInstanced(4, 1, 0, 0);
 }

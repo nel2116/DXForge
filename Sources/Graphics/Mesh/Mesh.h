@@ -37,5 +37,6 @@ private:
 	ComPtr<ID3D12Resource> m_pIndexBuff = nullptr;
 	D3D12_VERTEX_BUFFER_VIEW m_vbView;
 	D3D12_INDEX_BUFFER_VIEW m_ibView;
-	XMFLOAT3 m_vertices[3];
+	std::vector<XMFLOAT3> m_vertices;
+	std::vector<UINT> m_indices;
 };
