@@ -46,7 +46,7 @@ public:		// メンバ関数
 	/// </summary>
 	/// <param name="pDev">レンダラークラスのポインタ</param>
 	/// <param name="rangeType">レンジタイプリスト</param>
-	void Create(Renderer* pDev, std::vector<RangeType>& rangeType);
+	void Create(Renderer* pDev, std::vector<RangeType>& rangeType, UINT& cbvCount);
 
 	/// <summary>
 	/// ルートシグネチャーの取得

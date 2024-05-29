@@ -59,11 +59,19 @@ bool Renderer::Init(Window* window)
 	}
 
 	m_pRTVHeap = make_unique<RTVHeap>();
-	if (!m_pRTVHeap->Create(m_pDevice.Get(), 100))
+	if (!m_pRTVHeap->Create(this, HeapType::RTV, 100))
 	{
 		assert(0 && "RTVヒープの作成に失敗しました。");
 		return false;
 	}
+	m_upCBVSRVUAVHeap = make_unique<CBVSRVUAVHeap>();
+	if (!m_upCBVSRVUAVHeap->Create(this, HeapType::CBVSRVUAV, DirectX::XMFLOAT3(100, 100, 100)))
+	{
+		assert(0 && "CBVSRVUAVヒープの作成に失敗しました。");
+		return false;
+	}
+	m_upCBufferAllocater = make_unique<CBufferAllocater>();
+	m_upCBufferAllocater->Create(this, m_upCBVSRVUAVHeap.get());
 
 	if (!CreateSwapChainRTV())
 	{
@@ -95,7 +103,7 @@ void Renderer::BeginDraw()
 	TransBarrier(m_pBackBuffers[bbIdx].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
 	// レンダーターゲットをセット
-	auto rtvH = m_pRTVHeap->GetRTVCPUHandle(bbIdx);
+	auto rtvH = m_pRTVHeap->GetCPUHandle(bbIdx);
 	m_pCmdList->OMSetRenderTargets(1, &rtvH, true, nullptr);
 
 	// レンダーターゲットのクリア

@@ -53,9 +53,28 @@
 #include <dxgi1_6.h>
 #include <DirectXMath.h>
 
+// DirectXTex
+#pragma comment(lib, "DirectXTex.lib")
+#include <DirectXTex\DirectXTex.h>
+
 // ------ プロジェクト固有 ------
 #include <System/window.h>
+// 描画関係のデバイス
 #include <Graphics/Renderer.h>
+// ヒープ
+#include <Graphics/Heap/Heap.h>
+#include <Graphics\Heap\RTVHeap\RTVHeap.h>
+#include <Graphics\Heap\CBVSRVUAVHeap\CBVSRVUAVHeap.h>
+// 定数バッファのアロケーター
+#include <Graphics/CBufferAllocater/CBufferAllocater.h>
+// 定数バッファデータ
+#include <Graphics\CBufferAllocater\CBufferData\CBufferData.h>
+// テクスチャ
+#include <Graphics/Texture/Texture.h>
+// メッシュ
+#include <Graphics/Mesh/Mesh.h>
+// シェーダー
+#include <Graphics/Shader/Shader.h>
 
 // ====== 名前空間 ======
 using namespace std;

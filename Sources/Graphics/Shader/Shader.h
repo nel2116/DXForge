@@ -49,6 +49,12 @@ public:		// パブリック関数
 	/// <param name="mesh">メッシュ</param>
 	void DrawMesh(const Mesh& mesh);
 
+	/// <summary>
+	/// CBVカウント取得
+	/// </summary>
+	/// <returns>CBVカウント</returns>
+	UINT GetCBVCount() const { return m_cbvCount; }
+
 private:		// プライベート関数
 	/// <summary>
 	/// シェーダーファイルのロード
@@ -69,4 +75,6 @@ private:		// メンバ変数
 	ID3DBlob* m_pDSBlob = nullptr;	// ドメインシェーダーバッファ
 	ID3DBlob* m_pGSBlob = nullptr;	// ジオメトリシェーダーバッファ
 	ID3DBlob* m_pPSBlob = nullptr;	// ピクセルシェーダーバッファ
+
+	UINT m_cbvCount = 0;	// CBVカウント
 };

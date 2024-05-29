@@ -12,6 +12,14 @@
 // ====== 名前空間 ======
 using namespace DirectX;
 
+// ====== 構造体定義 ======
+struct Vertex
+{
+	Vertex(XMFLOAT3 position, XMFLOAT2 uv) :pos(position), UV(uv) {};
+	XMFLOAT3 pos;
+	XMFLOAT2 UV;
+};
+
 // ====== クラス定義 ======
 class Mesh
 {
@@ -35,8 +43,8 @@ private:
 	Renderer* m_pRenderer = nullptr;
 	ComPtr<ID3D12Resource> m_pVertexBuff = nullptr;
 	ComPtr<ID3D12Resource> m_pIndexBuff = nullptr;
-	D3D12_VERTEX_BUFFER_VIEW m_vbView;
-	D3D12_INDEX_BUFFER_VIEW m_ibView;
-	std::vector<XMFLOAT3> m_vertices;
+	D3D12_VERTEX_BUFFER_VIEW m_vbView = {};
+	D3D12_INDEX_BUFFER_VIEW m_ibView = {};
+	std::vector<Vertex> m_vertices;
 	std::vector<UINT> m_indices;
 };

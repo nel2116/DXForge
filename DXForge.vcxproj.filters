@@ -30,9 +30,6 @@
     <ClCompile Include="Sources\Graphics\Renderer.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\Graphics\RTVHeap\RTVHeap.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
     <ClCompile Include="Sources\Graphics\Mesh\Mesh.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -43,6 +40,18 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Sources\Graphics\Shader\Shader.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Sources\Graphics\Heap\CBVSRVUAVHeap\CBVSRVUAVHeap.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Sources\Graphics\Heap\RTVHeap\RTVHeap.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Sources\Graphics\Texture\Texture.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Sources\Graphics\CBufferAllocater\CBufferAllocater.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>
@@ -68,9 +77,6 @@
     <ClInclude Include="Sources\Graphics\Renderer.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\Graphics\RTVHeap\RTVHeap.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
     <ClInclude Include="Sources\Graphics\Shader\Shader.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
@@ -80,9 +86,30 @@
     <ClInclude Include="Sources\Graphics\Shader\Pipeline\Pipeline.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="Sources\Graphics\Heap\CBVSRVUAVHeap\CBVSRVUAVHeap.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Sources\Graphics\Heap\Heap.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Sources\Graphics\Heap\RTVHeap\RTVHeap.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Sources\Graphics\Texture\Texture.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Sources\Graphics\CBufferAllocater\CBufferAllocater.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Sources\Graphics\CBufferAllocater\CBufferData\CBufferData.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Sources\HLSL\PixelShader\PS_Simple.hlsl" />
     <FxCompile Include="Sources\HLSL\VertexShader\VS_Simple.hlsl" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Sources\HLSL\ShaderHeader\inc_Simple.hlsli" />
   </ItemGroup>
 </Project>

@@ -44,7 +44,7 @@ void Shader::Create(Renderer* pDev, std::string& filePath, RenderingSetting& set
 	LoadShader(filePath);
 
 	m_upRootSignature = std::make_unique<RootSignature>();
-	m_upRootSignature->Create(pDev, rangeTypes);
+	m_upRootSignature->Create(pDev, rangeTypes, m_cbvCount);
 
 	m_upPipeline = std::make_unique<Pipeline>();
 	m_upPipeline->SetRenderSetting(pDev, m_upRootSignature.get(), setting.inputLayouts, setting.cullMode, setting.blendMode, setting.primitiveTopology);
@@ -71,8 +71,7 @@ void Shader::Begin(int w, int h)
 		break;
 
 	case D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE:
-		m_pRenderer->GetCmdList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-		// m_pRenderer->GetCmdList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		m_pRenderer->GetCmdList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		break;
 
 	case D3D12_PRIMITIVE_TOPOLOGY_TYPE_PATCH:

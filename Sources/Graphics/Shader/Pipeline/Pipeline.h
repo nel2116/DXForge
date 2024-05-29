@@ -100,9 +100,9 @@ private:		// ƒƒ“ƒo•Ï”
 	RootSignature* m_pRootSignature = nullptr;
 
 	std::vector<InputLayout> m_inputLayouts;
-	CullMode m_cullMode;
-	BlendMode m_blendMode;
-	PrimitiveTopology m_topologyType;
+	CullMode m_cullMode = {};
+	BlendMode m_blendMode = {};
+	PrimitiveTopology m_topologyType = {};
 
 	ComPtr<ID3D12PipelineState> m_pPipelineState = nullptr;
 };

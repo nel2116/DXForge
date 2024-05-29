@@ -8,8 +8,6 @@
 // ====== インクルード部 ======
 #include "stdafx.h"
 #include "Application.h"
-#include <Graphics/Mesh/Mesh.h>
-#include <Graphics/Shader/Shader.h>
 
 // ====== メンバ関数 ======
 bool Application::Init()
@@ -47,7 +45,7 @@ void Application::Run()
 	mesh.Create(&Renderer::Instance());
 
 	RenderingSetting setting = {};
-	setting.inputLayouts = { InputLayout::POSITION };
+	setting.inputLayouts = { InputLayout::POSITION,InputLayout::TEXCOORD };
 	setting.Formats = { DXGI_FORMAT_R8G8B8A8_UNORM };
 	setting.isDepth = false;
 	setting.isDepthMask = false;
@@ -56,7 +54,18 @@ void Application::Run()
 
 	Shader shader;
 	string path = "Simple";
-	shader.Create(&Renderer::Instance(), path, setting, {});
+	shader.Create(&Renderer::Instance(), path, setting, { RangeType::CBV,RangeType::SRV });
+
+	Texture sampleTex;
+	sampleTex.Load(&Renderer::Instance(), "Assets/Texture/field.jpg");
+
+	DirectX::XMMATRIX mView = DirectX::XMMatrixLookAtLH(DirectX::XMVectorSet(0.0f, 0.0f, -5.0f, 0.0f), DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f), DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f));
+
+	DirectX::XMMATRIX mProj = DirectX::XMMatrixPerspectiveFovLH(DirectX::XMConvertToRadians(60.0f), WINDOW_WIDTH / WINDOW_HEIGHT, 0.01, 1000.0f);
+
+	CBufferData::Camera cbCamera;
+	cbCamera.mView = mView;
+	cbCamera.mProj = mProj;
 
 	while (true)
 	{
@@ -71,8 +80,13 @@ void Application::Run()
 			// ------ 描画処理 ------
 			Renderer::Instance().BeginDraw();		// 描画開始
 			// ここに描画処理を書く
+			Renderer::Instance().GetCBVSRVUAVHeap()->SetHeap();
+			Renderer::Instance().GetCBufferAllocater()->ResetNumber();
 
 			shader.Begin(m_window.GetWidth(), m_window.GetHeight());
+			sampleTex.Set(shader.GetCBVCount() + sampleTex.GetSRVNumber());
+
+			Renderer::Instance().GetCBufferAllocater()->BindAndAttachData(0, cbCamera);
 
 			shader.DrawMesh(mesh);
 

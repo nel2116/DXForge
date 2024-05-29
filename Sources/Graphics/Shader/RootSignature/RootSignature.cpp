@@ -11,7 +11,7 @@
 
 // ====== ƒƒ“ƒoŠÖ” ======
 // ì¬
-void RootSignature::Create(Renderer* pDev, std::vector<RangeType>& rangeType)
+void RootSignature::Create(Renderer* pDev, std::vector<RangeType>& rangeType, UINT& cbvCount)
 {
 	m_pRenderer = pDev;
 
@@ -37,7 +37,6 @@ void RootSignature::Create(Renderer* pDev, std::vector<RangeType>& rangeType)
 	// w’è‚³‚ê‚½‡‚Éİ’è
 	samplerCount = 0;
 	bool bSampler = false;
-	int cbvCount = 0;
 	int uavCount = 0;
 
 	for (int i = 0; i < rangeCount; ++i)

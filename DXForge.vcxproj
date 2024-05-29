@@ -170,12 +170,15 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Sources\Application\Application.cpp" />
+    <ClCompile Include="Sources\Graphics\CBufferAllocater\CBufferAllocater.cpp" />
+    <ClCompile Include="Sources\Graphics\Heap\CBVSRVUAVHeap\CBVSRVUAVHeap.cpp" />
+    <ClCompile Include="Sources\Graphics\Heap\RTVHeap\RTVHeap.cpp" />
     <ClCompile Include="Sources\Graphics\Mesh\Mesh.cpp" />
     <ClCompile Include="Sources\Graphics\Renderer.cpp" />
-    <ClCompile Include="Sources\Graphics\RTVHeap\RTVHeap.cpp" />
     <ClCompile Include="Sources\Graphics\Shader\Pipeline\Pipeline.cpp" />
     <ClCompile Include="Sources\Graphics\Shader\RootSignature\RootSignature.cpp" />
     <ClCompile Include="Sources\Graphics\Shader\Shader.cpp" />
+    <ClCompile Include="Sources\Graphics\Texture\Texture.cpp" />
     <ClCompile Include="Sources\Precompils\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
@@ -186,12 +189,17 @@
   <ItemGroup>
     <ClInclude Include="Sources\Application\Application.h" />
     <ClInclude Include="Sources\DirectXTex\DirectXTex.h" />
+    <ClInclude Include="Sources\Graphics\CBufferAllocater\CBufferAllocater.h" />
+    <ClInclude Include="Sources\Graphics\CBufferAllocater\CBufferData\CBufferData.h" />
+    <ClInclude Include="Sources\Graphics\Heap\CBVSRVUAVHeap\CBVSRVUAVHeap.h" />
+    <ClInclude Include="Sources\Graphics\Heap\Heap.h" />
+    <ClInclude Include="Sources\Graphics\Heap\RTVHeap\RTVHeap.h" />
     <ClInclude Include="Sources\Graphics\Mesh\Mesh.h" />
     <ClInclude Include="Sources\Graphics\Renderer.h" />
-    <ClInclude Include="Sources\Graphics\RTVHeap\RTVHeap.h" />
     <ClInclude Include="Sources\Graphics\Shader\Pipeline\Pipeline.h" />
     <ClInclude Include="Sources\Graphics\Shader\RootSignature\RootSignature.h" />
     <ClInclude Include="Sources\Graphics\Shader\Shader.h" />
+    <ClInclude Include="Sources\Graphics\Texture\Texture.h" />
     <ClInclude Include="Sources\Precompils\stdafx.h" />
     <ClInclude Include="Sources\System\texture.h" />
     <ClInclude Include="Sources\System\window.h" />
@@ -217,6 +225,9 @@
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">VS_Main</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">VS_Main</EntryPointName>
     </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Sources\HLSL\ShaderHeader\inc_Simple.hlsli" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

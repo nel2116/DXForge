@@ -11,11 +11,13 @@
 #include <array>
 #include <queue>
 #include <System/window.h>
-#include "RTVHeap/RTVHeap.h"
 
 using namespace std;
 
 // ====== クラス定義 ======
+class RTVHeap;
+class CBVSRVUAVHeap;
+class CBufferAllocater;
 class Renderer
 {
 private:	// 定数定義
@@ -80,6 +82,18 @@ public:		// アクセサ関数
 	ID3D12GraphicsCommandList6* GetCmdList() { return m_pCmdList.Get(); }
 
 	/// <summary>
+	/// CBVSRVUAVヒープの取得
+	/// </summary>
+	/// <returns>CBVSRVUAVヒープのポインタ</returns>
+	CBVSRVUAVHeap* GetCBVSRVUAVHeap() { return m_upCBVSRVUAVHeap.get(); }
+
+	/// <summary>
+	/// CBufferアロケータの取得
+	/// </summary>
+	/// <returns>CBufferアロケータのポインタ</returns>
+	CBufferAllocater* GetCBufferAllocater() { return m_upCBufferAllocater.get(); }
+
+	/// <summary>
 	/// クリアカラーの設定
 	/// </summary>
 	/// <param name="r">赤成分</param>
@@ -136,7 +150,7 @@ private:
 
 private:	// メンバ変数
 	// デバイス
-	D3D_FEATURE_LEVEL m_featureLevel;
+	D3D_FEATURE_LEVEL m_featureLevel = {};
 	ComPtr<ID3D12Device8> m_pDevice = nullptr;
 	ComPtr<IDXGIFactory6> m_pFactory = nullptr;
 	// コマンドリスト
@@ -147,14 +161,18 @@ private:	// メンバ変数
 	ComPtr<IDXGISwapChain4> m_pSwapChain = nullptr;
 	array<ComPtr<ID3D12Resource>, 2> m_pBackBuffers;
 	unique_ptr<RTVHeap> m_pRTVHeap = nullptr;
+	// CBVSRVUAVヒープ
+	unique_ptr<CBVSRVUAVHeap> m_upCBVSRVUAVHeap = nullptr;
+	// CBufferアロケータ
+	unique_ptr<CBufferAllocater> m_upCBufferAllocater = nullptr;
 	// Fance
 	ComPtr<ID3D12Fence> m_pFence = nullptr;
 	UINT64 m_fanceVal = 0;
 
 	// クリアカラー
-	float m_clearColor[4];
+	float m_clearColor[4] = {};
 	// ウィンドウクラス
-	Window* m_pWindow;
+	Window* m_pWindow = nullptr;
 public:
 	// シングルトン関連
 	/// <summary>
