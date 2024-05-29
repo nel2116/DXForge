@@ -7,17 +7,32 @@
 // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 #pragma once
 // ====== インクルード部 ======
+#include <string>
+#include <memory>
 #include <Graphics/Renderer.h>
+#include <Graphics/Texture/Texture.h>
+#include "MeshData/MeshData.h"
 
 // ====== 名前空間 ======
 using namespace DirectX;
 
 // ====== 構造体定義 ======
-struct Vertex
+struct MeshFace
 {
-	Vertex(XMFLOAT3 position, XMFLOAT2 uv) :pos(position), UV(uv) {};
-	XMFLOAT3 pos;
-	XMFLOAT2 UV;
+	UINT idx[3];
+};
+
+struct Material
+{
+	std::string name;									// マテリアルの名前
+	std::shared_ptr<Texture> spBaseColorTex;			// テクスチャ
+	XMFLOAT4 baseColor = { 1.0f,1.0f,1.0f,1.0f };		// ベースカラー
+	std::shared_ptr<Texture> spMetallicRoughnessTex;	// R:メタリック G:ラフネス
+	float metallic = 0.0f;								// メタリック
+	float roughness = 0.0f;								// ラフネス
+	std::shared_ptr<Texture> spEmissiveTex;				// 自己発光テクスチャ
+	XMFLOAT3 emissive = { 0.0f,0.0f,0.0f };				// 自己発光のスケーリング係数
+	std::shared_ptr<Texture> spNormalTex;				// 法線テクスチャ
 };
 
 // ====== クラス定義 ======
@@ -32,12 +47,28 @@ public:
 	/// 作成
 	/// </summary>
 	/// <param name="pDev">レンダラークラスのポインタ</param>
-	void Create(Renderer* pDev);
+	/// <param name="vertices">頂点情報</param>
+	/// <param name="faces">面情報</param>
+	/// <param name="materials">マテリアル情報</param>
+	void Create(Renderer* pDev, const std::vector<MeshVertex>& vertices, const std::vector<MeshFace>& faces, const Material& material);
 
 	/// <summary>
 	/// インスタンス描画
 	/// </summary>
-	void DrawInstanced() const;
+	/// <param name="vertexCount">頂点数</param>
+	void DrawInstanced(UINT vertexCount) const;
+
+	/// <summary>
+	/// インスタンス数を取得
+	/// </summary>
+	/// <returns>インスタンス数</returns>
+	UINT GetInstanceCount() const { return m_instanceCount; }
+
+	/// <summary>
+	/// マテリアルの取得
+	/// </summary>
+	/// <returns>マテリアル情報</returns>
+	const Material& GetMaterial() const { return m_material; }
 
 private:
 	Renderer* m_pRenderer = nullptr;
@@ -45,6 +76,6 @@ private:
 	ComPtr<ID3D12Resource> m_pIndexBuff = nullptr;
 	D3D12_VERTEX_BUFFER_VIEW m_vbView = {};
 	D3D12_INDEX_BUFFER_VIEW m_ibView = {};
-	std::vector<Vertex> m_vertices;
-	std::vector<UINT> m_indices;
+	UINT m_instanceCount = 0;
+	Material m_material = {};
 };

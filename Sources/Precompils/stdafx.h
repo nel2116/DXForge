@@ -73,6 +73,8 @@
 #include <Graphics/Texture/Texture.h>
 // メッシュ
 #include <Graphics/Mesh/Mesh.h>
+// モデル
+#include <Graphics/Model/Model.h>
 // シェーダー
 #include <Graphics/Shader/Shader.h>
 
@@ -103,3 +105,14 @@ const float PI = 3.1415926f;
 /// <param name="...">可変長引数</param>
 /// <remarks>この関数はデバッグ用です。デバッグ時にしか動作しません</remarks>
 void DebugOutputFormatString(const char* format, ...);
+
+/// <summary>
+/// ファイルパスから親ディレクトリまでのパスを取得する
+/// </summary>
+/// <param name="path">ファイルパス</param>
+/// <returns>ディレクトリパス</returns>
+inline string GetDirFromPath(const string& path)
+{
+	const string::size_type pos = path.find_last_of("/");
+	return (pos == string::npos) ? string() : path.substr(0, pos + 1);
+}

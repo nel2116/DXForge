@@ -50,6 +50,12 @@ public:		// パブリック関数
 	void DrawMesh(const Mesh& mesh);
 
 	/// <summary>
+	/// モデルの描画
+	/// </summary>
+	/// <param name="model">モデル</param>
+	void DrawModel(const Model& model);
+
+	/// <summary>
 	/// CBVカウント取得
 	/// </summary>
 	/// <returns>CBVカウント</returns>
@@ -61,6 +67,12 @@ private:		// プライベート関数
 	/// </summary>
 	/// <param name="filePath">ファイルパス</param>
 	void LoadShader(const std::string& filePath);
+
+	/// <summary>
+	/// マテリアルをセット
+	/// </summary>
+	/// <param name="material">マテリアル情報</param>
+	void SetMaterial(const Material& material);
 
 private:		// メンバ変数
 	Renderer* m_pRenderer = nullptr;

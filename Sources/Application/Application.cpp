@@ -12,6 +12,8 @@
 // ====== メンバ関数 ======
 bool Application::Init()
 {
+	SetDirectoryAndLoadDll();	// .dllのディレクトリのセットとロードを行う
+
 	// COMの初期化
 	if (FAILED(CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED)))
 	{
@@ -41,11 +43,11 @@ bool Application::Init()
 
 void Application::Run()
 {
-	Mesh mesh;
-	mesh.Create(&Renderer::Instance());
+	Model model;
+	model.Load("Assets/Model/Cube/Cube.gltf");
 
 	RenderingSetting setting = {};
-	setting.inputLayouts = { InputLayout::POSITION,InputLayout::TEXCOORD };
+	setting.inputLayouts = { InputLayout::POSITION,InputLayout::TEXCOORD,InputLayout::COLOR,InputLayout::NORMAL,InputLayout::TANGENT };
 	setting.Formats = { DXGI_FORMAT_R8G8B8A8_UNORM };
 	setting.isDepth = false;
 	setting.isDepthMask = false;
@@ -54,13 +56,11 @@ void Application::Run()
 
 	Shader shader;
 	string path = "Simple";
-	shader.Create(&Renderer::Instance(), path, setting, { RangeType::CBV,RangeType::SRV });
+	shader.Create(&Renderer::Instance(), path, setting, { RangeType::CBV,RangeType::CBV,RangeType::SRV,RangeType::SRV,RangeType::SRV,RangeType::SRV });
 
-	Texture sampleTex;
-	sampleTex.Load(&Renderer::Instance(), "Assets/Texture/field.jpg");
 
+	DirectX::XMMATRIX mWorld = DirectX::XMMatrixIdentity();
 	DirectX::XMMATRIX mView = DirectX::XMMatrixLookAtLH(DirectX::XMVectorSet(0.0f, 0.0f, -5.0f, 0.0f), DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f), DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f));
-
 	DirectX::XMMATRIX mProj = DirectX::XMMatrixPerspectiveFovLH(DirectX::XMConvertToRadians(60.0f), WINDOW_WIDTH / WINDOW_HEIGHT, 0.01, 1000.0f);
 
 	CBufferData::Camera cbCamera;
@@ -83,13 +83,15 @@ void Application::Run()
 			Renderer::Instance().GetCBVSRVUAVHeap()->SetHeap();
 			Renderer::Instance().GetCBufferAllocater()->ResetNumber();
 
+			// シェーダーの設定
 			shader.Begin(m_window.GetWidth(), m_window.GetHeight());
-			sampleTex.Set(shader.GetCBVCount() + sampleTex.GetSRVNumber());
-
+			// シェーダーにカメラのデータを渡す
 			Renderer::Instance().GetCBufferAllocater()->BindAndAttachData(0, cbCamera);
-
-			shader.DrawMesh(mesh);
-
+			// ワールド行列の更新
+			mWorld *= DirectX::XMMatrixRotationY(DirectX::XMConvertToRadians(1.0f));
+			Renderer::Instance().GetCBufferAllocater()->BindAndAttachData(1, mWorld);
+			// モデルの描画
+			shader.DrawModel(model);
 
 			Renderer::Instance().EndDraw();			// 描画終了
 		}
@@ -102,4 +104,16 @@ void Application::Uninit()
 	timeEndPeriod(1);	// タイマーの終了処理
 	UnregisterClass(CLASS_NAME, m_window.GetHinstance());	// ウィンドウクラスの登録解除
 	CoUninitialize();	// COMの終了処理
+}
+
+void Application::SetDirectoryAndLoadDll()
+{
+#ifdef _DEBUG
+	SetDllDirectory("Library/assimp/build/lib/Debug");
+	LoadLibraryExA("assimp-vc143-mtd.dll", NULL, NULL);
+#else
+	SetDllDirectory("Library/assimp/build/lib/Release");
+	LoadLibraryExA("assimp-vc143-mt.dll", NULL, NULL);
+#endif // _DEBUG
+
 }

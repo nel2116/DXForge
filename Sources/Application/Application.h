@@ -33,6 +33,12 @@ public:		// パブリック関数
 	/// </summary>
 	void Uninit();
 
+private:	// プライベート関数	
+	/// <summary>
+	///  .dllのディレクトリのセットとロードを行う
+	/// </summary>
+	void SetDirectoryAndLoadDll();
+
 
 private:	// メンバ変数
 	Window m_window;
