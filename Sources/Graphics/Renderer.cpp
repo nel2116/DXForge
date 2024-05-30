@@ -110,7 +110,7 @@ void Renderer::Uninit()
 	m_pWindow = nullptr;
 }
 
-void Renderer::BeginDraw()
+void Renderer::Begin3DDraw()
 {
 	// リソースバリアのステートをレンダーターゲットに変更
 	auto bbIdx = m_pSwapChain->GetCurrentBackBufferIndex();
@@ -119,13 +119,23 @@ void Renderer::BeginDraw()
 	// レンダーターゲットをセット
 	auto rtvH = m_pRTVHeap->GetCPUHandle(bbIdx);
 	auto dsvH = m_upDSVHeap->GetCPUHandle(m_upDepthStencil->GetDSVNumber());
-	m_pCmdList->OMSetRenderTargets(1, &rtvH, true, &dsvH);
+	m_pCmdList->OMSetRenderTargets(1, &rtvH, false, &dsvH);
 
 	// レンダーターゲットのクリア
 	m_pCmdList->ClearRenderTargetView(rtvH, m_clearColor, 0, nullptr);
 
 	// デプスバッファのクリア
 	m_upDepthStencil->ClearBuffer();
+}
+
+void Renderer::Begin2DDraw()
+{
+	// リソースバリアのステートをレンダーターゲットに変更
+	auto bbIdx = m_pSwapChain->GetCurrentBackBufferIndex();
+
+	// レンダーターゲットをセット
+	auto rtvH = m_pRTVHeap->GetCPUHandle(bbIdx);
+	m_pCmdList->OMSetRenderTargets(1, &rtvH, false, nullptr);
 }
 
 void Renderer::EndDraw()

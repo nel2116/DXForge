@@ -34,6 +34,12 @@ bool Application::Init()
 		return false;
 	}
 
+	if (!Texture::Init())
+	{
+		assert(0 && "Textureの初期化に失敗しました。");
+		return false;
+	}
+
 	// タイマーの初期化
 	timeBeginPeriod(1);
 	m_dwExecLastTime = timeGetTime();
@@ -56,14 +62,34 @@ void Application::Run()
 	string path = "Simple";
 	shader.Create(&Renderer::Instance(), path, setting, { RangeType::CBV,RangeType::CBV,RangeType::SRV,RangeType::SRV,RangeType::SRV,RangeType::SRV });
 
-
 	DirectX::XMMATRIX mWorld = DirectX::XMMatrixIdentity();
+	DirectX::XMMATRIX mWorld2 = DirectX::XMMatrixIdentity();
+	// カメラの設定
 	DirectX::XMMATRIX mView = DirectX::XMMatrixLookAtLH(DirectX::XMVectorSet(0.0f, 0.0f, -5.0f, 0.0f), DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f), DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f));
-	DirectX::XMMATRIX mProj = DirectX::XMMatrixPerspectiveFovLH(DirectX::XMConvertToRadians(60.0f), WINDOW_WIDTH / WINDOW_HEIGHT, 0.01, 1000.0f);
+	DirectX::XMMATRIX mProj = DirectX::XMMatrixPerspectiveFovLH(DirectX::XMConvertToRadians(60.0f), ASPECT_RATIO, 0.01, 1000.0f);
+
+	// 2D用カメラの設定
+	DirectX::XMMATRIX mView2 = DirectX::XMMatrixLookAtLH(DirectX::XMVectorSet(0.0f, 0.0f, -5.0f, 0.0f), DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f), DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f));
+	DirectX::XMMATRIX mProj2 = DirectX::XMMatrixOrthographicLH(WINDOW_WIDTH, WINDOW_HEIGHT, 0.01, 1000.0f);
 
 	CBufferData::Camera cbCamera;
+	CBufferData::Camera cbCamera2;
 	cbCamera.mView = mView;
 	cbCamera.mProj = mProj;
+	cbCamera2.mView = mView2;
+	cbCamera2.mProj = mProj2;
+
+	// テクスチャの設定
+	setting.inputLayouts = { InputLayout::POSITION };
+	setting.isDepth = false;
+	setting.isDepthMask = false;
+
+	Shader texShader;
+	path = "Texture";
+	texShader.Create(&Renderer::Instance(), path, setting, { RangeType::CBV,RangeType::CBV,RangeType::SRV });
+
+	Texture tex;
+	tex.Load(&Renderer::Instance(), "Assets/Texture/field.jpg");
 
 	while (true)
 	{
@@ -76,7 +102,7 @@ void Application::Run()
 			// ------ 更新処理 ------
 
 			// ------ 描画処理 ------
-			Renderer::Instance().BeginDraw();		// 描画開始
+			Renderer::Instance().Begin3DDraw();		// 描画開始
 			// ここに描画処理を書く
 			Renderer::Instance().GetCBVSRVUAVHeap()->SetHeap();
 			Renderer::Instance().GetCBufferAllocater()->ResetNumber();
@@ -86,10 +112,20 @@ void Application::Run()
 			// シェーダーにカメラのデータを渡す
 			Renderer::Instance().GetCBufferAllocater()->BindAndAttachData(0, cbCamera);
 			// ワールド行列の更新
+			mWorld *= DirectX::XMMatrixRotationX(DirectX::XMConvertToRadians(1.0f));
 			mWorld *= DirectX::XMMatrixRotationY(DirectX::XMConvertToRadians(1.0f));
+			mWorld *= DirectX::XMMatrixRotationZ(DirectX::XMConvertToRadians(1.0f));
 			Renderer::Instance().GetCBufferAllocater()->BindAndAttachData(1, mWorld);
 			// モデルの描画
 			shader.DrawModel(model);
+
+			// テクスチャの描画
+			Renderer::Instance().Begin2DDraw();		// 描画開始
+
+			Renderer::Instance().GetCBufferAllocater()->BindAndAttachData(0, cbCamera2);
+			Renderer::Instance().GetCBufferAllocater()->BindAndAttachData(1, mWorld2);
+			texShader.Begin(m_window.GetWidth(), m_window.GetHeight());
+			texShader.Draw2D(tex);
 
 			Renderer::Instance().EndDraw();			// 描画終了
 		}

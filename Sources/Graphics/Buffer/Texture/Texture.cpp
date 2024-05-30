@@ -11,6 +11,99 @@
 #include "stdafx.h"
 #include "Texture.h"
 
+// ====== メンバ変数の初期化 ======
+Microsoft::WRL::ComPtr<ID3D12Resource> Texture::m_pVBuffer = nullptr;
+Microsoft::WRL::ComPtr<ID3D12Resource> Texture::m_pIBuffer = nullptr;
+D3D12_VERTEX_BUFFER_VIEW Texture::m_vbView = {};
+D3D12_INDEX_BUFFER_VIEW Texture::m_ibView = {};
+std::vector<DirectX::XMFLOAT3> Texture::m_vertex;
+std::vector<UINT> Texture::m_index;
+
+// ====== メンバ関数 ======
+
+bool Texture::Init()
+{
+	m_vertex.emplace_back(DirectX::XMFLOAT3{ -1.0f,-1.0f,0.0f });
+	m_vertex.emplace_back(DirectX::XMFLOAT3{ -1.0f,1.0f,0.0f });
+	m_vertex.emplace_back(DirectX::XMFLOAT3{ 1.0f,-1.0f,0.0f });
+	m_vertex.emplace_back(DirectX::XMFLOAT3{ 1.0f,1.0f,0.0f });
+
+	D3D12_HEAP_PROPERTIES heapProp = {};
+	heapProp.Type = D3D12_HEAP_TYPE_UPLOAD;
+	heapProp.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+	heapProp.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+
+	D3D12_RESOURCE_DESC resDesc = {};
+	resDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+	resDesc.Width = sizeof(DirectX::XMFLOAT3) * m_vertex.size();
+	resDesc.Height = 1;
+	resDesc.DepthOrArraySize = 1;
+	resDesc.MipLevels = 1;
+	resDesc.Format = DXGI_FORMAT_UNKNOWN;
+	resDesc.SampleDesc.Count = 1;
+	resDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
+	resDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+
+	auto hr = Renderer::Instance().GetDev()->CreateCommittedResource(
+		&heapProp,
+		D3D12_HEAP_FLAG_NONE,
+		&resDesc,
+		D3D12_RESOURCE_STATE_GENERIC_READ,
+		nullptr,
+		IID_PPV_ARGS(m_pVBuffer.ReleaseAndGetAddressOf())
+	);
+	if (FAILED(hr)) { assert(0 && "テクスチャ用の頂点バッファーの作成に失敗しました。"); return false; }
+
+	m_vbView.BufferLocation = m_pVBuffer->GetGPUVirtualAddress();
+	m_vbView.SizeInBytes = (UINT)resDesc.Width;
+	m_vbView.StrideInBytes = sizeof(DirectX::XMFLOAT3);
+
+	// インデックスデータ
+	m_index.emplace_back(0);
+	m_index.emplace_back(1);
+	m_index.emplace_back(2);
+	m_index.emplace_back(2);
+	m_index.emplace_back(1);
+	m_index.emplace_back(3);
+
+	resDesc.Width = sizeof(UINT) * m_index.size();
+
+	// インデックスバッファの作成
+	hr = Renderer::Instance().GetDev()->CreateCommittedResource(
+		&heapProp,
+		D3D12_HEAP_FLAG_NONE,
+		&resDesc,
+		D3D12_RESOURCE_STATE_GENERIC_READ,
+		nullptr,
+		IID_PPV_ARGS(m_pIBuffer.ReleaseAndGetAddressOf())
+	);
+	if (FAILED(hr)) { assert(0 && "テクスチャ用のインデックスバッファーの作成に失敗しました。"); return false; }
+
+	m_ibView.BufferLocation = m_pIBuffer->GetGPUVirtualAddress();
+	m_ibView.SizeInBytes = (UINT)resDesc.Width;
+	m_ibView.Format = DXGI_FORMAT_R32_UINT;
+
+	// 頂点バッファに書き込む
+	DirectX::XMFLOAT3* vbMap = nullptr;
+	{
+		hr = m_pVBuffer->Map(0, nullptr, (void**)&vbMap);
+		if (FAILED(hr)) { assert(0 && "テクスチャ用の頂点バッファのマップに失敗しました。"); return false; }
+		std::copy(std::begin(m_vertex), std::end(m_vertex), vbMap);
+		m_pVBuffer->Unmap(0, nullptr);
+	}
+
+	// インデックスバッファに書き込む
+	UINT* ibMap = nullptr;
+	{
+		hr = m_pIBuffer->Map(0, nullptr, (void**)&ibMap);
+		if (FAILED(hr)) { assert(0 && "テクスチャ用のインデックスバッファのマップに失敗しました。"); return false; }
+		std::copy(std::begin(m_index), std::end(m_index), ibMap);
+		m_pIBuffer->Unmap(0, nullptr);
+	}
+
+	return true;
+}
+
 bool Texture::Load(Renderer* pDev, const string& filePath)
 {
 	m_pRenderer = pDev;
@@ -62,7 +155,14 @@ bool Texture::Load(Renderer* pDev, const string& filePath)
 	return true;
 }
 
-void Texture::Set(int index)
+void Texture::Set(int index) const
 {
 	m_pRenderer->GetCmdList()->SetGraphicsRootDescriptorTable(index, m_pRenderer->GetCBVSRVUAVHeap()->GetGPUHandle(m_srvNumber));
+}
+
+void Texture::Draw() const
+{
+	m_pRenderer->GetCmdList()->IASetVertexBuffers(0, 1, &m_vbView);
+	m_pRenderer->GetCmdList()->IASetIndexBuffer(&m_ibView);
+	m_pRenderer->GetCmdList()->DrawIndexedInstanced(6, 1, 0, 0, 0);
 }

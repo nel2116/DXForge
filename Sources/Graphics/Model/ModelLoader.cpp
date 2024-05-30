@@ -8,6 +8,7 @@ bool ModelLoader::Load(const std::string& filePath, std::vector<Model::Node>& no
 	int flags = 0;
 	flags |= aiProcess_CalcTangentSpace;
 	flags |= aiProcess_Triangulate;
+	flags |= aiProcess_ConvertToLeftHanded;
 	flags |= aiProcess_GenSmoothNormals;
 	flags |= aiProcess_PreTransformVertices;
 	flags |= aiProcess_RemoveRedundantMaterials;
@@ -51,8 +52,11 @@ std::shared_ptr<Mesh> ModelLoader::Parse(const aiScene* pScene, const aiMesh* pM
 
 		if (pMesh->HasTextureCoords(0))
 		{
-			vertices[i].UV.x = pMesh->mTextureCoords[0][i].x;
-			vertices[i].UV.y = pMesh->mTextureCoords[0][i].y;
+			vertices[i].UV.x = static_cast<float>(pMesh->mTextureCoords[0][i].x);
+			vertices[i].UV.y = static_cast<float>(pMesh->mTextureCoords[0][i].y);
+
+			// vertices[i].UV.x = 1.0f - vertices[i].UV.x;
+			// vertices[i].UV.y = 1.0f - vertices[i].UV.y;
 		}
 
 		vertices[i].Normal.x = pMesh->mNormals[i].x;

@@ -54,10 +54,16 @@ public:		// パブリック関数
 	void Uninit();
 
 	/// <summary>
-	/// レンダリングの開始
+	/// 3Dレンダリングの開始
 	/// </summary>
 	/// <returns></returns>
-	void BeginDraw();
+	void Begin3DDraw();
+
+	/// <summary>
+	/// 2Dレンダリングの開始
+	/// </summary>
+	/// <returns></returns>
+	void Begin2DDraw();
 
 	/// <summary>
 	/// レンダリングの終了
@@ -110,6 +116,14 @@ public:		// アクセサ関数
 	/// <param name="a">アルファ成分</param>
 	void SetClearColor(float r, float g, float b, float a);
 
+	/// <summary>
+	/// リソースとして引数に渡したバッファの扱いを変更する関数
+	/// </summary>
+	/// <param name="pResource">リソースの参照</param>
+	/// <param name="before">変更前のリソースの状態</param>
+	/// <param name="after">変更後のリソースの状態</param>
+	void TransBarrier(ID3D12Resource* pResource, D3D12_RESOURCE_STATES before, D3D12_RESOURCE_STATES after);
+
 private:
 	/// <summary>
 	/// ファクトリーの作成
@@ -146,15 +160,6 @@ private:
 	/// </summary>
 	/// <returns>作成に成功したらtrue</returns>
 	bool CreateFence();
-
-	/// <summary>
-	/// リソースとして引数に渡したバッファの扱いを変更する関数
-	/// </summary>
-	/// <param name="pResource">リソースの参照</param>
-	/// <param name="before">変更前のリソースの状態</param>
-	/// <param name="after">変更後のリソースの状態</param>
-	void TransBarrier(ID3D12Resource* pResource, D3D12_RESOURCE_STATES before, D3D12_RESOURCE_STATES after);
-
 
 private:	// メンバ変数
 	// デバイス

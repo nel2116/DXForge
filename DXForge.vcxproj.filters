@@ -138,8 +138,11 @@
   <ItemGroup>
     <FxCompile Include="Sources\HLSL\PixelShader\PS_Simple.hlsl" />
     <FxCompile Include="Sources\HLSL\VertexShader\VS_Simple.hlsl" />
+    <FxCompile Include="Sources\HLSL\PixelShader\PS_Texture.hlsl" />
+    <FxCompile Include="Sources\HLSL\VertexShader\VS_Texture.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Sources\HLSL\ShaderHeader\inc_Simple.hlsli" />
+    <None Include="Sources\HLSL\ShaderHeader\inc_Texture.hlsli" />
   </ItemGroup>
 </Project>

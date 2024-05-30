@@ -9,11 +9,18 @@
 #pragma once
 // ====== インクルード部 ======
 #include "../Buffer.h"
+#include <vector>
 
 // ====== クラス定義 ======
 class Texture : public Buffer
 {
-public:
+public:		// パブリック関数
+	/// <summary>
+	/// 初期化
+	/// </summary>
+	/// <returns>成功したらtrue</returns>
+	static bool Init();
+
 	/// <summary>
 	/// テクスチャのロード
 	/// </summary>
@@ -26,14 +33,26 @@ public:
 	/// シェーダーリソースとしてセット
 	/// </summary>
 	/// <param name="index">インデックス</param>
-	void Set(int index);
+	void Set(int index) const;
 
 	/// <summary>
 	/// SRV番号を取得
 	/// </summary>
 	/// <returns>SRV番号</returns>
-	int GetSRVNumber() { return m_srvNumber; }
+	const int GetSRVNumber() const { return m_srvNumber; }
+
+	/// <summary>
+	/// 描画
+	/// </summary>
+	void Draw() const;
 
 private:
-	int m_srvNumber = 0;
+	int m_srvNumber = 0;	// SRV番号
+
+	static Microsoft::WRL::ComPtr<ID3D12Resource> m_pVBuffer;	// バッファ
+	static Microsoft::WRL::ComPtr<ID3D12Resource> m_pIBuffer;	// バッファ
+	static D3D12_VERTEX_BUFFER_VIEW m_vbView;	// 頂点バッファビュー
+	static D3D12_INDEX_BUFFER_VIEW m_ibView;	// インデックスバッファビュー
+	static std::vector<DirectX::XMFLOAT3> m_vertex;	// 頂点座標
+	static std::vector<UINT> m_index;	// インデックス	
 };

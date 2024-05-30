@@ -56,6 +56,12 @@ public:		// パブリック関数
 	void DrawModel(const Model& model);
 
 	/// <summary>
+	/// 2D描画
+	/// </summary>
+	/// <param name="texture">テクスチャ</param>
+	void Draw2D(const Texture& texture);
+
+	/// <summary>
 	/// CBVカウント取得
 	/// </summary>
 	/// <returns>CBVカウント</returns>

@@ -111,6 +111,12 @@ void Shader::DrawModel(const Model& model)
 	}
 }
 
+void Shader::Draw2D(const Texture& texture)
+{
+	texture.Set(m_cbvCount);
+	texture.Draw();
+}
+
 void Shader::LoadShader(const std::string& filePath)
 {
 	ID3DInclude* include = D3D_COMPILE_STANDARD_FILE_INCLUDE;
@@ -217,8 +223,12 @@ void Shader::LoadShader(const std::string& filePath)
 
 void Shader::SetMaterial(const Material& material)
 {
+	int test = material.spBaseColorTex->GetSRVNumber();
 	material.spBaseColorTex->Set(m_cbvCount);
+	int test1 = material.spNormalTex->GetSRVNumber();
 	material.spNormalTex->Set(m_cbvCount + 1);
+	int test2 = material.spMetallicRoughnessTex->GetSRVNumber();
 	material.spMetallicRoughnessTex->Set(m_cbvCount + 2);
+	int test3 = material.spEmissiveTex->GetSRVNumber();
 	material.spEmissiveTex->Set(m_cbvCount + 3);
 }
