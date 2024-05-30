@@ -22,7 +22,7 @@ void Mesh::Create(Renderer* pDev, const std::vector<MeshVertex>& vertices, const
 		return;
 	}
 
-	m_instanceCount = static_cast<UINT>(vertices.size() * 3);
+	m_instanceCount = static_cast<UINT>(faces.size() * 3);
 
 	// 頂点バッファの作成
 	D3D12_HEAP_PROPERTIES heapProp = {};
