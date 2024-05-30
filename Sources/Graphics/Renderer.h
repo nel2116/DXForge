@@ -18,6 +18,8 @@ using namespace std;
 class RTVHeap;
 class CBVSRVUAVHeap;
 class CBufferAllocater;
+class DSVHeap;
+class DepthStencil;
 class Renderer
 {
 private:	// 定数定義
@@ -73,25 +75,31 @@ public:		// アクセサ関数
 	/// デバイスの取得
 	/// </summary>
 	/// <returns>デバイスの参照</returns>
-	ID3D12Device8* GetDev() { return m_pDevice.Get(); }
+	ID3D12Device8* GetDev()const { return m_pDevice.Get(); }
 
 	/// <summary>
 	/// コマンドリストの取得
 	/// </summary>
 	/// <returns>コマンドリストの参照</returns>
-	ID3D12GraphicsCommandList6* GetCmdList() { return m_pCmdList.Get(); }
+	ID3D12GraphicsCommandList6* GetCmdList()const { return m_pCmdList.Get(); }
 
 	/// <summary>
 	/// CBVSRVUAVヒープの取得
 	/// </summary>
 	/// <returns>CBVSRVUAVヒープのポインタ</returns>
-	CBVSRVUAVHeap* GetCBVSRVUAVHeap() { return m_upCBVSRVUAVHeap.get(); }
+	CBVSRVUAVHeap* GetCBVSRVUAVHeap()const { return m_upCBVSRVUAVHeap.get(); }
 
 	/// <summary>
 	/// CBufferアロケータの取得
 	/// </summary>
 	/// <returns>CBufferアロケータのポインタ</returns>
-	CBufferAllocater* GetCBufferAllocater() { return m_upCBufferAllocater.get(); }
+	CBufferAllocater* GetCBufferAllocater()const { return m_upCBufferAllocater.get(); }
+
+	/// <summary>
+	/// DSVヒープの取得
+	/// </summary>
+	/// <returns>DSVヒープのポインタ</returns>
+	DSVHeap* GetDSVHeap()const { return m_upDSVHeap.get(); }
 
 	/// <summary>
 	/// クリアカラーの設定
@@ -165,6 +173,11 @@ private:	// メンバ変数
 	unique_ptr<CBVSRVUAVHeap> m_upCBVSRVUAVHeap = nullptr;
 	// CBufferアロケータ
 	unique_ptr<CBufferAllocater> m_upCBufferAllocater = nullptr;
+	// DSVヒープ
+	unique_ptr<DSVHeap> m_upDSVHeap = nullptr;
+	// デプスステンシル
+	unique_ptr<DepthStencil> m_upDepthStencil = nullptr;
+
 	// Fance
 	ComPtr<ID3D12Fence> m_pFence = nullptr;
 	UINT64 m_fanceVal = 0;

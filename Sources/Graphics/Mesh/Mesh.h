@@ -10,7 +10,7 @@
 #include <string>
 #include <memory>
 #include <Graphics/Renderer.h>
-#include <Graphics/Texture/Texture.h>
+#include <Graphics/Buffer/Texture/Texture.h>
 #include "MeshData/MeshData.h"
 
 // ====== –¼‘O‹óŠÔ ======

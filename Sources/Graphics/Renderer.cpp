@@ -73,6 +73,20 @@ bool Renderer::Init(Window* window)
 	m_upCBufferAllocater = make_unique<CBufferAllocater>();
 	m_upCBufferAllocater->Create(this, m_upCBVSRVUAVHeap.get());
 
+	m_upDSVHeap = make_unique<DSVHeap>();
+	if (!m_upDSVHeap->Create(this, HeapType::DSV, 100))
+	{
+		assert(0 && "DSVヒープの作成に失敗しました。");
+		return false;
+	}
+
+	m_upDepthStencil = make_unique<DepthStencil>();
+	if (!m_upDepthStencil->Create(this, XMFLOAT2(WINDOW_WIDTH, WINDOW_HEIGHT)))
+	{
+		assert(0 && "デプスステンシルの作成に失敗しました。");
+		return false;
+	}
+
 	if (!CreateSwapChainRTV())
 	{
 		assert(0 && "スワップチェインのRTVの作成に失敗しました。");
@@ -104,10 +118,14 @@ void Renderer::BeginDraw()
 
 	// レンダーターゲットをセット
 	auto rtvH = m_pRTVHeap->GetCPUHandle(bbIdx);
-	m_pCmdList->OMSetRenderTargets(1, &rtvH, true, nullptr);
+	auto dsvH = m_upDSVHeap->GetCPUHandle(m_upDepthStencil->GetDSVNumber());
+	m_pCmdList->OMSetRenderTargets(1, &rtvH, true, &dsvH);
 
 	// レンダーターゲットのクリア
 	m_pCmdList->ClearRenderTargetView(rtvH, m_clearColor, 0, nullptr);
+
+	// デプスバッファのクリア
+	m_upDepthStencil->ClearBuffer();
 }
 
 void Renderer::EndDraw()

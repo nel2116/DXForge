@@ -8,15 +8,11 @@
 // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 #pragma once
 // ====== インクルード部 ======
-#include <Graphics\Renderer.h>
+#include "../Buffer.h"
 
 // ====== クラス定義 ======
-class Texture
+class Texture : public Buffer
 {
-private:	// 型定義
-	template<typename T>
-	using ComPtr = Microsoft::WRL::ComPtr<T>;
-
 public:
 	/// <summary>
 	/// テクスチャのロード
@@ -39,8 +35,5 @@ public:
 	int GetSRVNumber() { return m_srvNumber; }
 
 private:
-	Renderer* m_pRenderer = nullptr;
-
-	ComPtr<ID3D12Resource> m_pTexture = nullptr;
 	int m_srvNumber = 0;
 };

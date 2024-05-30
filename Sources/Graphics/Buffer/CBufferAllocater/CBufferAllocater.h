@@ -8,10 +8,10 @@
 // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 #pragma once
 // ====== インクルード部 ======
-#include <Graphics\Renderer.h>
+#include "../Buffer.h"
 
 // ====== クラス定義 ======
-class CBufferAllocater
+class CBufferAllocater : public Buffer
 {
 public:
 	/// <summary>
@@ -35,9 +35,7 @@ public:
 	void BindAndAttachData(int descIndex, const T& data);
 
 private:
-	Renderer* m_pRenderer = nullptr;
 	CBVSRVUAVHeap* m_pHeap = nullptr;
-	Microsoft::WRL::ComPtr<ID3D12Resource> m_pBuffer;
 	struct { char buf[256]; }*m_pMappedBuffer = nullptr;
 	int m_currentUseNumber = 0;
 };

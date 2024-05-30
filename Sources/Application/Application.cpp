@@ -49,9 +49,7 @@ void Application::Run()
 	RenderingSetting setting = {};
 	setting.inputLayouts = { InputLayout::POSITION,InputLayout::TEXCOORD,InputLayout::COLOR,InputLayout::NORMAL,InputLayout::TANGENT };
 	setting.Formats = { DXGI_FORMAT_R8G8B8A8_UNORM };
-	setting.isDepth = false;
-	setting.isDepthMask = false;
-	setting.cullMode = CullMode::None;
+	setting.cullMode = CullMode::Back;
 	setting.primitiveTopology = PrimitiveTopology::Triangle;
 
 	Shader shader;

@@ -1,3 +1,13 @@
+// _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+// [Texture.cpp]
+// 作成者 : 田中ミノル
+// 作成日 : 2024/05/29 12:00
+// 概要   : テクスチャクラスの実装
+// 更新履歴
+// 2024/05/29 作成
+// 2024/05/30 Bufferクラスを継承するように変更
+// _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+// ====== インクルード部 ======
 #include "stdafx.h"
 #include "Texture.h"
 
@@ -34,20 +44,20 @@ bool Texture::Load(Renderer* pDev, const string& filePath)
 	resDesc.MipLevels = (UINT16)metaData.mipLevels;
 	resDesc.SampleDesc.Count = 1;
 
-	hr = pDev->GetDev()->CreateCommittedResource(&heapProp, D3D12_HEAP_FLAG_NONE, &resDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(m_pTexture.ReleaseAndGetAddressOf()));
+	hr = pDev->GetDev()->CreateCommittedResource(&heapProp, D3D12_HEAP_FLAG_NONE, &resDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(m_pBuffer.ReleaseAndGetAddressOf()));
 	if (FAILED(hr))
 	{
 		assert(0 && "テクスチャバッファの作成に失敗しました。");
 		return false;
 	}
 
-	hr = m_pTexture->WriteToSubresource(0, nullptr, pImage->pixels, (UINT)pImage->rowPitch, (UINT)pImage->slicePitch);
+	hr = m_pBuffer->WriteToSubresource(0, nullptr, pImage->pixels, (UINT)pImage->rowPitch, (UINT)pImage->slicePitch);
 	if (FAILED(hr))
 	{
 		assert(0 && "テクスチャデータの書き込みに失敗しました。");
 		return false;
 	}
-	m_srvNumber = pDev->GetCBVSRVUAVHeap()->CreateSRV(m_pTexture.Get());
+	m_srvNumber = pDev->GetCBVSRVUAVHeap()->CreateSRV(m_pBuffer.Get());
 
 	return true;
 }
