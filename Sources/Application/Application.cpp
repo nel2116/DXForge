@@ -65,13 +65,17 @@ void Application::Run()
 	DirectX::XMMATRIX mWorld = DirectX::XMMatrixIdentity();
 	DirectX::XMMATRIX mWorld2 = DirectX::XMMatrixIdentity();
 
+	DirectX::XMFLOAT3 eye = { 0.0f, 0.0f, -5.0f };
+	DirectX::XMFLOAT3 target = { 0.0f, 0.0f, 0.0f };
+	DirectX::XMFLOAT3 up = { 0.0f, 1.0f, 0.0f };
+
 	// カメラの設定
-	DirectX::XMMATRIX mView = DirectX::XMMatrixLookAtLH(DirectX::XMVectorSet(0.0f, 0.0f, -5.0f, 0.0f), DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f), DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f));
+	DirectX::XMMATRIX mView = DirectX::XMMatrixLookAtLH(DirectX::XMLoadFloat3(&eye), DirectX::XMLoadFloat3(&target), DirectX::XMLoadFloat3(&up));
 	DirectX::XMMATRIX mProj = DirectX::XMMatrixPerspectiveFovLH(DirectX::XMConvertToRadians(60.0f), ASPECT_RATIO, 0.01, 1000.0f);
 
 	// 2D用カメラの設定
-	DirectX::XMMATRIX mView2 = DirectX::XMMatrixLookAtLH(DirectX::XMVectorSet(0.0f, 0.0f, -0.1f, 0.0f), DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f), DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f));
-	DirectX::XMMATRIX mProj2 = DirectX::XMMatrixPerspectiveFovLH(DirectX::XMConvertToRadians(60.0f), ASPECT_RATIO, 0.01, 1000.0f);
+	DirectX::XMMATRIX mView2 = DirectX::XMMatrixLookAtLH(DirectX::XMLoadFloat3(&eye), DirectX::XMLoadFloat3(&target), DirectX::XMLoadFloat3(&up));
+	DirectX::XMMATRIX mProj2 = DirectX::XMMatrixPerspectiveFovLH(XM_PIDIV2, ASPECT_RATIO, 1.0, 10.0f);
 
 	CBufferData::Camera cbCamera;
 	CBufferData::Camera cbCamera2;
@@ -119,13 +123,13 @@ void Application::Run()
 			// mWorld *= DirectX::XMMatrixRotationZ(DirectX::XMConvertToRadians(1.0f));
 			Renderer::Instance().GetCBufferAllocater()->BindAndAttachData(1, mWorld);
 			// モデルの描画
-			// shader.DrawModel(model);
+			shader.DrawModel(model);
 
 			// テクスチャの描画
 			Renderer::Instance().Begin2DDraw();		// 描画開始
 
-			Renderer::Instance().GetCBufferAllocater()->BindAndAttachData(0, cbCamera);
-			Renderer::Instance().GetCBufferAllocater()->BindAndAttachData(1, mWorld);
+			Renderer::Instance().GetCBufferAllocater()->BindAndAttachData(0, cbCamera2);
+			Renderer::Instance().GetCBufferAllocater()->BindAndAttachData(1, mWorld2);
 			texShader.Begin(m_window.GetWidth(), m_window.GetHeight());
 			texShader.Draw2D(tex);
 

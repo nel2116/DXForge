@@ -3,6 +3,7 @@
 Output VS_Main(float4 pos : POSITION, float2 uv : TEXCOORD)
 {
     Output output;
+    output.pos = pos;
     output.pos = mul(pos, c_mWorld);
     output.pos = mul(output.pos, c_mView);
     output.pos = mul(output.pos, c_mProj);
