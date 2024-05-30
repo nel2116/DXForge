@@ -64,13 +64,14 @@ void Application::Run()
 
 	DirectX::XMMATRIX mWorld = DirectX::XMMatrixIdentity();
 	DirectX::XMMATRIX mWorld2 = DirectX::XMMatrixIdentity();
+
 	// カメラの設定
 	DirectX::XMMATRIX mView = DirectX::XMMatrixLookAtLH(DirectX::XMVectorSet(0.0f, 0.0f, -5.0f, 0.0f), DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f), DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f));
 	DirectX::XMMATRIX mProj = DirectX::XMMatrixPerspectiveFovLH(DirectX::XMConvertToRadians(60.0f), ASPECT_RATIO, 0.01, 1000.0f);
 
 	// 2D用カメラの設定
-	DirectX::XMMATRIX mView2 = DirectX::XMMatrixLookAtLH(DirectX::XMVectorSet(0.0f, 0.0f, -5.0f, 0.0f), DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f), DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f));
-	DirectX::XMMATRIX mProj2 = DirectX::XMMatrixOrthographicLH(WINDOW_WIDTH, WINDOW_HEIGHT, 0.01, 1000.0f);
+	DirectX::XMMATRIX mView2 = DirectX::XMMatrixLookAtLH(DirectX::XMVectorSet(0.0f, 0.0f, -0.1f, 0.0f), DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f), DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f));
+	DirectX::XMMATRIX mProj2 = DirectX::XMMatrixPerspectiveFovLH(DirectX::XMConvertToRadians(60.0f), ASPECT_RATIO, 0.01, 1000.0f);
 
 	CBufferData::Camera cbCamera;
 	CBufferData::Camera cbCamera2;
@@ -80,7 +81,7 @@ void Application::Run()
 	cbCamera2.mProj = mProj2;
 
 	// テクスチャの設定
-	setting.inputLayouts = { InputLayout::POSITION };
+	setting.inputLayouts = { InputLayout::POSITION,InputLayout::TEXCOORD, };
 	setting.isDepth = false;
 	setting.isDepthMask = false;
 
@@ -94,6 +95,7 @@ void Application::Run()
 	while (true)
 	{
 		if (!m_window.ProcessMessage()) { break; }
+
 		m_dwCurrentTime = timeGetTime();
 		if ((m_dwCurrentTime - m_dwExecLastTime) >= FRAME_TIME)
 		{
@@ -112,18 +114,18 @@ void Application::Run()
 			// シェーダーにカメラのデータを渡す
 			Renderer::Instance().GetCBufferAllocater()->BindAndAttachData(0, cbCamera);
 			// ワールド行列の更新
-			mWorld *= DirectX::XMMatrixRotationX(DirectX::XMConvertToRadians(1.0f));
+			// mWorld *= DirectX::XMMatrixRotationX(DirectX::XMConvertToRadians(1.0f));
 			mWorld *= DirectX::XMMatrixRotationY(DirectX::XMConvertToRadians(1.0f));
-			mWorld *= DirectX::XMMatrixRotationZ(DirectX::XMConvertToRadians(1.0f));
+			// mWorld *= DirectX::XMMatrixRotationZ(DirectX::XMConvertToRadians(1.0f));
 			Renderer::Instance().GetCBufferAllocater()->BindAndAttachData(1, mWorld);
 			// モデルの描画
-			shader.DrawModel(model);
+			// shader.DrawModel(model);
 
 			// テクスチャの描画
 			Renderer::Instance().Begin2DDraw();		// 描画開始
 
-			Renderer::Instance().GetCBufferAllocater()->BindAndAttachData(0, cbCamera2);
-			Renderer::Instance().GetCBufferAllocater()->BindAndAttachData(1, mWorld2);
+			Renderer::Instance().GetCBufferAllocater()->BindAndAttachData(0, cbCamera);
+			Renderer::Instance().GetCBufferAllocater()->BindAndAttachData(1, mWorld);
 			texShader.Begin(m_window.GetWidth(), m_window.GetHeight());
 			texShader.Draw2D(tex);
 

@@ -215,7 +215,6 @@
     <ClInclude Include="Sources\Graphics\Shader\Shader.h" />
     <ClInclude Include="Sources\Graphics\Buffer\Texture\Texture.h" />
     <ClInclude Include="Sources\Precompils\stdafx.h" />
-    <ClInclude Include="Sources\System\texture.h" />
     <ClInclude Include="Sources\System\window.h" />
   </ItemGroup>
   <ItemGroup>

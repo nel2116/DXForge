@@ -12,6 +12,13 @@
 #include <vector>
 
 // ====== クラス定義 ======
+struct Vertex
+{
+	Vertex(DirectX::XMFLOAT3 Pos, DirectX::XMFLOAT2 UV) : pos(Pos), uv(UV) {}
+	DirectX::XMFLOAT3 pos;
+	DirectX::XMFLOAT2 uv;
+};
+
 class Texture : public Buffer
 {
 public:		// パブリック関数
@@ -51,8 +58,8 @@ private:
 
 	static Microsoft::WRL::ComPtr<ID3D12Resource> m_pVBuffer;	// バッファ
 	static Microsoft::WRL::ComPtr<ID3D12Resource> m_pIBuffer;	// バッファ
-	static D3D12_VERTEX_BUFFER_VIEW m_vbView;	// 頂点バッファビュー
-	static D3D12_INDEX_BUFFER_VIEW m_ibView;	// インデックスバッファビュー
-	static std::vector<DirectX::XMFLOAT3> m_vertex;	// 頂点座標
-	static std::vector<UINT> m_index;	// インデックス	
+	static D3D12_VERTEX_BUFFER_VIEW m_vbView;					// 頂点バッファビュー
+	static D3D12_INDEX_BUFFER_VIEW m_ibView;					// インデックスバッファビュー
+	static std::vector<Vertex> m_vertex;						// 頂点座標
+	static std::vector<UINT> m_index;							// インデックス	
 };

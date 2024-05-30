@@ -16,17 +16,17 @@ Microsoft::WRL::ComPtr<ID3D12Resource> Texture::m_pVBuffer = nullptr;
 Microsoft::WRL::ComPtr<ID3D12Resource> Texture::m_pIBuffer = nullptr;
 D3D12_VERTEX_BUFFER_VIEW Texture::m_vbView = {};
 D3D12_INDEX_BUFFER_VIEW Texture::m_ibView = {};
-std::vector<DirectX::XMFLOAT3> Texture::m_vertex;
+std::vector<Vertex> Texture::m_vertex;
 std::vector<UINT> Texture::m_index;
 
 // ====== メンバ関数 ======
 
 bool Texture::Init()
 {
-	m_vertex.emplace_back(DirectX::XMFLOAT3{ -1.0f,-1.0f,0.0f });
-	m_vertex.emplace_back(DirectX::XMFLOAT3{ -1.0f,1.0f,0.0f });
-	m_vertex.emplace_back(DirectX::XMFLOAT3{ 1.0f,-1.0f,0.0f });
-	m_vertex.emplace_back(DirectX::XMFLOAT3{ 1.0f,1.0f,0.0f });
+	m_vertex.emplace_back(DirectX::XMFLOAT3(-0.5f, -0.5f, 0.0f), DirectX::XMFLOAT2(0.0f, 1.0f));	// 左下
+	m_vertex.emplace_back(DirectX::XMFLOAT3(-0.5f, 0.5f, 0.0f), DirectX::XMFLOAT2(0.0f, 0.0f));	// 左上
+	m_vertex.emplace_back(DirectX::XMFLOAT3(0.5f, -0.5f, 0.0f), DirectX::XMFLOAT2(1.0f, 1.0f));	// 右下
+	m_vertex.emplace_back(DirectX::XMFLOAT3(0.5f, 0.5f, 0.0f), DirectX::XMFLOAT2(1.0f, 0.0f));		// 右上
 
 	D3D12_HEAP_PROPERTIES heapProp = {};
 	heapProp.Type = D3D12_HEAP_TYPE_UPLOAD;
@@ -35,7 +35,7 @@ bool Texture::Init()
 
 	D3D12_RESOURCE_DESC resDesc = {};
 	resDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-	resDesc.Width = sizeof(DirectX::XMFLOAT3) * m_vertex.size();
+	resDesc.Width = sizeof(Vertex) * m_vertex.size();
 	resDesc.Height = 1;
 	resDesc.DepthOrArraySize = 1;
 	resDesc.MipLevels = 1;
@@ -56,7 +56,7 @@ bool Texture::Init()
 
 	m_vbView.BufferLocation = m_pVBuffer->GetGPUVirtualAddress();
 	m_vbView.SizeInBytes = (UINT)resDesc.Width;
-	m_vbView.StrideInBytes = sizeof(DirectX::XMFLOAT3);
+	m_vbView.StrideInBytes = sizeof(Vertex);
 
 	// インデックスデータ
 	m_index.emplace_back(0);
@@ -84,7 +84,7 @@ bool Texture::Init()
 	m_ibView.Format = DXGI_FORMAT_R32_UINT;
 
 	// 頂点バッファに書き込む
-	DirectX::XMFLOAT3* vbMap = nullptr;
+	Vertex* vbMap = nullptr;
 	{
 		hr = m_pVBuffer->Map(0, nullptr, (void**)&vbMap);
 		if (FAILED(hr)) { assert(0 && "テクスチャ用の頂点バッファのマップに失敗しました。"); return false; }

@@ -23,14 +23,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 		switch (wp)
 		{
 		case VK_ESCAPE:	// ESCキーが押された
-			DestroyWindow(hwnd);
+			PostQuitMessage(0);
 			break;
-
 		}
+		break;
 
 	default:
-		return DefWindowProc(hwnd, msg, wp, lp);
-		break;
+		return DefWindowProc(hwnd, msg, wp, lp);	// 未処理のメッセージをデフォルト処理
 	}
 	return 0;
 }
@@ -49,7 +48,7 @@ bool Window::Create(int width, int height, const string& titleName, const string
 	// ウィンドウクラスの定義
 	WNDCLASSEX wc = {};
 	wc.cbSize = sizeof(WNDCLASSEX);			// 構造体のサイズ
-	wc.lpfnWndProc = (WNDPROC)WndProc;		// ウィンドウプロシージャ
+	wc.lpfnWndProc = WndProc;				// ウィンドウプロシージャ
 	wc.lpszClassName = className.c_str();	// ウィンドウクラス名
 	wc.hInstance = hInstance;				// インスタンスハンドル
 
@@ -66,7 +65,7 @@ bool Window::Create(int width, int height, const string& titleName, const string
 		0,
 		className.c_str(),						// ウィンドウクラス名
 		titleName.c_str(),						// タイトル名
-		WS_OVERLAPPEDWINDOW - WS_THICKFRAME,	// ウィンドウスタイル
+		WS_OVERLAPPEDWINDOW & ~WS_THICKFRAME,	// ウィンドウスタイル
 		CW_USEDEFAULT,							// ウィンドウのX座標
 		CW_USEDEFAULT,							// ウィンドウのY座標
 		rc.right - rc.left,						// ウィンドウの幅
@@ -96,7 +95,10 @@ bool Window::ProcessMessage()
 	while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
 	{
 		// 終了メッセージが来たらfalseを返す
-		if (msg.message == WM_QUIT) { return false; }
+		if (msg.message == WM_QUIT)
+		{
+			return false;
+		}
 
 		// メッセージ処理
 		TranslateMessage(&msg);

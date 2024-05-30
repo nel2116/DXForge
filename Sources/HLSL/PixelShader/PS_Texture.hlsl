@@ -6,6 +6,6 @@ SamplerState sam : register(s0);
 
 float4 PS_Main(Output pin) : SV_TARGET
 {
-//    float4 color = tex.Sample(sam, pin.uv);
-    return float4(1.0f, 1.0f, 1.0f, 1.0f);
+    float4 color = tex.Sample(sam, pin.uv);
+    return color;
 }
