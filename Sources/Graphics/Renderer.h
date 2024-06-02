@@ -20,6 +20,7 @@ class CBVSRVUAVHeap;
 class CBufferAllocater;
 class DSVHeap;
 class DepthStencil;
+class ImGuiHeap;
 class Renderer
 {
 private:	// 定数定義
@@ -66,6 +67,18 @@ public:		// パブリック関数
 	void Begin2DDraw();
 
 	/// <summary>
+	/// ImGuiの描画開始
+	/// </summary>
+	/// <returns></returns>
+	void BeginImGuiDraw();
+
+	/// <summary>
+	/// ImGuiの描画終了
+	/// </summary>
+	/// <returns></returns>
+	void EndImGuiDraw();
+
+	/// <summary>
 	/// レンダリングの終了
 	/// </summary>
 	/// <returns></returns>
@@ -106,6 +119,12 @@ public:		// アクセサ関数
 	/// </summary>
 	/// <returns>DSVヒープのポインタ</returns>
 	DSVHeap* GetDSVHeap()const { return m_upDSVHeap.get(); }
+
+	/// <summary>
+	/// imuGuiヒープの取得
+	/// </summary>
+	/// <returns>imuGuiヒープのポインタ</returns>
+	ImGuiHeap* GetImGuiHeap()const { return m_upImGuiHeap.get(); }
 
 	/// <summary>
 	/// クリアカラーの設定
@@ -161,6 +180,12 @@ private:
 	/// <returns>作成に成功したらtrue</returns>
 	bool CreateFence();
 
+	/// <summary>
+	/// ImGuiのセッティング
+	/// </summary>
+	/// <returns>作成に成功したらtrue</returns>
+	bool ImGuiSetting();
+
 private:	// メンバ変数
 	// デバイス
 	D3D_FEATURE_LEVEL m_featureLevel = {};
@@ -182,6 +207,8 @@ private:	// メンバ変数
 	unique_ptr<DSVHeap> m_upDSVHeap = nullptr;
 	// デプスステンシル
 	unique_ptr<DepthStencil> m_upDepthStencil = nullptr;
+	// imuGuiヒープ
+	unique_ptr<ImGuiHeap> m_upImGuiHeap = nullptr;
 
 	// Fance
 	ComPtr<ID3D12Fence> m_pFence = nullptr;

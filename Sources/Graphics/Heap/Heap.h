@@ -80,6 +80,12 @@ public:
 		return handle;
 	}
 
+	/// <summary>
+	/// ヒープの取得
+	/// </summary>
+	/// <returns>ヒープのポインタ</returns>
+	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> GetHeap()const { return m_pHeap; }
+
 protected:
 	Renderer* m_pRenderer = nullptr;
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_pHeap = nullptr;

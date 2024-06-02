@@ -53,9 +53,14 @@
 #include <dxgi1_6.h>
 #include <DirectXMath.h>
 
-// DirectXTex
+// ------ DirectXTex ------
 #pragma comment(lib, "DirectXTex.lib")
 #include <DirectXTex\DirectXTex.h>
+
+// ------ ImGui ------
+#include <imugui/imgui.h>
+#include <imugui/imgui_impl_win32.h>
+#include <imugui/imgui_impl_dx12.h>
 
 // ------ プロジェクト固有 ------
 #include <System/window.h>
@@ -66,6 +71,7 @@
 #include <Graphics/Heap/RTVHeap/RTVHeap.h>
 #include <Graphics/Heap/CBVSRVUAVHeap/CBVSRVUAVHeap.h>
 #include <Graphics/Heap/DSVHeap/DSVHeap.h>
+#include <Graphics/Heap/ImGuiHeap/ImGuiHeap.h>
 // 定数バッファのアロケーター
 #include <Graphics/Buffer/CBufferAllocater/CBufferAllocater.h>
 // 定数バッファデータ

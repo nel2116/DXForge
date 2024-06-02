@@ -9,6 +9,7 @@
 #include "stdafx.h"
 #include "Application.h"
 
+
 // ====== メンバ関数 ======
 bool Application::Init()
 {
@@ -34,6 +35,7 @@ bool Application::Init()
 		return false;
 	}
 
+
 	if (!Texture::Init())
 	{
 		assert(0 && "Textureの初期化に失敗しました。");
@@ -44,6 +46,9 @@ bool Application::Init()
 	timeBeginPeriod(1);
 	m_dwExecLastTime = timeGetTime();
 	m_dwCurrentTime = m_dwExecLastTime;
+	m_dwFrameCount = 0;
+	m_dwLsatFPSTime = m_dwExecLastTime;
+	m_fFPS = 0.0f;
 	return true;
 }
 
@@ -96,6 +101,8 @@ void Application::Run()
 	Texture tex;
 	tex.Load(&Renderer::Instance(), "Assets/Texture/field.jpg");
 
+	float scale = 1.0f;
+
 	while (true)
 	{
 		if (!m_window.ProcessMessage()) { break; }
@@ -118,9 +125,9 @@ void Application::Run()
 			// シェーダーにカメラのデータを渡す
 			Renderer::Instance().GetCBufferAllocater()->BindAndAttachData(0, cbCamera);
 			// ワールド行列の更新
-			// mWorld *= DirectX::XMMatrixRotationX(DirectX::XMConvertToRadians(1.0f));
+			mWorld *= DirectX::XMMatrixRotationX(DirectX::XMConvertToRadians(1.0f));
 			mWorld *= DirectX::XMMatrixRotationY(DirectX::XMConvertToRadians(1.0f));
-			// mWorld *= DirectX::XMMatrixRotationZ(DirectX::XMConvertToRadians(1.0f));
+			mWorld *= DirectX::XMMatrixRotationZ(DirectX::XMConvertToRadians(1.0f));
 			Renderer::Instance().GetCBufferAllocater()->BindAndAttachData(1, mWorld);
 			// モデルの描画
 			shader.DrawModel(model);
@@ -133,7 +140,51 @@ void Application::Run()
 			texShader.Begin(m_window.GetWidth(), m_window.GetHeight());
 			texShader.Draw2D(tex);
 
+			Renderer::Instance().BeginImGuiDraw();	// ImGuiの描画開始
+			// ImGuiの描画処理
+			ImGui::Begin("Test Menu");
+			ImGui::SetWindowSize(ImVec2(400, 500), ImGuiCond_::ImGuiCond_FirstUseEver);
+
+			// FPSの表示
+			if ((m_dwCurrentTime - m_dwLsatFPSTime) >= 1000)
+			{
+				m_fFPS = (float)(m_dwFrameCount / ((m_dwCurrentTime - m_dwLsatFPSTime) / 1000.0f));
+				m_dwFrameCount = 0;
+				m_dwLsatFPSTime = m_dwCurrentTime;
+			}
+			ImGui::Dummy(ImVec2(0.0f, 10.0f));
+			ImGui::Text("FPS : %3.2f", m_fFPS);
+			ImGui::Dummy(ImVec2(0.0f, 10.0f));
+			ImGui::Separator();
+			ImGui::Dummy(ImVec2(0.0f, 10.0f));
+
+			constexpr float pi = 3.141592653589f;
+			static int fov = 90.0f;
+			if (ImGui::SliderInt("Field of view", &fov, 10, 120))
+			{
+				cbCamera2.mProj = cbCamera.mProj = XMMatrixPerspectiveFovLH(XMConvertToRadians(fov), ASPECT_RATIO, 0.01f, 1000.0f);
+			}
+			ImGui::Dummy(ImVec2(0.0f, 10.0f));
+			ImGui::Separator();
+			ImGui::Dummy(ImVec2(0.0f, 10.0f));
+
+			static float bgCol[4] = { 0.0f,1.0f,1.0f,1.0f };
+			ImGui::ColorPicker4("BG color", bgCol, ImGuiColorEditFlags_::ImGuiColorEditFlags_PickerHueWheel | ImGuiColorEditFlags_::ImGuiColorEditFlags_AlphaBar);
+			ImGui::Dummy(ImVec2(0.0f, 10.0f));
+			ImGui::Separator();
+			ImGui::Dummy(ImVec2(0.0f, 10.0f));
+
+
+			// ----- 設定を渡す -----
+			Renderer::Instance().SetClearColor(bgCol[0], bgCol[1], bgCol[2], bgCol[3]);
+
+			ImGui::End();
+
+			// ----- 描画終了 -----
+			Renderer::Instance().EndImGuiDraw();		// ImGuiの描画終了
 			Renderer::Instance().EndDraw();			// 描画終了
+			// ========================================
+			m_dwFrameCount++;
 		}
 	}
 }

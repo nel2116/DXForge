@@ -16,6 +16,8 @@
 #define WINDOW_NAME "DXForge"
 // クラスの名前
 #define CLASS_NAME "DXForgeWindow"
+// 
+#define WINDOW_STYLE (WS_OVERLAPPEDWINDOW ^ (WS_THICKFRAME|WS_MAXIMIZEBOX))
 // ウィンドウの幅
 const int WINDOW_WIDTH = 1280;
 // ウィンドウの高さ
@@ -50,9 +52,12 @@ public:		// メンバ関数
 	int GetWidth() const { return m_width; }
 	int GetHeight() const { return m_height; }
 
+private:	// プライベート関数
+	static VOID SetClientSize(LONG sx, LONG sy);
+
 private:	// メンバ変数
-	HWND m_hwnd;
+	static HWND m_hwnd;
 	WNDCLASSEX m_windowClass;
-	int m_width;
-	int m_height;
+	static int m_width;
+	static int m_height;
 };

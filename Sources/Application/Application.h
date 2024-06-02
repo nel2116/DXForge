@@ -10,7 +10,7 @@
 #include <System/window.h>
 
 // ====== 定数定義 ======
-const float FPS = 60.0f;				// フレームレート
+const float FPS = 120.0f;				// フレームレート
 const float FRAME_TIME = 1000.0f / FPS;	// フレーム時間
 
 // ====== クラス定義 ======
@@ -44,7 +44,9 @@ private:	// メンバ変数
 	Window m_window;
 	DWORD m_dwExecLastTime;
 	DWORD m_dwCurrentTime;
-
+	DWORD m_dwFrameCount;
+	DWORD m_dwLsatFPSTime;
+	float m_fFPS;
 
 public:		// シングルトン関連
 	/// <summary>

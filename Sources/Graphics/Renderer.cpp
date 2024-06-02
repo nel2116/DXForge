@@ -8,6 +8,7 @@
 // ====== インクルード部 ======
 #include "stdafx.h"
 #include "Renderer.h"
+
 // ====== 名前空間 ======
 using Microsoft::WRL::ComPtr;
 
@@ -87,6 +88,41 @@ bool Renderer::Init(Window* window)
 		return false;
 	}
 
+	m_upImGuiHeap = make_unique<ImGuiHeap>();
+	if (!m_upImGuiHeap->Create(this, HeapType::CBVSRVUAV, 1))
+	{
+		assert(0 && "imuGuiヒープの作成に失敗しました。");
+		return false;
+	}
+
+
+	// Setup Dear ImGui context
+	IMGUI_CHECKVERSION();
+	if (ImGui::CreateContext() == nullptr)
+	{
+		assert(0 && "ImGuiのコンテキストの作成に失敗しました。");
+		return false;
+	}
+
+	if (!ImGuiSetting())
+	{
+		assert(0 && "ImGuiのセッティングに失敗しました。");
+		return false;
+	}
+
+	if (!ImGui_ImplWin32_Init(m_pWindow->GetHwnd()))
+	{
+		assert(0 && "ImGuiの初期化に失敗しました。");
+		return false;
+	}
+
+	if (!ImGui_ImplDX12_Init(m_pDevice.Get(), 3, DXGI_FORMAT_R8G8B8A8_UNORM, m_upImGuiHeap->GetHeap().Get(), m_upImGuiHeap->GetCPUHandle(0), m_upImGuiHeap->GetGPUHandle(0)))
+	{
+		assert(0 && "ImGuiDX12の初期化に失敗しました。");
+		return false;
+	}
+
+
 	if (!CreateSwapChainRTV())
 	{
 		assert(0 && "スワップチェインのRTVの作成に失敗しました。");
@@ -106,6 +142,11 @@ void Renderer::Uninit()
 {
 	// フェンスの待機
 	WaitForCmdQueue();
+
+	// Cleanup
+	ImGui_ImplDX12_Shutdown();
+	ImGui_ImplWin32_Shutdown();
+	ImGui::DestroyContext();
 
 	m_pWindow = nullptr;
 }
@@ -136,6 +177,20 @@ void Renderer::Begin2DDraw()
 	// レンダーターゲットをセット
 	auto rtvH = m_pRTVHeap->GetCPUHandle(bbIdx);
 	m_pCmdList->OMSetRenderTargets(1, &rtvH, false, nullptr);
+}
+
+void Renderer::BeginImGuiDraw()
+{
+	ImGui_ImplDX12_NewFrame();
+	ImGui_ImplWin32_NewFrame();
+	ImGui::NewFrame();
+}
+
+void Renderer::EndImGuiDraw()
+{
+	ImGui::Render();
+	m_pCmdList->SetDescriptorHeaps(1, m_upImGuiHeap->GetHeap().GetAddressOf());
+	ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), m_pCmdList.Get());
 }
 
 void Renderer::EndDraw()
@@ -380,6 +435,21 @@ bool Renderer::CreateFence()
 	return true;
 }
 
+bool Renderer::ImGuiSetting()
+{
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+	// Setup Dear ImGui style
+	ImGui::StyleColorsDark();
+	//ImGui::StyleColorsLight();
+
+	io.Fonts->AddFontFromFileTTF("Assets/Fonsts/MPLUS1-Medium.ttf", 24.0f, nullptr, io.Fonts->GetGlyphRangesJapanese());
+
+
+	return true;
+}
+
 void Renderer::TransBarrier(ID3D12Resource* pResource, D3D12_RESOURCE_STATES before, D3D12_RESOURCE_STATES after)
 {
 	D3D12_RESOURCE_BARRIER barrier = {};
@@ -392,3 +462,4 @@ void Renderer::TransBarrier(ID3D12Resource* pResource, D3D12_RESOURCE_STATES bef
 
 	m_pCmdList->ResourceBarrier(1, &barrier);
 }
+
