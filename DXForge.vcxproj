@@ -173,6 +173,7 @@
     </Bscmake>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Sources\Actor\Actor.cpp" />
     <ClCompile Include="Sources\Application\Application.cpp" />
     <ClCompile Include="Sources\Graphics\Buffer\CBufferAllocater\CBufferAllocater.cpp" />
     <ClCompile Include="Sources\Graphics\Buffer\DepthStencil\DepthStencil.cpp" />
@@ -202,8 +203,11 @@
     <ClCompile Include="Sources\System\window.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Sources\Actor\Actor.h" />
     <ClInclude Include="Sources\Application\Application.h" />
+    <ClInclude Include="Sources\Component\Component.h" />
     <ClInclude Include="Sources\DirectXTex\DirectXTex.h" />
+    <ClInclude Include="Sources\GameObject\Actor.h" />
     <ClInclude Include="Sources\Graphics\Buffer\Buffer.h" />
     <ClInclude Include="Sources\Graphics\Buffer\CBufferAllocater\CBufferAllocater.h" />
     <ClInclude Include="Sources\Graphics\Buffer\CBufferAllocater\CBufferData\CBufferData.h" />
