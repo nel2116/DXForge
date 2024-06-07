@@ -99,6 +99,9 @@ bool Window::Create(int width, int height, const string& titleName, const string
 	// ウィンドウの更新
 	UpdateWindow(m_hwnd);
 
+	// ウィンドウのフォーカスを設定
+	SetFocus(m_hwnd);
+
 	return true;
 }
 

@@ -9,17 +9,26 @@
 #include <stdio.h>
 #include <Application/Application.h>
 
+
+#if defined(_DEBUG) || defined(DEBUG)
+#define _CRTDBG_MAP_ALLOC
+#endif	// _DEBUG || DEBUG
+
+
 // ====== プロトタイプ宣言 ======
 void pause(void);	// [Enter]キーの入力待ち
 
 // エントリーポイント
-#ifndef _DEBUG
-int main(void)
-#else
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
-#endif
 {
+
+#if defined(_DEBUG) || defined(DEBUG)
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);	// メモリリーク検出
+	// _CrtSetBreakAlloc(0);	// メモリリーク発生時にブレークポイントを設定
+
+#endif	// _DEBUG || DEBUG
+
+	// アプリケーションの初期化
 	auto& app = Application::Instance();	// シングルトンのインスタンスを取得
 	if (!app.Init()) { return -1; }
 

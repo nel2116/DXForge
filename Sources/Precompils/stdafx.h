@@ -41,6 +41,7 @@
 #include <future>
 #include <filesystem>
 #include <chrono>
+#include <typeinfo>
 
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -66,26 +67,6 @@
 #include <System/window.h>
 // 描画関係のデバイス
 #include <Graphics/Renderer.h>
-// ヒープ
-#include <Graphics/Heap/Heap.h>
-#include <Graphics/Heap/RTVHeap/RTVHeap.h>
-#include <Graphics/Heap/CBVSRVUAVHeap/CBVSRVUAVHeap.h>
-#include <Graphics/Heap/DSVHeap/DSVHeap.h>
-#include <Graphics/Heap/ImGuiHeap/ImGuiHeap.h>
-// 定数バッファのアロケーター
-#include <Graphics/Buffer/CBufferAllocater/CBufferAllocater.h>
-// 定数バッファデータ
-#include <Graphics/Buffer/CBufferAllocater/CBufferData/CBufferData.h>
-// デプスステンシル
-#include <Graphics/Buffer/DepthStencil/DepthStencil.h>
-// テクスチャ
-#include <Graphics/Buffer/Texture/Texture.h>
-// メッシュ
-#include <Graphics/Mesh/Mesh.h>
-// モデル
-#include <Graphics/Model/Model.h>
-// シェーダー
-#include <Graphics/Shader/Shader.h>
 
 // ====== 名前空間 ======
 using namespace std;

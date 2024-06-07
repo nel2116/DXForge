@@ -30,14 +30,14 @@
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -90,6 +90,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <AdditionalIncludeDirectories>$(SolutionDir)Sources\DirectXTex;$(SolitionDir)Library\assimp\build\include</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -109,6 +110,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <AdditionalIncludeDirectories>$(SolutionDir)Sources\DirectXTex;$(SolitionDir)Library\assimp\build\include</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -132,6 +134,7 @@
       <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AdditionalIncludeDirectories>$(SolutionDir)Sources\DirectXTex;$(SolitionDir)Library\assimp\build\include</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -158,6 +161,7 @@
       <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AdditionalIncludeDirectories>$(SolutionDir)Sources\DirectXTex;$(SolitionDir)Library\assimp\build\include</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -175,26 +179,15 @@
   <ItemGroup>
     <ClCompile Include="Sources\Actor\Actor.cpp" />
     <ClCompile Include="Sources\Application\Application.cpp" />
-    <ClCompile Include="Sources\Graphics\Buffer\CBufferAllocater\CBufferAllocater.cpp" />
-    <ClCompile Include="Sources\Graphics\Buffer\DepthStencil\DepthStencil.cpp" />
-    <ClCompile Include="Sources\Graphics\Heap\CBVSRVUAVHeap\CBVSRVUAVHeap.cpp" />
-    <ClCompile Include="Sources\Graphics\Heap\DSVHeap\DSVHeap.cpp" />
-    <ClCompile Include="Sources\Graphics\Heap\ImGuiHeap\ImGuiHeap.cpp" />
-    <ClCompile Include="Sources\Graphics\Heap\RTVHeap\RTVHeap.cpp" />
-    <ClCompile Include="Sources\Graphics\Mesh\Mesh.cpp" />
-    <ClCompile Include="Sources\Graphics\Model\Model.cpp" />
-    <ClCompile Include="Sources\Graphics\Model\ModelLoader.cpp" />
+    <ClCompile Include="Sources\Graphics\Polygon\Polygon.cpp" />
     <ClCompile Include="Sources\Graphics\Renderer.cpp" />
-    <ClCompile Include="Sources\Graphics\Shader\Pipeline\Pipeline.cpp" />
-    <ClCompile Include="Sources\Graphics\Shader\RootSignature\RootSignature.cpp" />
-    <ClCompile Include="Sources\Graphics\Shader\Shader.cpp" />
-    <ClCompile Include="Sources\Graphics\Buffer\Texture\Texture.cpp" />
     <ClCompile Include="Sources\imugui\imgui.cpp" />
     <ClCompile Include="Sources\imugui\imgui_demo.cpp" />
     <ClCompile Include="Sources\imugui\imgui_draw.cpp" />
     <ClCompile Include="Sources\imugui\imgui_impl_dx12.cpp" />
     <ClCompile Include="Sources\imugui\imgui_impl_win32.cpp" />
     <ClCompile Include="Sources\imugui\imgui_widgets.cpp" />
+    <ClCompile Include="Sources\Manager\ActorManager.cpp" />
     <ClCompile Include="Sources\Precompils\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
@@ -208,24 +201,8 @@
     <ClInclude Include="Sources\Component\Component.h" />
     <ClInclude Include="Sources\DirectXTex\DirectXTex.h" />
     <ClInclude Include="Sources\GameObject\Actor.h" />
-    <ClInclude Include="Sources\Graphics\Buffer\Buffer.h" />
-    <ClInclude Include="Sources\Graphics\Buffer\CBufferAllocater\CBufferAllocater.h" />
-    <ClInclude Include="Sources\Graphics\Buffer\CBufferAllocater\CBufferData\CBufferData.h" />
-    <ClInclude Include="Sources\Graphics\Buffer\DepthStencil\DepthStencil.h" />
-    <ClInclude Include="Sources\Graphics\Heap\CBVSRVUAVHeap\CBVSRVUAVHeap.h" />
-    <ClInclude Include="Sources\Graphics\Heap\DSVHeap\DSVHeap.h" />
-    <ClInclude Include="Sources\Graphics\Heap\Heap.h" />
-    <ClInclude Include="Sources\Graphics\Heap\ImGuiHeap\ImGuiHeap.h" />
-    <ClInclude Include="Sources\Graphics\Heap\RTVHeap\RTVHeap.h" />
-    <ClInclude Include="Sources\Graphics\Mesh\Mesh.h" />
-    <ClInclude Include="Sources\Graphics\Mesh\MeshData\MeshData.h" />
-    <ClInclude Include="Sources\Graphics\Model\Model.h" />
-    <ClInclude Include="Sources\Graphics\Model\ModelLoader.h" />
+    <ClInclude Include="Sources\Graphics\Polygon\Polygon.h" />
     <ClInclude Include="Sources\Graphics\Renderer.h" />
-    <ClInclude Include="Sources\Graphics\Shader\Pipeline\Pipeline.h" />
-    <ClInclude Include="Sources\Graphics\Shader\RootSignature\RootSignature.h" />
-    <ClInclude Include="Sources\Graphics\Shader\Shader.h" />
-    <ClInclude Include="Sources\Graphics\Buffer\Texture\Texture.h" />
     <ClInclude Include="Sources\imugui\imconfig.h" />
     <ClInclude Include="Sources\imugui\imgui.h" />
     <ClInclude Include="Sources\imugui\imgui_impl_dx12.h" />
@@ -234,6 +211,8 @@
     <ClInclude Include="Sources\imugui\imstb_rectpack.h" />
     <ClInclude Include="Sources\imugui\imstb_textedit.h" />
     <ClInclude Include="Sources\imugui\imstb_truetype.h" />
+    <ClInclude Include="Sources\Manager\ActorManager.h" />
+    <ClInclude Include="Sources\Manager\Manager.h" />
     <ClInclude Include="Sources\Precompils\stdafx.h" />
     <ClInclude Include="Sources\System\window.h" />
   </ItemGroup>

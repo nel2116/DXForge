@@ -9,457 +9,406 @@
 #include "stdafx.h"
 #include "Renderer.h"
 
-// ====== 名前空間 ======
-using Microsoft::WRL::ComPtr;
 
-// ====== メンバ関数 ======
-
-namespace
+void EnableDebugLayer()
 {
-	// デバッグレイヤーをオンに
-	void EnableDebugLayer()
+	ComPtr<ID3D12Debug> debug;
+	auto hr = D3D12GetDebugInterface(IID_PPV_ARGS(debug.ReleaseAndGetAddressOf()));
+
+	// デバッグレイヤーの有効化
+	if (SUCCEEDED(hr))
 	{
-		ComPtr<ID3D12Debug> pDebugController = nullptr;
-		if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(pDebugController.ReleaseAndGetAddressOf()))))
-		{
-			pDebugController->EnableDebugLayer();
-		}
+		debug->EnableDebugLayer();
 	}
 }
 
-// レンダラーの初期化
+
 bool Renderer::Init(Window* window)
 {
-	SetClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-#ifdef _DEBUG
-	EnableDebugLayer();
-	SetClearColor(1.0f, 0.0f, 1.0f, 1.0f);
-#endif // _DEBUG
-
-	// ウィンドウの取得
+	// ウィンドウクラスのポインタを設定
 	m_pWindow = window;
-	if (!CreateFactory())
-	{
-		assert(0 && "ファクトリーの作成に失敗しました。");
-		return false;
-	}
+
+
+#if defined(_DEBUG) || defined(DEBUG)
+	// デバッグレイヤーの有効化
+	EnableDebugLayer();
+#endif	// _DEBUG || DEBUG
+
+	// --- D3D初期化 ---
+	// 1.デバイスの生成
 	if (!CreateDevice())
 	{
-		assert(0 && "D3D12デバイスの作成に失敗しました。");
+		// デバイスの生成に失敗した場合
+		assert(0 && "D3Dデバイスの生成に失敗しました");
 		return false;
 	}
-	if (!CreateCommandList())
+
+	// 2.コマンドキューの生成
+	if (!CreateCommandQueue())
 	{
-		assert(0 && "コマンドリストの作成に失敗しました。");
+		// コマンドキューの生成に失敗した場合
+		assert(0 && "コマンドキューの生成に失敗しました");
 		return false;
 	}
+
+	// 3.スワップチェインの生成
 	if (!CreateSwapChain())
 	{
-		assert(0 && "スワップチェインの作成に失敗しました。");
+		// スワップチェインの生成に失敗した場合
+		assert(0 && "スワップチェインの生成に失敗しました。");
 		return false;
 	}
 
-	m_pRTVHeap = make_unique<RTVHeap>();
-	if (!m_pRTVHeap->Create(this, HeapType::RTV, 100))
+	// 4.コマンドアロケータの生成
+	if (!CreateCommandAllocator())
 	{
-		assert(0 && "RTVヒープの作成に失敗しました。");
+		// コマンドアロケータの生成に失敗した場合
+		assert(0 && "コマンドアロケータの生成に失敗しました。");
 		return false;
+
 	}
-	m_upCBVSRVUAVHeap = make_unique<CBVSRVUAVHeap>();
-	if (!m_upCBVSRVUAVHeap->Create(this, HeapType::CBVSRVUAV, DirectX::XMFLOAT3(100, 100, 100)))
+
+	// 5.コマンドリストの生成
+	if (!CreateCommandList())
 	{
-		assert(0 && "CBVSRVUAVヒープの作成に失敗しました。");
+		// コマンドリストの生成に失敗した場合
+		assert(0 && "コマンドリストの生成に失敗しました。");
 		return false;
-	}
-	m_upCBufferAllocater = make_unique<CBufferAllocater>();
-	m_upCBufferAllocater->Create(this, m_upCBVSRVUAVHeap.get());
 
-	m_upDSVHeap = make_unique<DSVHeap>();
-	if (!m_upDSVHeap->Create(this, HeapType::DSV, 100))
+	}
+
+	// 6.RTVの生成
+	if (!CreateRTV())
 	{
-		assert(0 && "DSVヒープの作成に失敗しました。");
+		// RTVの生成に失敗した場合
+		assert(0 && "RTVの生成に失敗しました。");
 		return false;
 	}
 
-	m_upDepthStencil = make_unique<DepthStencil>();
-	if (!m_upDepthStencil->Create(this, XMFLOAT2(WINDOW_WIDTH, WINDOW_HEIGHT)))
-	{
-		assert(0 && "デプスステンシルの作成に失敗しました。");
-		return false;
-	}
-
-	m_upImGuiHeap = make_unique<ImGuiHeap>();
-	if (!m_upImGuiHeap->Create(this, HeapType::CBVSRVUAV, 1))
-	{
-		assert(0 && "imuGuiヒープの作成に失敗しました。");
-		return false;
-	}
-
-
-	// Setup Dear ImGui context
-	IMGUI_CHECKVERSION();
-	if (ImGui::CreateContext() == nullptr)
-	{
-		assert(0 && "ImGuiのコンテキストの作成に失敗しました。");
-		return false;
-	}
-
-	if (!ImGuiSetting())
-	{
-		assert(0 && "ImGuiのセッティングに失敗しました。");
-		return false;
-	}
-
-	if (!ImGui_ImplWin32_Init(m_pWindow->GetHwnd()))
-	{
-		assert(0 && "ImGuiの初期化に失敗しました。");
-		return false;
-	}
-
-	if (!ImGui_ImplDX12_Init(m_pDevice.Get(), 3, DXGI_FORMAT_R8G8B8A8_UNORM, m_upImGuiHeap->GetHeap().Get(), m_upImGuiHeap->GetCPUHandle(0), m_upImGuiHeap->GetGPUHandle(0)))
-	{
-		assert(0 && "ImGuiDX12の初期化に失敗しました。");
-		return false;
-	}
-
-
-	if (!CreateSwapChainRTV())
-	{
-		assert(0 && "スワップチェインのRTVの作成に失敗しました。");
-		return false;
-	}
-
+	// 7.フェンスの生成
 	if (!CreateFence())
 	{
-		assert(0 && "フェンスの作成に失敗しました。");
+		// フェンスの生成に失敗した場合
+		assert(0 && "フェンスの生成に失敗しました。");
 		return false;
 	}
 
+	// コマンドリストを閉じる
+	m_pCmdList->Close();
+
+	// 初期化成功
 	return true;
+}
+
+void Renderer::Begin()
+{
+	// コマンドの記録を開始
+	m_pCmdAllocator[m_FrameIndex]->Reset();
+	m_pCmdList->Reset(m_pCmdAllocator[m_FrameIndex].Get(), nullptr);
+
+	// リソースバリアの設定
+	D3D12_RESOURCE_BARRIER barrier = {};
+	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;	// リソースバリアの種類 : リソースの状態遷移
+	barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;		// フラグ : 特になし
+	barrier.Transition.pResource = m_pColorBuffer[m_FrameIndex].Get();	// 
+	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;	// 遷移前のリソースの状態 : プレゼント
+	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;	// 遷移後のリソースの状態 : レンダーターゲット
+	barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;	// サブリソース : 全て
+
+	// リソースバリア
+	m_pCmdList->ResourceBarrier(1, &barrier);
+
+	// レンダーターゲットの設定
+	m_pCmdList->OMSetRenderTargets(1, &m_RTVHandle[m_FrameIndex], FALSE, nullptr);
+
+	// クリアカラー
+	float clearColor[] = { 0.25f, 0.25f, 0.25f, 1.0f };
+
+	// レンダーターゲットビューをクリア
+	m_pCmdList->ClearRenderTargetView(m_RTVHandle[m_FrameIndex], clearColor, 0, nullptr);
+
+}
+
+void Renderer::End()
+{
+	// リソースバリアの設定
+	D3D12_RESOURCE_BARRIER barrier = {};
+	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;	// リソースバリアの種類 : リソースの状態遷移
+	barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;		// フラグ :
+	barrier.Transition.pResource = m_pColorBuffer[m_FrameIndex].Get();	// リソース
+	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;	// 遷移前のリソースの状態
+	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;	// 遷移後のリソースの状態
+	barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;	// サブリソース
+
+	// リソースバリア
+	m_pCmdList->ResourceBarrier(1, &barrier);
+
+	// コマンドの記録を終了
+	m_pCmdList->Close();
+
+	// コマンドの実行
+	ID3D12CommandList* ppCmdLists[] = { m_pCmdList.Get() };
+	m_pCmdQueue->ExecuteCommandLists(1, ppCmdLists);
+
+	// 画面に表示
+	Present(1);
+}
+
+void Renderer::Present(uint32_t interval)
+{
+	// スワップチェインの表示
+	// 第1引数 : フレームの表示間隔 : 1で更新周期通りに表示、0で即時表示(2などでは2回目の垂直同期後に表示を同期 例:ディスプレイの更新周期が60Hzの場合、2で30FPSとなる)
+	// 第2引数 : フラグ : 特になし
+	m_pSwapChain->Present(interval, 0);
+
+	// シグナル処理
+	const auto currentValue = m_FenceCounter[m_FrameIndex];
+	m_pCmdQueue->Signal(m_pFence.Get(), currentValue);
+
+	// バックバッファ番号を更新
+	m_FrameIndex = m_pSwapChain->GetCurrentBackBufferIndex();
+
+	// 次のフレームの描画準備蒲田であれば待機する
+	if (m_pFence->GetCompletedValue() < m_FenceCounter[m_FrameIndex])
+	{
+		m_pFence->SetEventOnCompletion(m_FenceCounter[m_FrameIndex], m_fenceEvent);
+		WaitForSingleObjectEx(m_fenceEvent, INFINITE, FALSE);
+	}
+
+	// 次のフレームのフェンスカウンターを増やす
+	m_FenceCounter[m_FrameIndex]++;
 }
 
 void Renderer::Uninit()
 {
-	// フェンスの待機
-	WaitForCmdQueue();
+	// GPUの処理完了を待つ
+	WaitGpu();
 
-	// Cleanup
-	ImGui_ImplDX12_Shutdown();
-	ImGui_ImplWin32_Shutdown();
-	ImGui::DestroyContext();
+	// イベント破棄
+	if (m_fenceEvent != nullptr)
+	{
+		CloseHandle(m_fenceEvent);
+		m_fenceEvent = nullptr;
+	}
 
 	m_pWindow = nullptr;
 }
 
-void Renderer::Begin3DDraw()
+void Renderer::WaitGpu()
 {
-	// リソースバリアのステートをレンダーターゲットに変更
-	auto bbIdx = m_pSwapChain->GetCurrentBackBufferIndex();
-	TransBarrier(m_pBackBuffers[bbIdx].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	assert(m_pCmdQueue != nullptr);
+	assert(m_pFence != nullptr);
+	assert(m_fenceEvent != nullptr);
 
-	// レンダーターゲットをセット
-	auto rtvH = m_pRTVHeap->GetCPUHandle(bbIdx);
-	auto dsvH = m_upDSVHeap->GetCPUHandle(m_upDepthStencil->GetDSVNumber());
-	m_pCmdList->OMSetRenderTargets(1, &rtvH, false, &dsvH);
+	// シグナル処理
+	m_pCmdQueue->Signal(m_pFence.Get(), m_FenceCounter[m_FrameIndex]);
 
-	// レンダーターゲットのクリア
-	m_pCmdList->ClearRenderTargetView(rtvH, m_clearColor, 0, nullptr);
+	// 完了時にイベントを設定する
+	m_pFence->SetEventOnCompletion(m_FenceCounter[m_FrameIndex], m_fenceEvent);
 
-	// デプスバッファのクリア
-	m_upDepthStencil->ClearBuffer();
+	// イベントが設定されるまで待機
+	WaitForSingleObjectEx(m_fenceEvent, INFINITE, FALSE);
+
+	// フェンスカウンターを増やす
+	m_FenceCounter[m_FrameIndex]++;
 }
 
-void Renderer::Begin2DDraw()
-{
-	// リソースバリアのステートをレンダーターゲットに変更
-	auto bbIdx = m_pSwapChain->GetCurrentBackBufferIndex();
-
-	// レンダーターゲットをセット
-	auto rtvH = m_pRTVHeap->GetCPUHandle(bbIdx);
-	m_pCmdList->OMSetRenderTargets(1, &rtvH, false, nullptr);
-}
-
-void Renderer::BeginImGuiDraw()
-{
-	ImGui_ImplDX12_NewFrame();
-	ImGui_ImplWin32_NewFrame();
-	ImGui::NewFrame();
-}
-
-void Renderer::EndImGuiDraw()
-{
-	ImGui::Render();
-	m_pCmdList->SetDescriptorHeaps(1, m_upImGuiHeap->GetHeap().GetAddressOf());
-	ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), m_pCmdList.Get());
-}
-
-void Renderer::EndDraw()
-{
-	auto bbIdx = m_pSwapChain->GetCurrentBackBufferIndex();
-
-	// リソースバリアのステートをプレゼントに変更
-	TransBarrier(m_pBackBuffers[bbIdx].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
-
-	// コマンドリストを閉じて実行する
-	m_pCmdList->Close();
-	ID3D12CommandList* cmdLists[] = { m_pCmdList.Get() };
-	m_pCmdQueue->ExecuteCommandLists(1, cmdLists);
-
-	// コマンドリストの同期を待つ
-	WaitForCmdQueue();
-
-	// コマンドアロケータとコマンドリストのリセット
-	m_pCmdAllocator->Reset();
-	m_pCmdList->Reset(m_pCmdAllocator.Get(), nullptr);
-
-	// スワップチェインにプレゼント
-	m_pSwapChain->Present(1, 0);
-}
-
-void Renderer::WaitForCmdQueue()
-{
-	m_pCmdQueue->Signal(m_pFence.Get(), ++m_fanceVal);
-	if (m_pFence->GetCompletedValue() < m_fanceVal)
-	{
-		auto event = CreateEvent(nullptr, false, false, nullptr);	// イベントハンドルの取得
-		if (!event)
-		{
-			assert(0 && "イベントエラー、アプリを終了します。");
-		}
-		m_pFence->SetEventOnCompletion(m_fanceVal, event);	// イベントの設定
-		WaitForSingleObject(event, INFINITE);	// イベントが発生するまで待機
-		CloseHandle(event);	// イベントハンドルの解放
-	}
-}
-
-void Renderer::SetClearColor(float r, float g, float b, float a)
-{
-	m_clearColor[0] = r;
-	m_clearColor[1] = g;
-	m_clearColor[2] = b;
-	m_clearColor[3] = a;
-}
-
-// ファクトリーの作成
-bool Renderer::CreateFactory()
-{
-	UINT flagsDXGI = 0;
-
-#ifdef _DEBUG
-	flagsDXGI |= DXGI_CREATE_FACTORY_DEBUG;
-#endif
-
-	auto hr = CreateDXGIFactory2(flagsDXGI, IID_PPV_ARGS(m_pFactory.ReleaseAndGetAddressOf()));
-
-	if (FAILED(hr))
-	{
-		// エラーメッセージの表示
-		MessageBox(nullptr, "DXGIファクトリーの作成に失敗しました。", "エラー", MB_OK);
-		return false;
-	}
-	return true;
-}
-
-// デバイスの作成
 bool Renderer::CreateDevice()
 {
-	// ------ 変数宣言 ------
-	ComPtr<IDXGIAdapter> pSelectAdapter = nullptr;
-	vector<ComPtr<IDXGIAdapter>> pAdapters;
-	vector<DXGI_ADAPTER_DESC> descs;
-
-	// ------ アダプターの列挙 ------
-	for (UINT idx = 0; 1; ++idx)
-	{
-		pAdapters.push_back(nullptr);
-		HRESULT hr = m_pFactory->EnumAdapters(idx, &pAdapters[idx]);
-
-		if (hr == DXGI_ERROR_NOT_FOUND) { break; }
-
-		descs.push_back({});
-		pAdapters[idx]->GetDesc(&descs[idx]);
-	}
-
-	// ------ 選択 ------
-	E_GPU_TIER tier = E_GPU_TIER::Kind;
-	// 優先度の高いGPUドライバーを選択
-	for (int i = 0; i < descs.size(); ++i)
-	{
-		if (wstring(descs[i].Description).find(L"NVIDIA") != wstring::npos)
-		{
-			pSelectAdapter = pAdapters[i];
-			break;
-		}
-		else if (wstring(descs[i].Description).find(L"Amd") != wstring::npos)
-		{
-			if (tier > E_GPU_TIER::Amd)
-			{
-				pSelectAdapter = pAdapters[i];
-				tier = E_GPU_TIER::Amd;
-			}
-		}
-		else if (wstring(descs[i].Description).find(L"Intel") != wstring::npos)
-		{
-			if (tier > E_GPU_TIER::Intel)
-			{
-				pSelectAdapter = pAdapters[i];
-				tier = E_GPU_TIER::Intel;
-			}
-		}
-		else if (wstring(descs[i].Description).find(L"Qualcomm") != wstring::npos)
-		{
-			if (tier > E_GPU_TIER::Qualcomm)
-			{
-				pSelectAdapter = pAdapters[i];
-				tier = E_GPU_TIER::Qualcomm;
-			}
-		}
-		else if (wstring(descs[i].Description).find(L"Arm") != wstring::npos)
-		{
-			if (tier > E_GPU_TIER::Arm)
-			{
-				pSelectAdapter = pAdapters[i];
-				tier = E_GPU_TIER::Arm;
-			}
-		}
-	}
-
-	// ------ デバイスの作成 ------
-	D3D_FEATURE_LEVEL levels[] =
-	{
-		D3D_FEATURE_LEVEL_12_1,
-		D3D_FEATURE_LEVEL_12_0,
-		D3D_FEATURE_LEVEL_11_1,
-		D3D_FEATURE_LEVEL_11_0,
-	};
-
-	for (auto lv : levels)
-	{
-		if (D3D12CreateDevice(nullptr, lv, IID_PPV_ARGS(m_pDevice.ReleaseAndGetAddressOf())) == S_OK)
-		{
-			m_featureLevel = lv;
-			break;
-		}
-	}
-
+	// デバイスの生成
+	// 第1引数 : ビデオアダプターへのポインタ。デフォルトのアダプターを使用する場合はnullptr
+	// 第2引数 : デバイスの成功のために必要とされる最小機能レベル。D3D_FEATURE_LEVEL列挙型の値を指定
+	// 第3引数 : デバイスを作成するためのインターフェースID
+	// マクロを使用しない場合
+	// auto hr = D3D12CreateDevice(nullptr, D3D_FEATURE_LEVEL_11_0, __uuidof(ID3D12Device), reinterpret_cast<void**>(&m_pDevice));
+	auto hr = D3D12CreateDevice(nullptr, D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(m_pDevice.ReleaseAndGetAddressOf()));
+	// エラーチェック
+	if (FAILED(hr)) { return false; }
 	return true;
 }
 
-// コマンドリストの作成
-bool Renderer::CreateCommandList()
+bool Renderer::CreateCommandQueue()
 {
-	// コマンドアロケータの作成
-	auto hr = m_pDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(m_pCmdAllocator.ReleaseAndGetAddressOf()));
-	if (FAILED(hr))
-	{
-		MessageBox(nullptr, "コマンドアロケータの作成に失敗しました。", "エラー", MB_OK);
-		return false;
-	}
-	m_pCmdAllocator->SetName(L"CmdAllocator");
-
-	// コマンドリストの作成
-	hr = m_pDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_pCmdAllocator.Get(), nullptr, IID_PPV_ARGS(m_pCmdList.ReleaseAndGetAddressOf()));
-	if (FAILED(hr))
-	{
-		MessageBox(nullptr, "コマンドリストの作成に失敗しました。", "エラー", MB_OK);
-		return false;
-	}
-	m_pCmdList->SetName(L"CmdList");
-
-	// コマンドキューの作成
+	// コマンドキューの設定
 	D3D12_COMMAND_QUEUE_DESC desc = {};
-	desc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;				// タイムアウトなし
-	desc.NodeMask = 0;										// アダプターを一つしか使わないときは0
-	desc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;	// 特に指定なし
-	desc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;				// コマンドリストと合わせる
+	desc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;	// コマンドリストの種類 : GPUが実行可能なコマンドバッファを指定
+	desc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;	// コマンドキューの優先度 : 通常
+	desc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;	// コマンドキューのフラグ : 特になし
+	desc.NodeMask = 0;	// ノードマスク : GUPが複数ある場合に使用
 
-	hr = m_pDevice->CreateCommandQueue(&desc, IID_PPV_ARGS(m_pCmdQueue.ReleaseAndGetAddressOf()));
-	if (FAILED(hr))
-	{
-		MessageBox(nullptr, "コマンドキューの作成に失敗しました。", "エラー", MB_OK);
-		return false;
-	}
-	m_pCmdQueue->SetName(L"CmdQueue");
-
+	// コマンドキューの生成
+	auto hr = m_pDevice->CreateCommandQueue(&desc, IID_PPV_ARGS(m_pCmdQueue.ReleaseAndGetAddressOf()));
+	// エラーチェック
+	if (FAILED(hr)) { return false; }
 	return true;
 }
 
-// スワップチェインの作成
 bool Renderer::CreateSwapChain()
 {
-	DXGI_SWAP_CHAIN_DESC1 desc = {};
-	desc.Width = m_pWindow->GetWidth();
-	desc.Height = m_pWindow->GetHeight();
-	desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	desc.SampleDesc.Count = 1;
-	desc.BufferUsage = DXGI_USAGE_BACK_BUFFER;
-	desc.BufferCount = 2;
-	desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;		// フリップ後は速やかに破棄
-	desc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;	// ウィンドウとフルスクリーン切り替えを許可
+	// DXGIファクトリーの生成
+	// DXGI : DirectXグラフィックスインストラクチャー
+	// DXGIはカーネルモードドライバー及びシステムハードウェアとの通信を行うためのAPI
+	// DXGI自体はDirect3Dに依存しない
+	// 基本的にはどのようなGPUが接続されているかの列挙や、描画したフレームを画面へ表示するために使う
+	IDXGIFactory4* pFactory = nullptr;	// DXGIファクトリーインターフェース
+	auto hr = CreateDXGIFactory1(IID_PPV_ARGS(&pFactory));
+	// エラーチェック
+	if (FAILED(hr)) { return false; }
 
-	auto hr = m_pFactory->CreateSwapChainForHwnd(m_pCmdQueue.Get(), m_pWindow->GetHwnd(), &desc, nullptr, nullptr, (IDXGISwapChain1**)m_pSwapChain.ReleaseAndGetAddressOf());
+	// スワップチェインの設定
+	DXGI_SWAP_CHAIN_DESC desc = {};
+	desc.BufferDesc.Width = m_pWindow->GetWidth();			// 解像度の横幅を指定
+	desc.BufferDesc.Height = m_pWindow->GetHeight();		// 解像度の縦幅を指定
+	desc.BufferDesc.RefreshRate.Numerator = 60;				// リフレッシュレートの分子
+	desc.BufferDesc.RefreshRate.Denominator = 1;			// リフレッシュレートの分母
+	desc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;	// スキャンラインの順序 : 特に指定しない
+	desc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;					// スケーリング : 特に指定しない
+	desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;						// フォーマット	: RGBA8bit
+	desc.SampleDesc.Count = 1;								// サンプル数
+	desc.SampleDesc.Quality = 0;							// サンプル品質
+	desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;		// バッファの使用法 : 出力レンダーターゲットとして使用
+	desc.BufferCount = FRAME_BUFFER_COUNT;					// バッファ数
+	desc.OutputWindow = m_pWindow->GetHwnd();				// 出力先のウィンドウハンドル
+	desc.Windowed = TRUE;									// ウィンドウモード
+	desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;		// スワップエフェクト : バックバッファの内容を速やかに破棄
+	desc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;	// フラグ : モード切り替えを許可
+
+	// スワップチェインの生成
+	IDXGISwapChain* pSwapChain = nullptr;
+	hr = pFactory->CreateSwapChain(m_pCmdQueue.Get(), &desc, &pSwapChain);
+	// エラーチェック
 	if (FAILED(hr))
 	{
-		MessageBox(nullptr, "スワップチェインの作成に失敗しました。", "エラー", MB_OK);
+		SAFE_RELEASE(pFactory);
 		return false;
 	}
+
+	// IDXGISwapChain3を取得
+	hr = pSwapChain->QueryInterface(IID_PPV_ARGS(m_pSwapChain.ReleaseAndGetAddressOf()));
+	// エラーチェック
+	if (FAILED(hr))
+	{
+		SAFE_RELEASE(pFactory);
+		SAFE_RELEASE(pSwapChain);
+		return false;
+	}
+
+	// バックバッファ番号を取得
+	m_FrameIndex = m_pSwapChain->GetCurrentBackBufferIndex();
+
+	// 不要になったので解放
+	SAFE_RELEASE(pFactory);
+	SAFE_RELEASE(pSwapChain);
 
 	return true;
 }
 
-bool Renderer::CreateSwapChainRTV()
+bool Renderer::CreateCommandAllocator()
 {
-	for (int i = 0; i < (int)m_pBackBuffers.size(); ++i)
+	// コマンドアロケータの生成
+	for (auto i = 0u; i < FRAME_BUFFER_COUNT; ++i)
 	{
-		auto hr = m_pSwapChain->GetBuffer(i, IID_PPV_ARGS(m_pBackBuffers[i].ReleaseAndGetAddressOf()));
-		if (FAILED(hr))
-		{
-			MessageBox(nullptr, "スワップチェインのバックバッファの取得に失敗しました。", "エラー", MB_OK);
-			return false;
-		}
-		m_pRTVHeap->CreateRTV(m_pBackBuffers[i].Get());
+		// 第1引数 : コマンドリストの種類 : GPUが実行可能なコマンドバッファを指定
+		auto hr = m_pDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(m_pCmdAllocator[i].ReleaseAndGetAddressOf()));
+		// エラーチェック
+		if (FAILED(hr)) { return false; }
 	}
-	m_pBackBuffers[0]->SetName(L"BackBuffer0");
-	m_pBackBuffers[1]->SetName(L"BackBuffer1");
+	return true;
+}
+
+bool Renderer::CreateCommandList()
+{
+	// コマンドリストの生成
+	// 第1引数 : 複数のGPUノードがある場合に、ノードを識別するためのビットマスク : GPUが1つしかない場合は0
+	// 第2引数 : コマンドリストの種類 : GPUが実行可能なコマンドバッファを指定
+	// 第3引数 : コマンドアロケータ : コマンドリストが使用するコマンドアロケータ
+	// 第4引数 : パイプラインステート : 後で設定するためにnullptrを指定
+	// 第5引数 : インターフェースID
+	auto hr = m_pDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_pCmdAllocator[m_FrameIndex].Get(), nullptr, IID_PPV_ARGS(m_pCmdList.ReleaseAndGetAddressOf()));
+	// エラーチェック
+	if (FAILED(hr)) { return false; }
+	return true;
+}
+
+bool Renderer::CreateRTV()
+{
+	// ====== レンダーターゲットビュー(RTV) ======
+	// レンダーターゲットはDirect3Dの描画先
+	// 実体はバックバッファやテクスチャといったリソース
+	// リソースは単にメモリ領域を持つオブジェクトがわかっているだけでGPUのアドレスがどこになるのかわからない
+	// また、バッファ要領はわかっているが、バッファの区切り方によって2次元のテクスチャとして使うのか、3次元のテクスチャとして使うのかわからない
+	// そこで、リソースをどのように使うのかを指定するのがビュー
+	// RTVの作成方法
+	// 1,リソースの生成
+	// 2,ディスクリプタヒープの生成
+	// 3,レンダーターゲットビューの生成
+	// 今回の場合はスワップチェインのバックバッファをリソースとするため、1は不要
+	// 次にやるべきことはディスクリプタのアドレス取得
+
+	// ディスクリプタヒープの設定
+	D3D12_DESCRIPTOR_HEAP_DESC desc = {};
+	desc.NumDescriptors = FRAME_BUFFER_COUNT;	// ディスクリプタ数 : バッファ数
+	desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;	// ヒープの種類	: RTV
+	desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;	// フラグ : 特になし
+	desc.NodeMask = 0;	// ノードマスク : GPUが複数ある場合に使用
+
+	// ディスクリプタヒープの生成
+	auto hr = m_pDevice->CreateDescriptorHeap(&desc, IID_PPV_ARGS(m_pRTVHeap.ReleaseAndGetAddressOf()));
+	// エラーチェック
+	if (FAILED(hr)) { return false; }
+
+	// レンダーターゲットビューの生成
+	auto handle = m_pRTVHeap->GetCPUDescriptorHandleForHeapStart();
+	// この関数で取得できる値は固定値だが、デバイス依存のため必ず取得する
+	auto incrementSize = m_pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+
+	for (auto i = 0u; i < FRAME_BUFFER_COUNT; ++i)
+	{
+		hr = m_pSwapChain->GetBuffer(i, IID_PPV_ARGS(m_pColorBuffer[i].ReleaseAndGetAddressOf()));
+		// エラーチェック
+		if (FAILED(hr)) { return false; }
+
+		D3D12_RENDER_TARGET_VIEW_DESC viewDesc = {};
+		viewDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;	// フォーマット : sRGBでのRGBA8bit
+		viewDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;	// ビューの次元 : 2D
+		viewDesc.Texture2D.MipSlice = 0;	// ミップマップスライス : 0
+		viewDesc.Texture2D.PlaneSlice = 0;	// プレーンスライス : 0
+
+		m_pDevice->CreateRenderTargetView(m_pColorBuffer[i].Get(), &viewDesc, handle);
+		m_RTVHandle[i] = handle;
+		handle.ptr += incrementSize;
+	}
+
 	return true;
 }
 
 bool Renderer::CreateFence()
 {
-	auto hr = m_pDevice->CreateFence(m_fanceVal, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(m_pFence.ReleaseAndGetAddressOf()));
-	if (FAILED(hr))
+	// CPUとGPUの同期処理はApplication側の責務
+	// フェンスはCPUとGPUの同期を取るための仕組み
+	// フェンスの値がインクリメントされたかどうかでGPUの処理が終わったかどうかを判断する
+
+	// フェンスカウンターをリセット
+	for (auto i = 0u; i < FRAME_BUFFER_COUNT; ++i)
 	{
-		MessageBox(nullptr, "フェンスの作成に失敗しました。", "エラー", MB_OK);
-		return false;
+		m_FenceCounter[i] = 0;
 	}
+
+	// フェンスの生成
+	// 第1引数 : フェンスの初期値
+	// 第2引数 : フェンスのフラグ : 特になし
+	// 第3引数 : インターフェースID
+	auto hr = m_pDevice->CreateFence(m_FenceCounter[m_FrameIndex], D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(m_pFence.ReleaseAndGetAddressOf()));
+	// エラーチェック
+	if (FAILED(hr)) { return false; }
+
+	m_FenceCounter[m_FrameIndex]++;
+
+	// フェンスイベントの生成
+	// 描画処理が実際に終わるまで待つためOSのイベントを使用
+	m_fenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+	// エラーチェック
+	if (m_fenceEvent == nullptr) { return false; }
+
 	return true;
 }
-
-bool Renderer::ImGuiSetting()
-{
-	ImGuiIO& io = ImGui::GetIO(); (void)io;
-	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-	// Setup Dear ImGui style
-	ImGui::StyleColorsDark();
-	//ImGui::StyleColorsLight();
-
-	io.Fonts->AddFontFromFileTTF("Assets/Fonsts/MPLUS1-Medium.ttf", 24.0f, nullptr, io.Fonts->GetGlyphRangesJapanese());
-
-
-	return true;
-}
-
-void Renderer::TransBarrier(ID3D12Resource* pResource, D3D12_RESOURCE_STATES before, D3D12_RESOURCE_STATES after)
-{
-	D3D12_RESOURCE_BARRIER barrier = {};
-	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-	barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-	barrier.Transition.pResource = pResource;
-	barrier.Transition.StateBefore = before;
-	barrier.Transition.StateAfter = after;
-	barrier.Transition.Subresource = 0;
-
-	m_pCmdList->ResourceBarrier(1, &barrier);
-}
-

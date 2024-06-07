@@ -8,7 +8,7 @@
 // ====== インクルード部 ======
 #include "stdafx.h"
 #include "Application.h"
-
+#include <Manager/ActorManager.h>
 
 // ====== メンバ関数 ======
 bool Application::Init()
@@ -29,18 +29,14 @@ bool Application::Init()
 		return false;
 	}
 
-	if (!Renderer::Instance().Init(&m_window))
+	if (!RENDERER.Init(&m_window))
 	{
 		assert(0 && "Rendererの初期化に失敗しました。");
 		return false;
 	}
 
-
-	if (!Texture::Init())
-	{
-		assert(0 && "Textureの初期化に失敗しました。");
-		return false;
-	}
+	// ====== Managerの初期化 ======
+	ACTOR_MANAGER.Init();
 
 	// タイマーの初期化
 	timeBeginPeriod(1);
@@ -54,55 +50,6 @@ bool Application::Init()
 
 void Application::Run()
 {
-	Model model;
-	model.Load("Assets/Model/Cube/Cube.gltf");
-
-	RenderingSetting setting = {};
-	setting.inputLayouts = { InputLayout::POSITION,InputLayout::TEXCOORD,InputLayout::COLOR,InputLayout::NORMAL,InputLayout::TANGENT };
-	setting.Formats = { DXGI_FORMAT_R8G8B8A8_UNORM };
-	setting.cullMode = CullMode::Back;
-	setting.primitiveTopology = PrimitiveTopology::Triangle;
-
-	Shader shader;
-	string path = "Simple";
-	shader.Create(&Renderer::Instance(), path, setting, { RangeType::CBV,RangeType::CBV,RangeType::SRV,RangeType::SRV,RangeType::SRV,RangeType::SRV });
-
-	DirectX::XMMATRIX mWorld = DirectX::XMMatrixIdentity();
-	DirectX::XMMATRIX mWorld2 = DirectX::XMMatrixIdentity();
-
-	DirectX::XMFLOAT3 eye = { 0.0f, 0.0f, -5.0f };
-	DirectX::XMFLOAT3 target = { 0.0f, 0.0f, 0.0f };
-	DirectX::XMFLOAT3 up = { 0.0f, 1.0f, 0.0f };
-
-	// カメラの設定
-	DirectX::XMMATRIX mView = DirectX::XMMatrixLookAtLH(DirectX::XMLoadFloat3(&eye), DirectX::XMLoadFloat3(&target), DirectX::XMLoadFloat3(&up));
-	DirectX::XMMATRIX mProj = DirectX::XMMatrixPerspectiveFovLH(DirectX::XMConvertToRadians(60.0f), ASPECT_RATIO, 0.01, 1000.0f);
-
-	// 2D用カメラの設定
-	DirectX::XMMATRIX mView2 = DirectX::XMMatrixLookAtLH(DirectX::XMLoadFloat3(&eye), DirectX::XMLoadFloat3(&target), DirectX::XMLoadFloat3(&up));
-	DirectX::XMMATRIX mProj2 = DirectX::XMMatrixPerspectiveFovLH(XM_PIDIV2, ASPECT_RATIO, 1.0, 10.0f);
-
-	CBufferData::Camera cbCamera;
-	CBufferData::Camera cbCamera2;
-	cbCamera.mView = mView;
-	cbCamera.mProj = mProj;
-	cbCamera2.mView = mView2;
-	cbCamera2.mProj = mProj2;
-
-	// テクスチャの設定
-	setting.inputLayouts = { InputLayout::POSITION,InputLayout::TEXCOORD, };
-	setting.isDepth = false;
-	setting.isDepthMask = false;
-
-	Shader texShader;
-	path = "Texture";
-	texShader.Create(&Renderer::Instance(), path, setting, { RangeType::CBV,RangeType::CBV,RangeType::SRV });
-
-	Texture tex;
-	tex.Load(&Renderer::Instance(), "Assets/Texture/field.jpg");
-
-	float scale = 1.0f;
-
 	while (true)
 	{
 		if (!m_window.ProcessMessage()) { break; }
@@ -113,76 +60,18 @@ void Application::Run()
 			m_dwExecLastTime = m_dwCurrentTime;
 			// ====== ここにゲームの処理を書く ======
 			// ------ 更新処理 ------
+			ACTOR_MANAGER.Update();
 
 			// ------ 描画処理 ------
-			Renderer::Instance().Begin3DDraw();		// 描画開始
-			// ここに描画処理を書く
-			Renderer::Instance().GetCBVSRVUAVHeap()->SetHeap();
-			Renderer::Instance().GetCBufferAllocater()->ResetNumber();
+			RENDERER.Begin();
 
-			// シェーダーの設定
-			shader.Begin(m_window.GetWidth(), m_window.GetHeight());
-			// シェーダーにカメラのデータを渡す
-			Renderer::Instance().GetCBufferAllocater()->BindAndAttachData(0, cbCamera);
-			// ワールド行列の更新
-			mWorld *= DirectX::XMMatrixRotationX(DirectX::XMConvertToRadians(1.0f));
-			mWorld *= DirectX::XMMatrixRotationY(DirectX::XMConvertToRadians(1.0f));
-			mWorld *= DirectX::XMMatrixRotationZ(DirectX::XMConvertToRadians(1.0f));
-			Renderer::Instance().GetCBufferAllocater()->BindAndAttachData(1, mWorld);
-			// モデルの描画
-			shader.DrawModel(model);
+			// --- 以下ゲームの描画処理
+			ACTOR_MANAGER.Draw();
 
-			// テクスチャの描画
-			Renderer::Instance().Begin2DDraw();		// 描画開始
-
-			Renderer::Instance().GetCBufferAllocater()->BindAndAttachData(0, cbCamera2);
-			Renderer::Instance().GetCBufferAllocater()->BindAndAttachData(1, mWorld2);
-			texShader.Begin(m_window.GetWidth(), m_window.GetHeight());
-			texShader.Draw2D(tex);
-
-			Renderer::Instance().BeginImGuiDraw();	// ImGuiの描画開始
-			// ImGuiの描画処理
-			ImGui::Begin("Test Menu");
-			ImGui::SetWindowSize(ImVec2(400, 500), ImGuiCond_::ImGuiCond_FirstUseEver);
-
-			// FPSの表示
-			if ((m_dwCurrentTime - m_dwLsatFPSTime) >= 1000)
-			{
-				m_fFPS = (float)(m_dwFrameCount / ((m_dwCurrentTime - m_dwLsatFPSTime) / 1000.0f));
-				m_dwFrameCount = 0;
-				m_dwLsatFPSTime = m_dwCurrentTime;
-			}
-			ImGui::Dummy(ImVec2(0.0f, 10.0f));
-			ImGui::Text("FPS : %3.2f", m_fFPS);
-			ImGui::Dummy(ImVec2(0.0f, 10.0f));
-			ImGui::Separator();
-			ImGui::Dummy(ImVec2(0.0f, 10.0f));
-
-			constexpr float pi = 3.141592653589f;
-			static int fov = 90.0f;
-			if (ImGui::SliderInt("Field of view", &fov, 10, 120))
-			{
-				cbCamera2.mProj = cbCamera.mProj = XMMatrixPerspectiveFovLH(XMConvertToRadians(fov), ASPECT_RATIO, 0.01f, 1000.0f);
-			}
-			ImGui::Dummy(ImVec2(0.0f, 10.0f));
-			ImGui::Separator();
-			ImGui::Dummy(ImVec2(0.0f, 10.0f));
-
-			static float bgCol[4] = { 0.0f,1.0f,1.0f,1.0f };
-			ImGui::ColorPicker4("BG color", bgCol, ImGuiColorEditFlags_::ImGuiColorEditFlags_PickerHueWheel | ImGuiColorEditFlags_::ImGuiColorEditFlags_AlphaBar);
-			ImGui::Dummy(ImVec2(0.0f, 10.0f));
-			ImGui::Separator();
-			ImGui::Dummy(ImVec2(0.0f, 10.0f));
-
-
-			// ----- 設定を渡す -----
-			Renderer::Instance().SetClearColor(bgCol[0], bgCol[1], bgCol[2], bgCol[3]);
-
-			ImGui::End();
+			// --- ここまでゲームの描画処理
 
 			// ----- 描画終了 -----
-			Renderer::Instance().EndImGuiDraw();		// ImGuiの描画終了
-			Renderer::Instance().EndDraw();			// 描画終了
+			RENDERER.End();
 			// ========================================
 			m_dwFrameCount++;
 		}
@@ -191,7 +80,12 @@ void Application::Run()
 
 void Application::Uninit()
 {
-	Renderer::Instance().Uninit();	// Rendererの終了処理
+	// ====== 終了処理 ======
+	// ----- Managerの終了処理 -----
+	ACTOR_MANAGER.Uninit();	// ActorManagerの終了処理
+
+	// ----- システムの終了処理 -----
+	RENDERER.Uninit();	// Rendererの終了処理
 	timeEndPeriod(1);	// タイマーの終了処理
 	UnregisterClass(CLASS_NAME, m_window.GetHinstance());	// ウィンドウクラスの登録解除
 	CoUninitialize();	// COMの終了処理

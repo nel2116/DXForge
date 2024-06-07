@@ -1,19 +1,15 @@
 #include "../ShaderHeader/inc_Simple.hlsli"
 
-Output VS_Main(float4 pos : POSITION,
-               float2 uv : TEXCOORD0,
-               float3 normal : NORMAL,
-               float4 color : COLOR,
-               float3 tangent : TANGENT)
+VSOutput VS_Main(VSInput vin)
 {
-    Output output;
-    output.pos = mul(pos, c_mWorld);
-    output.pos = mul(output.pos, c_mView);
-    output.pos = mul(output.pos, c_mProj);
-    output.uv = uv;
-    output.Color = color;
-    output.Normal = normal;
-    output.Tngent = tangent;
+    VSOutput vout = (VSOutput) 0;
     
-    return output;
+    float4 localPos = float4(vin.pos, 1.0f);
+    float4 worldPos = mul(World, localPos);
+    float4 viewPos = mul(View, worldPos);
+    float4 projPos = mul(Proj, viewPos);
+
+    vout.pos = projPos;
+    vout.color = vin.color;
+    return vout;
 }

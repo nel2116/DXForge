@@ -14,8 +14,8 @@ class Actor;
 class Component
 {
 public:	// メンバ関数
-	Component(Actor* pParent) : m_pParent(pParent), m_bIsActive(true), m_bIsDead(false), m_nOrder(0), m_sTag("none") {}
-	virtual ~Component() {}
+	Component() : m_pOwner(nullptr), m_bIsActive(true), m_bIsDead(false), m_nOrder(0), m_sTag("none") {}
+	virtual ~Component() = default;
 
 	virtual void Update() = 0;
 	virtual void Draw() = 0;
@@ -25,18 +25,18 @@ public:	// メンバ関数
 	void Destroy() { m_bIsDead = true; }
 
 public:	// アクセサ
-	void SetParent(Actor* parent) { m_pParent = parent; }
-	Actor* GetParent() { return m_pParent; }
+	void SetOwner(Actor* parent) { m_pOwner = parent; }
+	Actor* GetOwner() { return m_pOwner; }
 	void SetOrder(int nOrder) { m_nOrder = nOrder; }
 	int GetOrder() { return m_nOrder; }
 	void SetActive(bool bIsActive) { m_bIsActive = bIsActive; }
 	bool IsActive() { return m_bIsActive; }
 	bool IsDead() { return m_bIsDead; }
-	void SetTag(const string& tag) { m_sTag = tag; }
-	const string& GetTag() { return m_sTag; }
+	void SetTag(const std::string& tag) { m_sTag = tag; }
+	std::string GetTag() { return m_sTag; }
 
 protected:
-	Actor* m_pParent;	// 親オブジェクト
+	Actor* m_pOwner;	// 親オブジェクト
 
 private:
 	bool m_bIsActive;	// アクティブフラグ : falseの場合、コンポーネントは更新されない

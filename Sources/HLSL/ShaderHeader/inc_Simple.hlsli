@@ -1,19 +1,23 @@
-struct Output
+struct VSInput
+{
+    float3 pos : POSITION;
+    float4 color : COLOR;
+};
+
+struct VSOutput
 {
     float4 pos : SV_POSITION;
-    float2 uv : TEXCOORD0;
-    float3 Normal : NORMAL;
-    float3 Tngent : TANGENT;
-    float4 Color : COLOR;
+    float4 color : COLOR;
 };
 
-cbuffer cbCamera : register(b0)
+struct PSOutput
 {
-    row_major matrix c_mView;
-    row_major matrix c_mProj;
+    float4 color : SV_TARGET0;
 };
 
-cbuffer cbWorld : register(b1)
+cbuffer Transform : register(b0)
 {
-    row_major matrix c_mWorld;
+    float4x4 World : packoffset(c0); // ワールド行列
+    float4x4 View : packoffset(c4); // ビュー行列
+    float4x4 Proj : packoffset(c8); // プロジェクション行列
 };
