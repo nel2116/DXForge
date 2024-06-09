@@ -38,6 +38,12 @@ bool Application::Init()
 	// ====== Managerの初期化 ======
 	ACTOR_MANAGER.Init();
 
+	if (!m_Polygon.Init())
+	{
+		assert(0 && "ポリゴンの初期化に失敗しました。");
+		return false;
+	}
+
 	// タイマーの初期化
 	timeBeginPeriod(1);
 	m_dwExecLastTime = timeGetTime();
@@ -67,6 +73,7 @@ void Application::Run()
 
 			// --- 以下ゲームの描画処理
 			ACTOR_MANAGER.Draw();
+			m_Polygon.Draw();
 
 			// --- ここまでゲームの描画処理
 
@@ -81,6 +88,8 @@ void Application::Run()
 void Application::Uninit()
 {
 	// ====== 終了処理 ======
+	m_Polygon.Uninit();	// ポリゴンの終了処理
+
 	// ----- Managerの終了処理 -----
 	ACTOR_MANAGER.Uninit();	// ActorManagerの終了処理
 

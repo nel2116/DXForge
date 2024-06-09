@@ -1,8 +1,7 @@
 #include "../ShaderHeader/inc_Simple.hlsli"
 
-PSOutput PS_Main(VSOutput pin)
+float4 PS_Main(VSOutput pin) : SV_TARGET
 {
-    PSOutput pout = (PSOutput) 0;
-    pout = pin.color;
-    return pout;
+    float4 color = pin.color;
+    return color;
 }

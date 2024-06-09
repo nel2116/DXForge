@@ -49,10 +49,12 @@
 // ------ DirectX ------
 #pragma comment(lib, "d3d12.lib")
 #pragma comment(lib, "dxgi.lib")
+#pragma comment(lib, "d3dcompiler.lib")
 
 #include <d3d12.h>
 #include <dxgi1_6.h>
 #include <DirectXMath.h>
+#include <d3dcompiler.h>
 
 // ------ DirectXTex ------
 #pragma comment(lib, "DirectXTex.lib")
@@ -67,6 +69,8 @@
 #include <System/window.h>
 // 描画関係のデバイス
 #include <Graphics/Renderer.h>
+
+#include <Graphics/Polygon/Polygon.h>
 
 // ====== 名前空間 ======
 using namespace std;

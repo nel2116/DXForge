@@ -10,11 +10,6 @@ struct VSOutput
     float4 color : COLOR;
 };
 
-struct PSOutput
-{
-    float4 color : SV_TARGET0;
-};
-
 cbuffer Transform : register(b0)
 {
     float4x4 World : packoffset(c0); // ƒ[ƒ‹ƒhs—ñ

@@ -8,7 +8,7 @@
 // ====== インクルード部 ======
 #include "stdafx.h"
 #include "Renderer.h"
-
+#include "Polygon/Polygon.h"
 
 void EnableDebugLayer()
 {
@@ -93,6 +93,14 @@ bool Renderer::Init(Window* window)
 		return false;
 	}
 
+	// 8.深度ステンシルバッファの生成
+	if (!CreateDepthStencilBuffer())
+	{
+		// 深度ステンシルバッファの生成に失敗した場合
+		assert(0 && "深度ステンシルバッファの生成に失敗しました。");
+		return false;
+	}
+
 	// コマンドリストを閉じる
 	m_pCmdList->Close();
 
@@ -119,14 +127,15 @@ void Renderer::Begin()
 	m_pCmdList->ResourceBarrier(1, &barrier);
 
 	// レンダーターゲットの設定
-	m_pCmdList->OMSetRenderTargets(1, &m_RTVHandle[m_FrameIndex], FALSE, nullptr);
+	m_pCmdList->OMSetRenderTargets(1, &m_RTVHandle[m_FrameIndex], FALSE, &m_DSVHandle);
 
 	// クリアカラー
 	float clearColor[] = { 0.25f, 0.25f, 0.25f, 1.0f };
 
 	// レンダーターゲットビューをクリア
 	m_pCmdList->ClearRenderTargetView(m_RTVHandle[m_FrameIndex], clearColor, 0, nullptr);
-
+	// 深度ステンシルビューをクリア.
+	m_pCmdList->ClearDepthStencilView(m_DSVHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 }
 
 void Renderer::End()
@@ -156,27 +165,27 @@ void Renderer::End()
 
 void Renderer::Present(uint32_t interval)
 {
-	// スワップチェインの表示
+	// 画面フリップ
 	// 第1引数 : フレームの表示間隔 : 1で更新周期通りに表示、0で即時表示(2などでは2回目の垂直同期後に表示を同期 例:ディスプレイの更新周期が60Hzの場合、2で30FPSとなる)
 	// 第2引数 : フラグ : 特になし
 	m_pSwapChain->Present(interval, 0);
 
-	// シグナル処理
+	// シグナル処理.
 	const auto currentValue = m_FenceCounter[m_FrameIndex];
 	m_pCmdQueue->Signal(m_pFence.Get(), currentValue);
 
-	// バックバッファ番号を更新
+	// バックバッファ番号を更新.
 	m_FrameIndex = m_pSwapChain->GetCurrentBackBufferIndex();
 
-	// 次のフレームの描画準備蒲田であれば待機する
+	// 次のフレームの描画準備がまだであれば待機する
 	if (m_pFence->GetCompletedValue() < m_FenceCounter[m_FrameIndex])
 	{
 		m_pFence->SetEventOnCompletion(m_FenceCounter[m_FrameIndex], m_fenceEvent);
 		WaitForSingleObjectEx(m_fenceEvent, INFINITE, FALSE);
 	}
 
-	// 次のフレームのフェンスカウンターを増やす
-	m_FenceCounter[m_FrameIndex]++;
+	// 次のフレームのフェンスカウンターを増やす.
+	m_FenceCounter[m_FrameIndex] = currentValue + 1;
 }
 
 void Renderer::Uninit()
@@ -410,5 +419,72 @@ bool Renderer::CreateFence()
 	// エラーチェック
 	if (m_fenceEvent == nullptr) { return false; }
 
+	return true;
+}
+
+bool Renderer::CreateDepthStencilBuffer()
+{
+	// 深度ステンシルバッファの設定
+	D3D12_HEAP_PROPERTIES heapProp = {};
+	heapProp.Type = D3D12_HEAP_TYPE_DEFAULT;					// ヒープの種類 : デフォルト
+	heapProp.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;	// CPUページプロパティ : 未指定
+	heapProp.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;	// メモリプールの優先度 : 未指定
+	heapProp.CreationNodeMask = 1;								// 作成ノードマスク : 1
+	heapProp.VisibleNodeMask = 1;								// 可視ノードマスク : 1
+
+	D3D12_RESOURCE_DESC resDesc = {};
+	resDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;	// リソースの次元 : 2D
+	resDesc.Alignment = 0;									// アライメント : 0
+	resDesc.Width = m_pWindow->GetWidth();					// 幅
+	resDesc.Height = m_pWindow->GetHeight();				// 高さ
+	resDesc.DepthOrArraySize = 1;							// 深度または配列サイズ : 1
+	resDesc.MipLevels = 1;									// ミップレベル : 1
+	resDesc.Format = DXGI_FORMAT_D32_FLOAT;					// フォーマット : D32bit
+	resDesc.SampleDesc.Count = 1;							// サンプル数 : 1
+	resDesc.SampleDesc.Quality = 0;							// サンプル品質 : 0
+	resDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;			// テクスチャレイアウト : 未指定
+	resDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;	// フラグ : 深度ステンシルを許可
+
+	D3D12_CLEAR_VALUE clearValue = {};
+	clearValue.Format = DXGI_FORMAT_D32_FLOAT;	// フォーマット : D32bit
+	clearValue.DepthStencil.Depth = 1.0f;		// 深度 : 1.0f
+	clearValue.DepthStencil.Stencil = 0;		// ステンシル : 0
+
+	auto hr = m_pDevice->CreateCommittedResource(
+		&heapProp,
+		D3D12_HEAP_FLAG_NONE,
+		&resDesc,
+		D3D12_RESOURCE_STATE_DEPTH_WRITE,
+		&clearValue,
+		IID_PPV_ARGS(m_pDepthStencilBuffer.ReleaseAndGetAddressOf()));
+
+	// エラーチェック
+	if (FAILED(hr)) { return false; }
+
+	// ディスクリプタヒープの設定
+	D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
+	heapDesc.NumDescriptors = 1;	// ディスクリプタ数 : 1
+	heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;	// ヒープの種類 : DSV
+	heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;	// フラグ : 特になし
+	heapDesc.NodeMask = 0;	// ノードマスク : 0
+
+	// ディスクリプタヒープの生成
+	hr = m_pDevice->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(m_pDSVHeap.ReleaseAndGetAddressOf()));
+	// エラーチェック
+	if (FAILED(hr)) { return false; }
+
+	auto handle = m_pDSVHeap->GetCPUDescriptorHandleForHeapStart();
+	auto incrementSize = m_pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+
+	// 深度ステンシルビューの設定
+	D3D12_DEPTH_STENCIL_VIEW_DESC viewDesc = {};
+	viewDesc.Format = DXGI_FORMAT_D32_FLOAT;	// フォーマット : D32bit
+	viewDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;	// ビューの次元 : 2D
+	viewDesc.Texture2D.MipSlice = 0;	// ミップスライス : 0
+	viewDesc.Flags = D3D12_DSV_FLAG_NONE;	// フラグ : 特になし
+
+	m_pDevice->CreateDepthStencilView(m_pDepthStencilBuffer.Get(), &viewDesc, handle);
+
+	m_DSVHandle = handle;
 	return true;
 }

@@ -56,7 +56,25 @@ public:		// アクセサ関数
 	/// コマンドリストの取得
 	///	</summary>
 	/// <returns>コマンドリストの参照</returns>
-	ID3D12CommandList* GetCmdList() { return m_pCmdList.Get(); }
+	ID3D12GraphicsCommandList* GetCmdList() { return m_pCmdList.Get(); }
+
+	/// <summary>
+	/// フレームバッファのインデックスを取得
+	/// </summary>
+	/// <returns>フレームバッファのインデックス</returns>
+	uint32_t GetFrameIndex() { return m_FrameIndex; }
+
+	/// <summary>
+	/// ウィンドウの横幅を取得
+	/// </summary>
+	/// <returns>ウィンドウの横幅</returns>
+	int GetWidth() { return m_pWindow->GetWidth(); }
+
+	/// <summary>
+	/// ウィンドウの縦幅を取得
+	/// </summary>
+	/// <returns>ウィンドウの縦幅</returns>
+	int GetHeight() { return m_pWindow->GetHeight(); }
 
 private:	// プライベート関数
 
@@ -79,6 +97,9 @@ private:	// プライベート関数
 	bool CreateRTV();
 	// フェンスの生成
 	bool CreateFence();
+	// 深度ステンシルバッファの生成
+	bool CreateDepthStencilBuffer();
+
 
 private:	// メンバ変数
 	// フレームバッファ数
@@ -105,6 +126,11 @@ private:	// メンバ変数
 	D3D12_CPU_DESCRIPTOR_HANDLE m_RTVHandle[FRAME_BUFFER_COUNT] = {};	// RTVハンドル
 	ComPtr<ID3D12Resource> m_pColorBuffer[FRAME_BUFFER_COUNT];			// カラーバッファ
 
+	// 深度ステンシルバッファ関連
+	ComPtr<ID3D12DescriptorHeap> m_pDSVHeap;							// DSVヒープ
+	D3D12_CPU_DESCRIPTOR_HANDLE m_DSVHandle;							// DSVハンドル
+	ComPtr<ID3D12Resource> m_pDepthStencilBuffer;						// 深度ステンシルバッファ
+
 	// ビューポート関連
 	D3D12_VIEWPORT m_viewport;	// ビューポート
 	D3D12_RECT m_scissorRect;	// シザー矩形
@@ -127,3 +153,5 @@ private:
 };
 
 #define RENDERER Renderer::Instance()	// レンダラーのインスタンスを取得
+#define WIDTH RENDERER.GetWidth()		// ウィンドウの幅
+#define HEIGHT RENDERER.GetHeight()		// ウィンドウの高さ
