@@ -59,6 +59,12 @@ public:		// アクセサ関数
 	ID3D12GraphicsCommandList* GetCmdList() { return m_pCmdList.Get(); }
 
 	/// <summary>
+	/// コマンドキューの取得
+	/// </summary>
+	/// <returns>コマンドキューの参照</returns>
+	ID3D12CommandQueue* GetCmdQueue() { return m_pCmdQueue.Get(); }
+
+	/// <summary>
 	/// フレームバッファのインデックスを取得
 	/// </summary>
 	/// <returns>フレームバッファのインデックス</returns>

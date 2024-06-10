@@ -1,13 +1,15 @@
 #include "../ShaderHeader/inc_Texture.hlsli"
 
-Output VS_Main(float4 pos : POSITION, float2 uv : TEXCOORD)
+VSOutput VS_Main(VSInput vin)
 {
-    Output output;
-    output.pos = pos;
-    output.pos = mul(pos, c_mWorld);
-    //output.pos = mul(output.pos, c_mView);
-  //  output.pos = mul(output.pos, c_mProj);
-    output.uv = uv;
+    VSOutput vout = (VSOutput) 0;
     
-    return output;
+    float4 localPos = float4(vin.pos, 1.0f);
+    float4 worldPos = mul(World, localPos);
+    float4 viewPos = mul(View, worldPos);
+    float4 projPos = mul(Proj, viewPos);
+
+    vout.pos = projPos;
+    vout.uv = vin.uv;
+    return vout;
 }
