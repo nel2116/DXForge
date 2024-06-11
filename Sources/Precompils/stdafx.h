@@ -73,6 +73,7 @@
 
 #include <Graphics/Polygon/Polygon.h>
 #include <Graphics/Texture/Texture.h>
+#include <Graphics/Model/Model.h>
 
 // ====== 名前空間 ======
 using namespace std;
@@ -92,6 +93,7 @@ const float PI = 3.1415926f;
 #define SAFE_DELETE(p) { if(p) { delete(p); (p) = nullptr; } }
 #define SAFE_DELETE_ARRAY(p) { if(p) { delete[](p); (p) = nullptr; } }
 #define SAFE_RELEASE(p) { if(p) { (p)->Release(); (p) = nullptr; } }
+#define SAFE_DELETE_ARRAY(p) { if(p) { delete[](p); (p) = nullptr; } }
 
 // ====== プロトタイプ宣言 ======
 /// <summary>

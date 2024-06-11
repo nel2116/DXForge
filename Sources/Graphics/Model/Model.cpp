@@ -6,21 +6,37 @@
 // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 // ====== インクルード部 ======
 #include "stdafx.h"
-#include "Texture.h"
+#include "Model.h"
 #include <System/FileUtil.h>
 
-bool Texture::Init()
+bool Model::Init()
 {
+	// メッシュをロード
+	{
+		std::wstring path;
+		if (!SearchFilePath(L"Assets/Models/teapot/teapot.obj", path))
+		{
+			assert(0 && "[Model.cpp]モデルが見つかりませんでした。");
+			return false;
+		}
+
+		if (!LoadMesh(path.c_str(), m_Meshes, m_Materials))
+		{
+			assert(0 && "[Model.cpp]モデルのロードに失敗しました。");
+			return false;
+		}
+
+		// メッシュが一つのみとする
+		assert(m_Meshes.size() == 1 && "[Model.cpp]メッシュが複数存在しています。");
+	}
+
+
 	// 頂点バッファの生成
 	{
 		// 頂点データ
-		Vertex vertices[] =
-		{
-			{DirectX::XMFLOAT3(-1.0f, 1.0f,0.0f),DirectX::XMFLOAT2(0.0f,0.0f)},
-			{DirectX::XMFLOAT3(1.0f, 1.0f,0.0f),DirectX::XMFLOAT2(1.0f,0.0f)},
-			{DirectX::XMFLOAT3(1.0f,-1.0f,0.0f),DirectX::XMFLOAT2(1.0f,1.0f)},
-			{DirectX::XMFLOAT3(-1.0f,-1.0f,0.0f),DirectX::XMFLOAT2(0.0f,1.0f)},
-		};
+		auto size = sizeof(MeshVertex) * m_Meshes[0].vertices.size();
+		auto vertices = m_Meshes[0].vertices.data();
+
 
 		// ヒーププロパティ
 		D3D12_HEAP_PROPERTIES heapProp = {};
@@ -34,7 +50,7 @@ bool Texture::Init()
 		D3D12_RESOURCE_DESC resDesc = {};
 		resDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;		// D3D12_RESOURCE_DIMENSION_BUFFER : リソースがバッファであることを示す
 		resDesc.Alignment = 0;										// 0 : リソースのアライメントを指定しない
-		resDesc.Width = sizeof(vertices);							// 頂点データのサイズ
+		resDesc.Width = size;							// 頂点データのサイズ
 		resDesc.Height = 1;											// 1 : バッファの場合は1を指定、テクスチャの場合は縦幅を指定
 		resDesc.DepthOrArraySize = 1;								// 1 : バッファの場合は1を指定、テクスチャの場合は配列数を指定、ボリュームテクスチャの場合は奥行きを指定
 		resDesc.MipLevels = 1;										// 1 : ミップマップレベル数を指定
@@ -61,7 +77,7 @@ bool Texture::Init()
 
 		if (FAILED(hr))
 		{	// 失敗時
-			assert(0 && "[Texture.cpp]頂点バッファの生成に失敗しました。");
+			assert(0 && "[Model.cpp]頂点バッファの生成に失敗しました。");
 			return false;
 		}
 
@@ -73,12 +89,12 @@ bool Texture::Init()
 		hr = m_pVB->Map(0, nullptr, &p);
 		if (FAILED(hr))
 		{
-			assert(0 && "[Texture.cpp]頂点バッファのマッピングに失敗しました。");
+			assert(0 && "[Model.cpp]頂点バッファのマッピングに失敗しました。");
 			return false;
 		}
 
 		// 頂点データをマッピング先に設定
-		memcpy(p, vertices, sizeof(vertices));
+		memcpy(p, vertices, size);
 
 		// マップング解除
 		// 第一引数はサブリソースのインデックス
@@ -87,13 +103,15 @@ bool Texture::Init()
 
 		// 頂点バッファビューの設定
 		m_vbView.BufferLocation = m_pVB->GetGPUVirtualAddress();	// バッファのGPU仮想アドレスを取得
-		m_vbView.SizeInBytes = static_cast<UINT>(sizeof(vertices));	// 頂点バッファ全体のサイズを設定
-		m_vbView.StrideInBytes = static_cast<UINT>(sizeof(Vertex));	// 1頂点のサイズを設定
+		m_vbView.SizeInBytes = static_cast<UINT>(size);	// 頂点バッファ全体のサイズを設定
+		m_vbView.StrideInBytes = static_cast<UINT>(sizeof(MeshVertex));	// 1頂点のサイズを設定
 	}
 
 	// インデックスバッファの生成
 	{
-		uint32_t indices[] = { 0,1,2,0,2,3 };
+		auto size = sizeof(uint32_t) * m_Meshes[0].indices.size();
+
+		auto indices = m_Meshes[0].indices.data();
 
 		// ヒーププロパティ
 		D3D12_HEAP_PROPERTIES heapProp = {};
@@ -107,7 +125,7 @@ bool Texture::Init()
 		D3D12_RESOURCE_DESC resDesc = {};
 		resDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;		// D3D12_RESOURCE_DIMENSION_BUFFER : リソースがバッファであることを示す
 		resDesc.Alignment = 0;										// 0 : リソースのアライメントを指定しない
-		resDesc.Width = sizeof(indices);							// インデックスデータのサイズ
+		resDesc.Width = size;										// インデックスデータのサイズ
 		resDesc.Height = 1;											// 1 : バッファの場合は1を指定、テクスチャの場合は縦幅を指定
 		resDesc.DepthOrArraySize = 1;								// 1 : バッファの場合は1を指定、テクスチャの場合は配列数を指定、ボリュームテクスチャの場合は奥行きを指定
 		resDesc.MipLevels = 1;										// 1 : ミップマップレベル数を指定
@@ -134,7 +152,7 @@ bool Texture::Init()
 
 		if (FAILED(hr))
 		{	// 失敗時
-			assert(0 && "[Texture.cpp]インデックスバッファの生成に失敗しました。");
+			assert(0 && "[Model.cpp]インデックスバッファの生成に失敗しました。");
 			return false;
 		}
 
@@ -146,12 +164,12 @@ bool Texture::Init()
 		hr = m_pIB->Map(0, nullptr, &p);
 		if (FAILED(hr))
 		{
-			assert(0 && "[Texture.cpp]インデックスバッファのマッピングに失敗しました。");
+			assert(0 && "[Model.cpp]インデックスバッファのマッピングに失敗しました。");
 			return false;
 		}
 
 		// インデックスデータをマッピング先に設定
-		memcpy(p, indices, sizeof(indices));
+		memcpy(p, indices, size);
 
 		// マップング解除
 		m_pIB->Unmap(0, nullptr);
@@ -159,7 +177,7 @@ bool Texture::Init()
 		// インデックスバッファビューの設定
 		m_ibView.BufferLocation = m_pIB->GetGPUVirtualAddress();	// バッファのGPU仮想アドレスを取得
 		m_ibView.Format = DXGI_FORMAT_R32_UINT;					// インデックスのフォーマットを設定
-		m_ibView.SizeInBytes = static_cast<UINT>(sizeof(indices));	// インデックスバッファ全体のサイズを設定
+		m_ibView.SizeInBytes = static_cast<UINT>(size);	// インデックスバッファ全体のサイズを設定
 	}
 
 	// 定数バッファ用ディスクリプタヒープの生成
@@ -174,7 +192,7 @@ bool Texture::Init()
 		auto hr = RENDERER.GetDevice()->CreateDescriptorHeap(&desc, IID_PPV_ARGS(m_pHeapCBV_SRV_UAV.ReleaseAndGetAddressOf()));
 		if (FAILED(hr))
 		{
-			assert(0 && "[Texture.cpp]定数バッファ用ディスクリプタヒープの生成に失敗しました。");
+			assert(0 && "[Model.cpp]定数バッファ用ディスクリプタヒープの生成に失敗しました。");
 			return false;
 		}
 	}
@@ -218,7 +236,7 @@ bool Texture::Init()
 
 			if (FAILED(hr))
 			{
-				assert(0 && "[Texture.cpp]定数バッファの生成に失敗しました。");
+				assert(0 && "[Model.cpp]定数バッファの生成に失敗しました。");
 				return false;
 			}
 
@@ -242,7 +260,7 @@ bool Texture::Init()
 			hr = m_pCB[i]->Map(0, nullptr, reinterpret_cast<void**>(&m_CBV[i].pBuffer));
 			if (FAILED(hr))
 			{
-				assert(0 && "[Texture.cpp]定数バッファのマッピングに失敗しました。");
+				assert(0 && "[Model.cpp]定数バッファのマッピングに失敗しました。");
 				return false;
 			}
 
@@ -321,7 +339,7 @@ bool Texture::Init()
 			pErrorBlob.ReleaseAndGetAddressOf());
 		if (FAILED(hr))
 		{
-			assert(0 && "[Texture.cpp]ルートシグネチャのシリアライズに失敗しました。");
+			assert(0 && "[Model.cpp]ルートシグネチャのシリアライズに失敗しました。");
 			return false;
 		}
 
@@ -333,20 +351,13 @@ bool Texture::Init()
 			IID_PPV_ARGS(m_pRootSignature.ReleaseAndGetAddressOf()));
 		if (FAILED(hr))
 		{
-			assert(0 && "[Texture.cpp]ルートシグネチャの生成に失敗しました。");
+			assert(0 && "[Model.cpp]ルートシグネチャの生成に失敗しました。");
 			return false;
 		}
 	}
 
 	// パイプラインステートの生成
 	{
-		// 入力レイアウトの設定
-		D3D12_INPUT_ELEMENT_DESC layout[] =
-		{
-			{ "POSITION",0,DXGI_FORMAT_R32G32B32_FLOAT,0,D3D12_APPEND_ALIGNED_ELEMENT,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0 },
-			{ "TEXCOORD",0,DXGI_FORMAT_R32G32_FLOAT,0,D3D12_APPEND_ALIGNED_ELEMENT,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0 },
-		};
-
 		// ラスタライザステートの設定
 		D3D12_RASTERIZER_DESC rsDesc = {};
 		rsDesc.FillMode = D3D12_FILL_MODE_SOLID;								// 頂点によって形作られている三角形で描画
@@ -393,14 +404,14 @@ bool Texture::Init()
 		std::wstring vsPath;
 		std::wstring psPath;
 
-		if (!SearchFilePath(L"Assets/Shaders/VS_Texture.cso", vsPath))
+		if (!SearchFilePath(L"Assets/Shaders/VS_Mesh.cso", vsPath))
 		{
-			assert(0 && "[Texture.cpp]頂点シェーダーが見つかりませんでした");
+			assert(0 && "[Model.cpp]頂点シェーダーが見つかりませんでした");
 			return false;
 		}
-		if (!SearchFilePath(L"Assets/Shaders/PS_Texture.cso", psPath))
+		if (!SearchFilePath(L"Assets/Shaders/PS_Mesh.cso", psPath))
 		{
-			assert(0 && "[Texture.cpp]ピクセルシェーダーが見つかりませんでした");
+			assert(0 && "[Model.cpp]ピクセルシェーダーが見つかりませんでした");
 			return false;
 		}
 
@@ -408,20 +419,20 @@ bool Texture::Init()
 		auto hr = D3DReadFileToBlob(vsPath.c_str(), pVSBlob.ReleaseAndGetAddressOf());
 		if (FAILED(hr))
 		{
-			assert(0 && "[Texture.cpp]頂点シェーダーの読み込みに失敗しました。");
+			assert(0 && "[Model.cpp]頂点シェーダーの読み込みに失敗しました。");
 			return false;
 		}
 		// ピクセルシェーダーの読み込み
 		hr = D3DReadFileToBlob(psPath.c_str(), pPSBlob.ReleaseAndGetAddressOf());
 		if (FAILED(hr))
 		{
-			assert(0 && "[Texture.cpp]ピクセルシェーダーの読み込みに失敗しました。");
+			assert(0 && "[Model.cpp]ピクセルシェーダーの読み込みに失敗しました。");
 			return false;
 		}
 
 		// パイプラインステートの設定
 		D3D12_GRAPHICS_PIPELINE_STATE_DESC desc = {};
-		desc.InputLayout = { layout,_countof(layout) };
+		desc.InputLayout = MeshVertex::InputLayout;
 		desc.pRootSignature = m_pRootSignature.Get();
 		desc.VS = { pVSBlob->GetBufferPointer(),pVSBlob->GetBufferSize() };
 		desc.PS = { pPSBlob->GetBufferPointer(),pPSBlob->GetBufferSize() };
@@ -440,7 +451,7 @@ bool Texture::Init()
 		hr = RENDERER.GetDevice()->CreateGraphicsPipelineState(&desc, IID_PPV_ARGS(m_pPSO.ReleaseAndGetAddressOf()));
 		if (FAILED(hr))
 		{
-			assert(0 && "[Texture.cpp]パイプラインステートの生成に失敗しました。");
+			assert(0 && "[Model.cpp]パイプラインステートの生成に失敗しました。");
 			return false;
 		}
 
@@ -449,7 +460,7 @@ bool Texture::Init()
 	// テクスチャの生成
 	if (!CreateTexture())
 	{
-		assert(0 && "[Texture.cpp]テクスチャの生成に失敗しました。");
+		assert(0 && "[Model.cpp]テクスチャの生成に失敗しました。");
 		return false;
 	}
 
@@ -470,13 +481,13 @@ bool Texture::Init()
 	return true;
 }
 
-void Texture::Draw()
+void Model::Draw()
 {
 	// 更新処理
 	{
 		m_RotateAngle += 0.025f;
-		m_CBV[RENDERER.GetFrameIndex() * 2 + 0].pBuffer->mWorld = DirectX::XMMatrixRotationZ(m_RotateAngle + DirectX::XMConvertToRadians(45.0f));
-		m_CBV[RENDERER.GetFrameIndex() * 2 + 1].pBuffer->mWorld = DirectX::XMMatrixRotationY(m_RotateAngle) * DirectX::XMMatrixScaling(2.0f, 0.5f, 1.0f);
+		m_CBV[RENDERER.GetFrameIndex() * 2 + 0].pBuffer->mWorld = DirectX::XMMatrixRotationY(m_RotateAngle + DirectX::XMConvertToRadians(45.0f));
+
 	}
 
 	// 描画処理
@@ -503,16 +514,12 @@ void Texture::Draw()
 		// 第3引数は開始インデックス : 先頭データから描画するため0を指定
 		// 第4引数は開始頂点 : 0を指定
 		// 第5引数はインスタンスの開始インデックス : 最初のインスタンスから描画するため0を指定
-		cmdList->DrawIndexedInstanced(6, 1, 0, 0, 0);
-
-		// 奥のポリゴン
-		cmdList->SetGraphicsRootConstantBufferView(0, m_CBV[frameIndex * 2 + 1].Desc.BufferLocation);
-		cmdList->SetGraphicsRootDescriptorTable(1, m_Texture.HandleGPU);
-		cmdList->DrawIndexedInstanced(6, 1, 0, 0, 0);
+		auto count = static_cast<uint32_t>(m_Meshes[0].indices.size());
+		cmdList->DrawIndexedInstanced(count, 1, 0, 0, 0);
 	}
 }
 
-void Texture::Uninit()
+void Model::Uninit()
 {
 	// マッピング解除
 	for (int i = 0; i < 2; ++i)
@@ -524,17 +531,42 @@ void Texture::Uninit()
 		}
 		m_pCB[i].Reset();
 	}
+	for (size_t i = 0; i < m_Meshes.size(); ++i)
+	{
+		m_Meshes[i].vertices.clear();
+		m_Meshes[i].indices.clear();
+	}
+
+	m_Meshes.clear();
+	m_Materials.clear();
+
+	m_pIB.Reset();
 	m_pVB.Reset();
 	m_pPSO.Reset();
+	m_pHeapCBV_SRV_UAV.Reset();
+
+	m_vbView.BufferLocation = 0;
+	m_vbView.SizeInBytes = 0;
+	m_vbView.StrideInBytes = 0;
+
+	m_ibView.BufferLocation = 0;
+	m_ibView.Format = DXGI_FORMAT_UNKNOWN;
+	m_ibView.SizeInBytes = 0;
+
+	m_pRootSignature.Reset();
+
+	m_Texture.pResource.Reset();
+	m_Texture.HandleCPU.ptr = 0;
+	m_Texture.HandleGPU.ptr = 0;
 }
 
-bool Texture::CreateTexture()
+bool Model::CreateTexture()
 {
 	// ファイルパスを検索
 	std::wstring texPath;
-	if (!SearchFilePath(L"Assets/Texture/SampleTexture.dds", texPath))
+	if (!SearchFilePath(L"Assets/Models/teapot/default.dds", texPath))
 	{
-		assert(0 && "[Texture.cpp]テクスチャファイルが見つかりませんでした。");
+		assert(0 && "[Model.cpp]テクスチャファイルが見つかりませんでした。");
 		return false;
 	}
 
@@ -546,7 +578,7 @@ bool Texture::CreateTexture()
 		auto hr = DirectX::LoadFromWICFile(texPath.c_str(), DirectX::WIC_FLAGS_NONE, &metadata, scratch);
 		if (FAILED(hr))
 		{
-			assert(0 && "[Texture.cpp]テクスチャの読み込みに失敗しました。");
+			assert(0 && "[Model.cpp]テクスチャの読み込みに失敗しました。");
 			return false;
 		}
 
@@ -585,7 +617,7 @@ bool Texture::CreateTexture()
 			IID_PPV_ARGS(m_Texture.pResource.ReleaseAndGetAddressOf()));
 		if (FAILED(hr))
 		{
-			assert(0 && "[Texture.cpp]テクスチャリソースの生成に失敗しました。");
+			assert(0 && "[Model.cpp]テクスチャリソースの生成に失敗しました。");
 			return false;
 		}
 
@@ -619,7 +651,7 @@ bool Texture::CreateTexture()
 			IID_PPV_ARGS(m_Texture.pResource.ReleaseAndGetAddressOf()));
 		if (FAILED(hr))
 		{
-			assert(0 && "[Texture.cpp]テクスチャアップロード用リソースの生成に失敗しました。");
+			assert(0 && "[Model.cpp]テクスチャアップロード用リソースの生成に失敗しました。");
 			return false;
 		}
 
@@ -627,7 +659,7 @@ bool Texture::CreateTexture()
 		hr = m_Texture.pResource->WriteToSubresource(0, nullptr, img->pixels, img->rowPitch, img->slicePitch);
 		if (FAILED(hr))
 		{
-			assert(0 && "[Texture.cpp]テクスチャデータのコピーに失敗しました。");
+			assert(0 && "[Model.cpp]テクスチャデータのコピーに失敗しました。");
 			return false;
 		}
 	}

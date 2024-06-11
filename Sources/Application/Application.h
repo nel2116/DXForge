@@ -49,6 +49,7 @@ private:	// メンバ変数
 	float m_fFPS;
 	MyPolygon m_Polygon;
 	Texture m_Texture;
+	Model m_Model;
 
 public:		// シングルトン関連
 	/// <summary>

@@ -1,6 +1,6 @@
 #include "../ShaderHeader/inc_Simple.hlsli"
 
-VSOutput VS_Main(VSInput vin)
+VSOutput main(VSInput vin)
 {
     VSOutput vout = (VSOutput) 0;
     

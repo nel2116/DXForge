@@ -1,4 +1,4 @@
-#include "../ShaderHeader/inc_Texture.hlsli"
+#include "../ShaderHeader/inc_Mesh.hlsli"
 
 Texture2D tex : register(t0);
 SamplerState sam : register(s0);
