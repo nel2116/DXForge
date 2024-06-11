@@ -7,9 +7,6 @@
 // ====== インクルード部 ======
 #include "stdafx.h"
 #include "Texture.h"
-#include "ResourceUploadBatch.h"
-#include "DDSTextureLoader.h"
-#include "VertexTypes.h"
 #include <System/FileUtil.h>
 
 bool Texture::Init()
@@ -91,7 +88,7 @@ bool Texture::Init()
 		// 頂点バッファビューの設定
 		m_vbView.BufferLocation = m_pVB->GetGPUVirtualAddress();	// バッファのGPU仮想アドレスを取得
 		m_vbView.SizeInBytes = static_cast<UINT>(sizeof(vertices));	// 頂点バッファ全体のサイズを設定
-		m_vbView.StrideInBytes = static_cast<UINT>(sizeof(DirectX::VertexPositionTexture));	// 1頂点のサイズを設定
+		m_vbView.StrideInBytes = static_cast<UINT>(sizeof(Vertex));	// 1頂点のサイズを設定
 	}
 
 	// インデックスバッファの生成
@@ -396,12 +393,12 @@ bool Texture::Init()
 		std::wstring vsPath;
 		std::wstring psPath;
 
-		if (!SearchFilePath(L"VS_Texture.cso", vsPath))
+		if (!SearchFilePath(L"Assets/Shaders/VS_Texture.cso", vsPath))
 		{
 			assert(0 && "[Polygon.cpp]頂点シェーダーが見つかりませんでした");
 			return false;
 		}
-		if (!SearchFilePath(L"PS_Texture.cso", psPath))
+		if (!SearchFilePath(L"Assets/Shaders/PS_Texture.cso", psPath))
 		{
 			assert(0 && "[Polygon.cpp]ピクセルシェーダーが見つかりませんでした");
 			return false;
@@ -541,22 +538,99 @@ bool Texture::CreateTexture()
 		return false;
 	}
 
-	DirectX::ResourceUploadBatch batch(RENDERER.GetDevice());
-	batch.Begin();
-
-	// リソースを生成
-	auto hr = DirectX::CreateDDSTextureFromFile(RENDERER.GetDevice(), batch, texPath.c_str(), m_Texture.pResource.ReleaseAndGetAddressOf(), true);
-	if (FAILED(hr))
+	// テクスチャの生成
 	{
-		assert(0 && "[Texture.cpp]テクスチャの生成に失敗しました。");
-		return false;
+		// テクスチャの読み込み
+		DirectX::TexMetadata metadata = {};
+		DirectX::ScratchImage scratch = {};
+		auto hr = DirectX::LoadFromWICFile(texPath.c_str(), DirectX::WIC_FLAGS_NONE, &metadata, scratch);
+		if (FAILED(hr))
+		{
+			assert(0 && "[Texture.cpp]テクスチャの読み込みに失敗しました。");
+			return false;
+		}
+
+		// テクスチャの設定
+		auto img = scratch.GetImage(0, 0, 0);
+
+		// ヒーププロパティ
+		D3D12_HEAP_PROPERTIES heapProp = {};
+		heapProp.Type = D3D12_HEAP_TYPE_DEFAULT;						// D3D12_HEAP_TYPE_DEFAULT : GPUからの読み書きが高速
+		heapProp.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;	// D3D12_CPU_PAGE_PROPERTY_UNKNOWN : CPUページプロパティを未指定
+		heapProp.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;	// D3D12_MEMORY_POOL_UNKNOWN : メモリプール未指定
+		heapProp.CreationNodeMask = 1;								// 単一GPUによる動作を前提としているため1を指定
+		heapProp.VisibleNodeMask = 1;								// 単一GPUによる動作を前提としているため1を指定
+
+		// リソースの設定
+		D3D12_RESOURCE_DESC resDesc = {};
+		resDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;		// D3D12_RESOURCE_DIMENSION_TEXTURE2D : リソースが2次元テクスチャであることを示す
+		resDesc.Alignment = 0;										// 0 : リソースのアライメントを指定しない
+		resDesc.Width = metadata.width;								// テクスチャの横幅
+		resDesc.Height = metadata.height;							// テクスチャの縦幅
+		resDesc.DepthOrArraySize = 1;								// 1 : テクスチャの深度または配列サイズ
+		resDesc.MipLevels = 1;										// 1 : ミップマップレベル数
+		resDesc.Format = metadata.format;							// テクスチャのフォーマット
+		resDesc.SampleDesc.Count = 1;								// 1 : サンプリング数
+		resDesc.SampleDesc.Quality = 0;								// 0 : サンプリング品質
+		resDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;				// D3D12_TEXTURE_LAYOUT_UNKNOWN : テクスチャデータのレイアウトを未指定
+		resDesc.Flags = D3D12_RESOURCE_FLAG_NONE;					// D3D12_RESOURCE_FLAG_NONE : オプションを特に指定しない
+
+		// リソースの生成
+		hr = RENDERER.GetDevice()->CreateCommittedResource(
+			&heapProp,
+			D3D12_HEAP_FLAG_NONE,				// D3D12_HEAP_FLAG_NONE : ヒープのオプションを特に指定しない
+			&resDesc,
+			D3D12_RESOURCE_STATE_COPY_DEST,
+			nullptr,
+			IID_PPV_ARGS(m_Texture.pResource.ReleaseAndGetAddressOf()));
+		if (FAILED(hr))
+		{
+			assert(0 && "[Texture.cpp]テクスチャリソースの生成に失敗しました。");
+			return false;
+		}
+
+
+		// テクスチャのアップロード
+		D3D12_HEAP_PROPERTIES heapPropUpload = {};
+		heapPropUpload.Type = D3D12_HEAP_TYPE_CUSTOM;							// D3D12_HEAP_TYPE_UPLOAD : CPUからGPUへの転送が高速
+		heapPropUpload.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_WRITE_BACK;	// D3D12_CPU_PAGE_PROPERTY_WRITE_BACK : CPUページプロパティを書き戻し可能に設定
+		heapPropUpload.MemoryPoolPreference = D3D12_MEMORY_POOL_L0;				// D3D12_MEMORY_POOL_L0 : メモリプールをL0に設定
+		heapPropUpload.CreationNodeMask = 0;									// 単一GPUによる動作を前提としているため0を指定
+		heapPropUpload.VisibleNodeMask = 0;										// 単一GPUによる動作を前提としているため0を指定
+
+		D3D12_RESOURCE_DESC resDescUpload = {};
+		resDescUpload.Format = metadata.format;									// テクスチャのフォーマット
+		resDescUpload.Width = metadata.width;									// テクスチャの横幅
+		resDescUpload.Height = metadata.height;									// テクスチャの縦幅
+		resDescUpload.DepthOrArraySize = metadata.arraySize;
+		resDescUpload.SampleDesc.Count = 1;
+		resDescUpload.SampleDesc.Quality = 0;
+		resDescUpload.MipLevels = metadata.mipLevels;
+		resDescUpload.Dimension = static_cast<D3D12_RESOURCE_DIMENSION>(metadata.dimension);	// D3D12_RESOURCE_DIMENSION_BUFFER : リソースがバッファであることを示す
+		resDescUpload.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;								
+		resDescUpload.Flags = D3D12_RESOURCE_FLAG_NONE;									// D3D12_RESOURCE_FLAG_NONE : オプションを特に指定しない
+
+		hr = RENDERER.GetDevice()->CreateCommittedResource(
+			&heapPropUpload,
+			D3D12_HEAP_FLAG_NONE,
+			&resDescUpload,
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+			nullptr,
+			IID_PPV_ARGS(m_Texture.pResource.ReleaseAndGetAddressOf()));
+		if (FAILED(hr))
+		{
+			assert(0 && "[Texture.cpp]テクスチャアップロード用リソースの生成に失敗しました。");
+			return false;
+		}
+
+		// テクスチャデータのコピー
+		hr = m_Texture.pResource->WriteToSubresource(0, nullptr, img->pixels, img->rowPitch, img->slicePitch);
+		if (FAILED(hr))
+		{
+			assert(0 && "[Texture.cpp]テクスチャデータのコピーに失敗しました。");
+			return false;
+		}
 	}
-
-	// コマンドを実行
-	auto future = batch.End(RENDERER.GetCmdQueue());
-
-	// コマンドの完了を待機する
-	future.wait();
 
 	// インクリメントサイズを取得
 	auto incrementSize = RENDERER.GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);

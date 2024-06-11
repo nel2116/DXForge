@@ -44,6 +44,12 @@ bool Application::Init()
 		return false;
 	}
 
+	if (!m_Texture.Init())
+	{
+		assert(0 && "テクスチャの初期化に失敗しました。");
+		return false;
+	}
+
 	// タイマーの初期化
 	timeBeginPeriod(1);
 	m_dwExecLastTime = timeGetTime();
@@ -73,7 +79,8 @@ void Application::Run()
 
 			// --- 以下ゲームの描画処理
 			ACTOR_MANAGER.Draw();
-			m_Polygon.Draw();
+			//			m_Polygon.Draw();
+			m_Texture.Draw();
 
 			// --- ここまでゲームの描画処理
 
@@ -88,6 +95,7 @@ void Application::Run()
 void Application::Uninit()
 {
 	// ====== 終了処理 ======
+	m_Texture.Uninit();	// テクスチャの終了処理
 	m_Polygon.Uninit();	// ポリゴンの終了処理
 
 	// ----- Managerの終了処理 -----

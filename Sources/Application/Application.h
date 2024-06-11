@@ -14,7 +14,6 @@ const float FPS = 120.0f;				// フレームレート
 const float FRAME_TIME = 1000.0f / FPS;	// フレーム時間
 
 // ====== クラス定義 ======
-class Polygon;
 class Application
 {
 public:		// パブリック関数
@@ -49,6 +48,7 @@ private:	// メンバ変数
 	DWORD m_dwLsatFPSTime;
 	float m_fFPS;
 	MyPolygon m_Polygon;
+	Texture m_Texture;
 
 public:		// シングルトン関連
 	/// <summary>

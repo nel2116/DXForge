@@ -47,19 +47,19 @@
 #include <math.h>
 
 // ------ DirectX ------
-#pragma comment(lib, "d3d12.lib")
-#pragma comment(lib, "dxgi.lib")
-#pragma comment(lib, "dxguid.lib")
-#pragma comment(lib, "d3dcompiler.lib")
-
 #include <d3d12.h>
 #include <dxgi1_6.h>
 #include <DirectXMath.h>
 #include <d3dcompiler.h>
 
+#pragma comment(lib, "d3d12.lib")
+#pragma comment(lib, "dxgi.lib")
+#pragma comment(lib, "dxguid.lib")
+#pragma comment(lib, "d3dcompiler.lib")
+
 // ------ DirectXTex ------
+#include <DirectXTex.h>
 #pragma comment(lib, "DirectXTex.lib")
-#include <DirectXTex\DirectXTex.h>
 
 // ------ ImGui ------
 #include <imugui/imgui.h>
@@ -72,6 +72,7 @@
 #include <Graphics/Renderer.h>
 
 #include <Graphics/Polygon/Polygon.h>
+#include <Graphics/Texture/Texture.h>
 
 // ====== –¼‘O‹óŠÔ ======
 using namespace std;
