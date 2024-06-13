@@ -7,13 +7,10 @@
 // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 #pragma once
 // ====== インクルード部 ======
-#include <wrl/client.h>
 #include <System/window.h>
+#include <System/ComPtr.h>
 
 using namespace std;
-
-// ====== 型定義 ======
-template <typename T> using ComPtr = Microsoft::WRL::ComPtr<T>;
 
 // ====== クラス定義 ======
 class Renderer

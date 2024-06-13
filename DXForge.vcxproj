@@ -195,6 +195,8 @@
   <ItemGroup>
     <ClCompile Include="Sources\Actor\Actor.cpp" />
     <ClCompile Include="Sources\Application\Application.cpp" />
+    <ClCompile Include="Sources\Graphics\ConstantBuffer\ConstantBuffer.cpp" />
+    <ClCompile Include="Sources\Graphics\DescriptorPool\DescriptorPool.cpp" />
     <ClCompile Include="Sources\Graphics\Mesh\Mesh.cpp" />
     <ClCompile Include="Sources\Graphics\Model\Model.cpp" />
     <ClCompile Include="Sources\Graphics\Polygon\Polygon.cpp" />
@@ -212,6 +214,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Sources\System\FileUtil.cpp" />
+    <ClCompile Include="Sources\System\Logger.cpp" />
     <ClCompile Include="Sources\System\main.cpp" />
     <ClCompile Include="Sources\System\window.cpp" />
   </ItemGroup>
@@ -221,9 +224,12 @@
     <ClInclude Include="Sources\Component\Component.h" />
     <ClInclude Include="Sources\DirectXTex\DirectXTex.h" />
     <ClInclude Include="Sources\GameObject\Actor.h" />
+    <ClInclude Include="Sources\Graphics\ConstantBuffer\ConstantBuffer.h" />
+    <ClInclude Include="Sources\Graphics\DescriptorPool\DescriptorPool.h" />
     <ClInclude Include="Sources\Graphics\Mesh\Mesh.h" />
     <ClInclude Include="Sources\Graphics\Model\Model.h" />
     <ClInclude Include="Sources\Graphics\Polygon\Polygon.h" />
+    <ClInclude Include="Sources\Graphics\Pool\Pool.h" />
     <ClInclude Include="Sources\Graphics\Renderer.h" />
     <ClInclude Include="Sources\Graphics\Texture\Texture.h" />
     <ClInclude Include="Sources\imugui\imconfig.h" />
@@ -237,7 +243,9 @@
     <ClInclude Include="Sources\Manager\ActorManager.h" />
     <ClInclude Include="Sources\Manager\Manager.h" />
     <ClInclude Include="Sources\Precompils\stdafx.h" />
+    <ClInclude Include="Sources\System\ComPtr.h" />
     <ClInclude Include="Sources\System\FileUtil.h" />
+    <ClInclude Include="Sources\System\Logger.h" />
     <ClInclude Include="Sources\System\window.h" />
   </ItemGroup>
   <ItemGroup>

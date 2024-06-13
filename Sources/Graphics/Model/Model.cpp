@@ -521,43 +521,6 @@ void Model::Draw()
 
 void Model::Uninit()
 {
-	// マッピング解除
-	for (int i = 0; i < 2; ++i)
-	{
-		if (m_pCB[i])
-		{
-			m_pCB[i]->Unmap(0, nullptr);
-			memset(&m_CBV[i], 0, sizeof(m_CBV[i]));
-		}
-		m_pCB[i].Reset();
-	}
-	for (size_t i = 0; i < m_Meshes.size(); ++i)
-	{
-		m_Meshes[i].vertices.clear();
-		m_Meshes[i].indices.clear();
-	}
-
-	m_Meshes.clear();
-	m_Materials.clear();
-
-	m_pIB.Reset();
-	m_pVB.Reset();
-	m_pPSO.Reset();
-	m_pHeapCBV_SRV_UAV.Reset();
-
-	m_vbView.BufferLocation = 0;
-	m_vbView.SizeInBytes = 0;
-	m_vbView.StrideInBytes = 0;
-
-	m_ibView.BufferLocation = 0;
-	m_ibView.Format = DXGI_FORMAT_UNKNOWN;
-	m_ibView.SizeInBytes = 0;
-
-	m_pRootSignature.Reset();
-
-	m_Texture.pResource.Reset();
-	m_Texture.HandleCPU.ptr = 0;
-	m_Texture.HandleGPU.ptr = 0;
 }
 
 bool Model::CreateTexture()
