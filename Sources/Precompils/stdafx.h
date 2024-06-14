@@ -42,6 +42,7 @@
 #include <filesystem>
 #include <chrono>
 #include <typeinfo>
+#include <new>
 
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -67,13 +68,23 @@
 #include <imugui/imgui_impl_dx12.h>
 
 // ------ プロジェクト固有 ------
+// ウィンドウ関係
 #include <System/window.h>
 // 描画関係のデバイス
 #include <Graphics/Renderer.h>
+// DirectXMathのラッパー
+#include <System/SimpleMath.h>
+// ファイルパスを検索する関数
+#include <System/FileUtil.h>
+// デバッグ関連
+#include <System/Logger.h>
 
-#include <Graphics/Polygon/Polygon.h>
-#include <Graphics/Texture/Texture.h>
-#include <Graphics/Model/Model.h>
+// メッシュ
+#include <Graphics/Mesh/Mesh.h>
+// マテリアル
+#include <Graphics/Mesh/Material/Material.h>
+// 定数バッファ
+#include <Graphics/Buffer/ConstantBuffer/ConstantBuffer.h>
 
 // ====== 名前空間 ======
 using namespace std;

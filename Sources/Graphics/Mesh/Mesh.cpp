@@ -1,240 +1,69 @@
-//_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+ï»¿// _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 // [Mesh.cpp]
-// ì¬Ò : “c’†ƒ~ƒmƒ‹
-// ì¬“ú : 2024/05/25 19:00
-// ŠT—v   : ƒƒbƒVƒ…ƒNƒ‰ƒX‚ÌÀ‘•
-// XV—š—ğ : 2024/06/11 ì¬
-//_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-#pragma once
-// ====== ƒCƒ“ƒNƒ‹[ƒh•” ======
-#include "stdafx.h"
+// ä½œæˆè€… : ç”°ä¸­ãƒŸãƒãƒ«
+// ä½œæˆæ—¥ : 2024/06/14 11:55 : ä½œæˆ
+// æ¦‚è¦   : ãƒ¡ãƒƒã‚·ãƒ¥ã‚¯ãƒ©ã‚¹ã®å®Ÿè£…
+// æ›´æ–°å±¥æ­´
+// 2024/06/14  ä½œæˆ
+// _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+// ====== ã‚¤ãƒ³ã‚¯ãƒ«ãƒ¼ãƒ‰éƒ¨ ======
 #include "Mesh.h"
 
-#if defined(_DEBUG) || defined(DEBUG)
-#pragma comment(lib, "assimp-vc143-mtd.lib")
-#else
-#pragma comment(lib, "assimp-vc143-mt.lib")
-#endif // _DEBUG
+// ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿
+Mesh::Mesh()
+	: m_MaterialId(UINT32_MAX)
+	, m_IndexCount(0)
+{}
 
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
-#include <codecvt>
-#include <cassert>
-
-namespace
+// ãƒ‡ã‚¹ãƒˆãƒ©ã‚¯ã‚¿
+Mesh::~Mesh()
 {
-	// UTF-16‚©‚çUTF-8‚É•ÏŠ·
-	std::string ToUTF8(const wstring& text)
-	{
-		auto length = WideCharToMultiByte(CP_UTF8, 0U, text.data(), -1, nullptr, 0, nullptr, nullptr);
-		auto buffer = NEW char[length];
+	Uninit();
+}
 
-		WideCharToMultiByte(CP_UTF8, 0U, text.data(), -1, buffer, length, nullptr, nullptr);
-
-		std::string result(buffer);
-		SAFE_DELETE_ARRAY(buffer);
-
-		return result;
-	}
-
-	class MeshLoader
-	{
-	public:
-		MeshLoader() {}
-		~MeshLoader() {}
-
-		bool Load(const wchar_t* fileName, std::vector<Mesh>& meshes, std::vector<Material>& materials);
-
-	private:
-		void ParseMesh(Mesh& dstMesh, const aiMesh* pSrcMesh);
-		void ParseMaterial(Material& dstMaterial, const aiMaterial* pSrcMaterial);
-
-	};
-
-	// ƒƒbƒVƒ…‚Ì“Ç‚İ‚İ
-	bool MeshLoader::Load(const wchar_t* fileName, std::vector<Mesh>& meshes, std::vector<Material>& materials)
-	{
-		if (!fileName) { return false; }
-
-		// wchar_t‚©‚çchar(UTF-8)‚É•ÏŠ·
-		auto path = ToUTF8(fileName);
-
-		Assimp::Importer importer;
-		int flags = 0;
-		flags |= aiProcess_Triangulate;					// ‚·‚×‚Ä‚ÌƒƒbƒVƒ…‚Ì‚·‚×‚Ä‚Ì–Êƒf[ƒ^‚ğOŠpŒ`‚É•ÏŠ·
-		flags |= aiProcess_PreTransformVertices;		// ƒm[ƒhƒtƒ‰ƒO‚ğíœ‚µA‚»‚ê‚ç‚Ìƒm[ƒh‚ª‚Âƒ[ƒJƒ‹•ÏŠ·s—ñ‚Å‚·‚×‚Ä‚Ì’¸“_‚ğ–‘O‚É•ÏŠ·‚µ‚Ü‚·B
-		flags |= aiProcess_CalcTangentSpace;			// ƒCƒ“ƒ|[ƒg‚³‚ê‚½ƒƒbƒVƒ…‚É‘Î‚µ‚ÄÚüƒxƒNƒgƒ‹‚Æ]ÚüƒxƒNƒgƒ‹‚ğŒvZ‚µ‚Ü‚·B
-		flags |= aiProcess_GenSmoothNormals;			// ƒƒbƒVƒ…“à‚Ì‚·‚×‚Ä‚Ì’¸“_‚É‚Â‚¢‚ÄƒXƒ€[ƒX–@üƒxƒNƒgƒ‹‚ğ¶¬‚µ‚Ü‚·B
-		flags |= aiProcess_GenUVCoords;					// ƒƒbƒVƒ…“à‚Ì‚·‚×‚Ä‚Ì’¸“_‚ÉƒeƒNƒXƒ`ƒƒÀ•W‚ğ¶¬‚µ‚Ü‚·B
-		flags |= aiProcess_RemoveRedundantMaterials;	// ƒV[ƒ““à‚Ì‚·‚×‚Ä‚Ìƒ}ƒeƒŠƒAƒ‹‚ğŒŸ¸‚µAg—p‚³‚ê‚Ä‚¢‚È‚¢ƒ}ƒeƒŠƒAƒ‹‚ğíœ‚µ‚Ü‚·B
-		flags |= aiProcess_OptimizeMeshes;				// ƒƒbƒVƒ…”‚ğÅ“K‰»‚µ‚Ü‚·B
-
-		// ƒtƒ@ƒCƒ‹‚ğ“Ç‚İ‚Ş
-		auto pScene = importer.ReadFile(path, flags);
-
-		// ƒ`ƒFƒbƒN
-		if (!pScene)
-		{
-			assert(0 && "[Mesh.cpp]ƒtƒ@ƒCƒ‹‚Ì“Ç‚İ‚İ‚É¸”s‚µ‚Ü‚µ‚½B");
-			return false;
-		}
-
-		// ƒƒbƒVƒ…‚Ìƒƒ‚ƒŠ‚ğŠm•Û
-		meshes.clear();
-		meshes.resize(pScene->mNumMeshes);
-
-		// ƒƒbƒVƒ…ƒf[ƒ^‚ğ•ÏŠ·
-		for (size_t i = 0; i < meshes.size(); ++i)
-		{
-			const auto pMesh = pScene->mMeshes[i];
-			ParseMesh(meshes[i], pMesh);
-		}
-
-		// ƒ}ƒeƒŠƒAƒ‹‚Ìƒƒ‚ƒŠ‚ğŠm•Û
-		materials.clear();
-		materials.resize(pScene->mNumMaterials);
-
-		// ƒ}ƒeƒŠƒAƒ‹ƒf[ƒ^‚ğ•ÏŠ·
-		for (size_t i = 0; i < materials.size(); ++i)
-		{
-			const auto pMaterial = pScene->mMaterials[i];
-			ParseMaterial(materials[i], pMaterial);
-		}
-
-		//•s—v‚É‚È‚Á‚½‚Ì‚ÅƒNƒŠƒA
-		pScene = nullptr;
-
-		// ³íI—¹
-		return true;
-	}
-
-	void MeshLoader::ParseMesh(Mesh& dstMesh, const aiMesh* pSrcMesh)
-	{
-		// ƒ}ƒeƒŠƒAƒ‹”Ô†‚ğİ’è
-		dstMesh.materialIdx = pSrcMesh->mMaterialIndex;
-
-		aiVector3D zero3D(0.0f, 0.0f, 0.0f);
-
-		// ’¸“_ƒf[ƒ^‚Ìƒƒ‚ƒŠ‚ğŠm•Û
-		dstMesh.vertices.resize(pSrcMesh->mNumVertices);
-
-		for (auto i = 0u; i < pSrcMesh->mNumVertices; ++i)
-		{
-			auto pPos = &(pSrcMesh->mVertices[i]);
-			auto pNormal = &(pSrcMesh->mNormals[i]);
-			auto pTexCoord = pSrcMesh->HasTextureCoords(0) ? &(pSrcMesh->mTextureCoords[0][i]) : &zero3D;
-			auto pTangent = pSrcMesh->HasTangentsAndBitangents() ? &(pSrcMesh->mTangents[i]) : &zero3D;
-
-			dstMesh.vertices[i] = MeshVertex(
-				DirectX::XMFLOAT3(pPos->x, pPos->y, pPos->z),
-				DirectX::XMFLOAT3(pNormal->x, pNormal->y, pNormal->z),
-				DirectX::XMFLOAT2(pTexCoord->x, pTexCoord->y),
-				DirectX::XMFLOAT3(pTangent->x, pTangent->y, pTangent->z));
-		}
-
-		// ƒCƒ“ƒfƒbƒNƒXƒf[ƒ^‚Ìƒƒ‚ƒŠ‚ğŠm•Û
-		dstMesh.indices.resize(pSrcMesh->mNumFaces * 3);
-
-		for (auto i = 0u; i < pSrcMesh->mNumFaces; ++i)
-		{
-			const auto& pFace = pSrcMesh->mFaces[i];
-			assert(pFace.mNumIndices == 3);		// OŠpŒ`‚Ì‚İ‘Î‰
-
-			dstMesh.indices[i * 3 + 0] = pFace.mIndices[0];
-			dstMesh.indices[i * 3 + 1] = pFace.mIndices[1];
-			dstMesh.indices[i * 3 + 2] = pFace.mIndices[2];
-		}
-	}
-
-	void MeshLoader::ParseMaterial(Material& dstMaterial, const aiMaterial* pSrcMaterial)
-	{
-		// ŠgU”½Ë¬•ª
-		{
-			aiColor3D color(0.0f, 0.0f, 0.0f);
-
-			if (pSrcMaterial->Get(AI_MATKEY_COLOR_DIFFUSE, color) == AI_SUCCESS)
-			{
-				dstMaterial.Diffuse = DirectX::XMFLOAT3(color.r, color.g, color.b);
-			}
-			else
-			{
-				dstMaterial.Diffuse = DirectX::XMFLOAT3(0.5f, 0.5f, 0.5f);
-			}
-		}
-
-		// ‹¾–Ê”½Ë¬•ª
-		{
-			aiColor3D color(0.0f, 0.0f, 0.0f);
-
-			if (pSrcMaterial->Get(AI_MATKEY_COLOR_SPECULAR, color) == AI_SUCCESS)
-			{
-				dstMaterial.Specular = DirectX::XMFLOAT3(color.r, color.g, color.b);
-			}
-			else
-			{
-				dstMaterial.Specular = DirectX::XMFLOAT3(0.5f, 0.5f, 0.5f);
-			}
-		}
-
-		// ‹¾–Ê”½Ë‹­“x
-		{
-			float shininess = 0.0f;
-
-			if (pSrcMaterial->Get(AI_MATKEY_SHININESS, shininess) == AI_SUCCESS)
-			{
-				dstMaterial.Shininess = shininess;
-			}
-			else
-			{
-				dstMaterial.Shininess = 0.0f;
-			}
-		}
-
-		// ƒfƒBƒtƒ…[ƒYƒ}ƒbƒv
-		{
-			aiString path;
-			if (pSrcMaterial->Get(AI_MATKEY_TEXBLEND_DIFFUSE(0), path) == AI_SUCCESS)
-			{
-				dstMaterial.DiffuseMap = path.C_Str();
-			}
-			else
-			{
-				dstMaterial.DiffuseMap.clear();
-			}
-		}
-
-	}
-}	// namespace
-
-// ====== ’è”Eƒ}ƒNƒ’è‹` ======
-#define FMT_FLOAT3      DXGI_FORMAT_R32G32B32_FLOAT
-#define FMT_FLOAT2      DXGI_FORMAT_R32G32_FLOAT
-#define APPEND          D3D12_APPEND_ALIGNED_ELEMENT
-#define IL_VERTEX       D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA
-
-const D3D12_INPUT_ELEMENT_DESC MeshVertex::InputElements[] =
+// åˆæœŸåŒ–å‡¦ç†
+bool Mesh::Init(const ResMesh& resource)
 {
-	{ "POSITION", 0, FMT_FLOAT3, 0, APPEND, IL_VERTEX, 0 },
-	{ "NORMAL",   0, FMT_FLOAT3, 0, APPEND, IL_VERTEX, 0 },
-	{ "TEXCOORD", 0, FMT_FLOAT2, 0, APPEND, IL_VERTEX, 0 },
-	{ "TANGENT",  0, FMT_FLOAT3, 0, APPEND, IL_VERTEX, 0 },
-};
+	if (!m_VB.Init(sizeof(MeshVertex) * resource.vertices.size(), resource.vertices.data()))
+	{
+		// é ‚ç‚¹ãƒãƒƒãƒ•ã‚¡ã®åˆæœŸåŒ–ã«å¤±æ•—
+		return false;
+	}
 
-const D3D12_INPUT_LAYOUT_DESC MeshVertex::InputLayout = {
-	MeshVertex::InputElements,
-	MeshVertex::InputElementCount
-};
+	if (!m_IB.Init(sizeof(uint32_t) * resource.indices.size(), resource.indices.data()))
+	{
+		return false;
+	}
 
-static_assert(sizeof(MeshVertex) == 44, "Vertex struct/layout mismatch");
+	m_MaterialId = resource.materialIdx;
+	m_IndexCount = uint32_t(resource.indices.size());
 
-#undef FMT_FLOAT3
-#undef FMT_FLOAT2
-#undef APPEND
-#undef IL_VERTEX
+	return true;
+}
 
-bool LoadMesh(const wchar_t* fileName, std::vector<Mesh>& meshes, std::vector<Material>& materials)
+// çµ‚äº†å‡¦ç†
+void Mesh::Uninit()
 {
-	MeshLoader loader;
-	return loader.Load(fileName, meshes, materials);
+	m_VB.Uninit();
+	m_IB.Uninit();
+	m_MaterialId = UINT32_MAX;
+	m_IndexCount = 0;
+}
+
+// æç”»å‡¦ç†
+void Mesh::Draw()
+{
+	auto pCmdList = RENDERER.GetCmdList();
+	auto VBV = m_VB.GetView();
+	auto IBV = m_IB.GetView();
+	pCmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	pCmdList->IASetVertexBuffers(0, 1, &VBV);
+	pCmdList->IASetIndexBuffer(&IBV);
+	pCmdList->DrawIndexedInstanced(m_IndexCount, 1, 0, 0, 0);
+}
+
+// ãƒãƒ†ãƒªã‚¢ãƒ«IDã‚’å–å¾—
+uint32_t Mesh::GetMaterialId() const
+{
+	return m_MaterialId;
 }

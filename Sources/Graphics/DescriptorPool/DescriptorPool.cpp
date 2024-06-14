@@ -92,8 +92,9 @@ ID3D12DescriptorHeap* const DescriptorPool::GetHeap() const
 	return m_pHeap.Get();
 }
 
-bool DescriptorPool::Create(ID3D12Device* pDevice, const D3D12_DESCRIPTOR_HEAP_DESC* pDesc, DescriptorPool** ppPool)
+bool DescriptorPool::Create(const D3D12_DESCRIPTOR_HEAP_DESC* pDesc, DescriptorPool** ppPool)
 {
+	auto pDevice = RENDERER.GetDevice();
 	// 引数チェック
 	if (pDevice == nullptr || pDesc == nullptr || ppPool == nullptr)
 	{

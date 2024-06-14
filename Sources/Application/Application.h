@@ -47,9 +47,15 @@ private:	// メンバ変数
 	DWORD m_dwFrameCount;
 	DWORD m_dwLsatFPSTime;
 	float m_fFPS;
-	MyPolygon m_Polygon;
-	Texture m_Texture;
-	Model m_Model;
+
+	// テスト用
+	std::vector<Mesh*>              m_pMesh;            //!< メッシュです.
+	std::vector<ConstantBuffer*>    m_Transform;        //!< 変換行列です.
+	ConstantBuffer* m_pLight;           //!< ライトです.
+	Material                        m_Material;         //!< マテリアルです.
+	ComPtr<ID3D12PipelineState>     m_pPSO;             //!< パイプラインステートです.
+	ComPtr<ID3D12RootSignature>     m_pRootSig;         //!< ルートシグニチャです.
+	float                           m_RotateAngle;      //!< 回転角です.
 
 public:		// シングルトン関連
 	/// <summary>

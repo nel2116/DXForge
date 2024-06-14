@@ -63,10 +63,7 @@
     <ClCompile Include="Sources\System\FileUtil.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\Graphics\Mesh\Mesh.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="Sources\Graphics\Model\Model.cpp">
+    <ClCompile Include="Sources\Graphics\Mesh\ResMesh.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Sources\Graphics\DescriptorPool\DescriptorPool.cpp">
@@ -75,7 +72,25 @@
     <ClCompile Include="Sources\System\Logger.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\Graphics\ConstantBuffer\ConstantBuffer.cpp">
+    <ClCompile Include="Sources\Graphics\Buffer\ConstantBuffer\ConstantBuffer.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Sources\Graphics\Mesh\Mesh.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Sources\Graphics\Buffer\IndexBuffer\IndexBuffer.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Sources\Graphics\Buffer\VertexBuffer\VertexBuffer.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Sources\Graphics\Mesh\Material\Material.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Sources\Graphics\ColorTarget.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Sources\Graphics\DepthTarget.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>
@@ -143,10 +158,7 @@
     <ClInclude Include="Sources\System\FileUtil.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\Graphics\Mesh\Mesh.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="Sources\Graphics\Model\Model.h">
+    <ClInclude Include="Sources\Graphics\Mesh\ResMesh.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Sources\Graphics\Pool\Pool.h">
@@ -161,7 +173,28 @@
     <ClInclude Include="Sources\System\Logger.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\Graphics\ConstantBuffer\ConstantBuffer.h">
+    <ClInclude Include="Sources\Graphics\Buffer\ConstantBuffer\ConstantBuffer.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Sources\Graphics\Mesh\Mesh.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Sources\Graphics\Buffer\IndexBuffer\IndexBuffer.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Sources\Graphics\Buffer\VertexBuffer\VertexBuffer.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Sources\Graphics\Mesh\Material\Material.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Sources\System\SimpleMath.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Sources\Graphics\ColorTarget.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Sources\Graphics\DepthTarget.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>
@@ -172,10 +205,13 @@
     <FxCompile Include="Sources\HLSL\VertexShader\VS_Texture.hlsl" />
     <FxCompile Include="Sources\HLSL\PixelShader\PS_Mesh.hlsl" />
     <FxCompile Include="Sources\HLSL\VertexShader\VS_Mesh.hlsl" />
+    <FxCompile Include="Sources\HLSL\VertexShader\VS_Lambert.hlsl" />
+    <FxCompile Include="Sources\HLSL\PixelShader\PS_Lambert.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Sources\HLSL\ShaderHeader\inc_Simple.hlsli" />
     <None Include="Sources\HLSL\ShaderHeader\inc_Texture.hlsli" />
     <None Include="Sources\HLSL\ShaderHeader\inc_Mesh.hlsli" />
+    <None Include="Sources\HLSL\ShaderHeader\inc_Lambert.hlsli" />
   </ItemGroup>
 </Project>

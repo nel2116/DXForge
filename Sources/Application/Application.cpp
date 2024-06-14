@@ -10,6 +10,20 @@
 #include "Application.h"
 #include <Manager/ActorManager.h>
 
+using namespace DirectX::SimpleMath;
+
+struct LigBuffer
+{
+	Vector4 LigPos;	// ライトの位置
+	Color LigColor;	// ライトの色
+};
+
+struct MaterialBufer
+{
+	Vector3 Diffuse;	// ディフューズ
+	float Alpha;		// アルファ
+};
+
 // ====== メンバ関数 ======
 bool Application::Init()
 {
@@ -38,23 +52,146 @@ bool Application::Init()
 	// ====== Managerの初期化 ======
 	ACTOR_MANAGER.Init();
 
-	if (!m_Polygon.Init())
+	// メッシュをロード
 	{
-		assert(0 && "ポリゴンの初期化に失敗しました。");
-		return false;
+		std::wstring path;
+		// ファイルパスを検索
+		if (!SearchFilePathW(L"Assets/Models/teapot/teapot.obj", path));
+		{
+			ELOG("[App.cpp]Error : Line61 : ファイルが見つかりませんでした。");
+			return false;
+		}
+
+		std::wstring dir = GetDirectoryPathW(path.c_str());
+
+		// メッシュの読み込み
+		vector<ResMesh> resMesh;
+		vector<ResMaterial> resMaterial;
+
+		if (!LoadMesh(path.c_str(), resMesh, resMaterial))
+		{
+			ELOG("[App.cpp]Error : Line72 : メッシュの読み込みに失敗しました。FilePath = %ls", path.c_str());
+			return false;
+		}
+
+		// メモリを予約
+		m_pMesh.reserve(resMesh.size());
+
+		// メッシュを初期化
+		for (size_t i = 0; i < resMesh.size(); ++i)
+		{
+			// メッシュの生成
+			auto pMesh = NEW Mesh();
+
+			// チェック
+			if (!pMesh)
+			{
+				ELOG("[App.cpp]Error : Line88 : メモリの確保に失敗しました。");
+				return false;
+			}
+
+			// 初期化処理
+			if (!pMesh->Init(resMesh[i]))
+			{
+				ELOG("[App.cpp]Error : Line96 : メッシュの初期化に失敗しました。");
+				SAFE_DELETE(pMesh);
+				return false;
+			}
+
+			// メッシュの追加
+			m_pMesh.push_back(pMesh);
+		}
+
+		// メモリ最適化
+		resMesh.shrink_to_fit();
+
+		DescriptorPool* pPool = RENDERER.GetDescriptorPool(POOL_TYPE_RES);
+
+		// マテリアルの初期化
+		if (!m_Material.Init(pPool, sizeof(MaterialBufer), resMaterial.size()));
+		{
+			ELOG("[App.cpp]Error : Line111 : マテリアルの初期化に失敗しました。");
+			return false;
+		}
+
+		// テクスチャとマテリアルの設定
+		for (size_t i = 0; i < resMaterial.size(); ++i)
+		{
+			auto ptr = m_Material.GetBufferPtr<MaterialBufer>(i);
+			ptr->Diffuse = resMaterial[i].Diffuse;
+			ptr->Alpha = resMaterial[i].Alpha;
+
+			// テクスチャの設定
+			std::wstring path = dir + resMaterial[i].DiffuseMap;
+			m_Material.SetTexture(i, TU_DIFFUSE, path);
+		}
 	}
 
-	if (!m_Texture.Init())
+	// ライトバッファの設定
 	{
-		assert(0 && "テクスチャの初期化に失敗しました。");
-		return false;
+		auto pCB = NEW ConstantBuffer();
+		// チェック
+		if (!pCB)
+		{
+			ELOG("[App.cpp]Error : Line136 : メモリの確保に失敗しました。");
+			return false;
+		}
+
+		// 初期化
+		DescriptorPool* pPool = RENDERER.GetDescriptorPool(POOL_TYPE_RES);
+		if (!pCB->Init(pPool, sizeof(LigBuffer)))
+		{
+			ELOG("[App.cpp]Error : Line144 : ライトバッファの初期化に失敗しました。");
+			SAFE_DELETE(pCB);
+			return false;
+		}
+
+		auto ptr = pCB->GetPtr<LigBuffer>();
+		ptr->LigPos = Vector4(0.0f, 50.0f, 100.0f, 1.0f);
+		ptr->LigColor = Color(1.0f, 1.0f, 1.0f, 0.0f);
+
+		m_pLight = pCB;
 	}
 
-	if (!m_Model.Init())
+	// ルートシグネチャーの生成
 	{
-		assert(0 && "モデルの初期化に失敗しました。");
-		return false;
+		auto flag = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+		// ルートパラメーターの設定
+		flag |= D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS;
+		flag |= D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS;
+		flag |= D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
+
+		// ディスクリプタレンジを設定
+		D3D12_DESCRIPTOR_RANGE range = {};
+		range[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		range[0].NumDescriptors = 1;
+		range[0].BaseShaderRegister = 0;
+		range[0].RegisterSpace = 0;
+		range[0].OffsetInDescriptorsFromTableStart = 0;
+
+		// ルートパラメーターを設定
+		D3D12_ROOT_PARAMETER param[4] = {};
+		param[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+		param[0].Descriptor.ShaderRegister = 0;
+		param[0].Descriptor.RegisterSpace = 0;
+		param[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+		param[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+		param[1].Descriptor.ShaderRegister = 1;
+		param[1].Descriptor.RegisterSpace = 0;
+		param[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+		param[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+		param[2].Descriptor.ShaderRegister = 2;
+		param[2].Descriptor.RegisterSpace = 0;
+		param[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+		param[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+		param[3].DescriptorTable.NumDescriptorRanges = 1;
+		param[3].DescriptorTable.pDescriptorRanges = &range;
+
 	}
+
 
 	// タイマーの初期化
 	timeBeginPeriod(1);
@@ -85,9 +222,6 @@ void Application::Run()
 
 			// --- 以下ゲームの描画処理
 			ACTOR_MANAGER.Draw();
-			// m_Polygon.Draw();
-			// m_Texture.Draw();
-			m_Model.Draw();
 
 			// --- ここまでゲームの描画処理
 
@@ -102,9 +236,6 @@ void Application::Run()
 void Application::Uninit()
 {
 	// ====== 終了処理 ======
-	m_Model.Uninit();	// モデルの終了処理
-	m_Texture.Uninit();	// テクスチャの終了処理
-	m_Polygon.Uninit();	// ポリゴンの終了処理
 
 	// ----- Managerの終了処理 -----
 	ACTOR_MANAGER.Uninit();	// ActorManagerの終了処理

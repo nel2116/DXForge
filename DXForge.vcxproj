@@ -195,10 +195,15 @@
   <ItemGroup>
     <ClCompile Include="Sources\Actor\Actor.cpp" />
     <ClCompile Include="Sources\Application\Application.cpp" />
-    <ClCompile Include="Sources\Graphics\ConstantBuffer\ConstantBuffer.cpp" />
+    <ClCompile Include="Sources\Graphics\Buffer\ConstantBuffer\ConstantBuffer.cpp" />
+    <ClCompile Include="Sources\Graphics\Buffer\IndexBuffer\IndexBuffer.cpp" />
+    <ClCompile Include="Sources\Graphics\Buffer\VertexBuffer\VertexBuffer.cpp" />
+    <ClCompile Include="Sources\Graphics\ColorTarget.cpp" />
+    <ClCompile Include="Sources\Graphics\DepthTarget.cpp" />
     <ClCompile Include="Sources\Graphics\DescriptorPool\DescriptorPool.cpp" />
+    <ClCompile Include="Sources\Graphics\Mesh\Material\Material.cpp" />
     <ClCompile Include="Sources\Graphics\Mesh\Mesh.cpp" />
-    <ClCompile Include="Sources\Graphics\Model\Model.cpp" />
+    <ClCompile Include="Sources\Graphics\Mesh\ResMesh.cpp" />
     <ClCompile Include="Sources\Graphics\Polygon\Polygon.cpp" />
     <ClCompile Include="Sources\Graphics\Renderer.cpp" />
     <ClCompile Include="Sources\Graphics\Texture\Texture.cpp" />
@@ -224,10 +229,15 @@
     <ClInclude Include="Sources\Component\Component.h" />
     <ClInclude Include="Sources\DirectXTex\DirectXTex.h" />
     <ClInclude Include="Sources\GameObject\Actor.h" />
-    <ClInclude Include="Sources\Graphics\ConstantBuffer\ConstantBuffer.h" />
+    <ClInclude Include="Sources\Graphics\Buffer\ConstantBuffer\ConstantBuffer.h" />
+    <ClInclude Include="Sources\Graphics\Buffer\IndexBuffer\IndexBuffer.h" />
+    <ClInclude Include="Sources\Graphics\Buffer\VertexBuffer\VertexBuffer.h" />
+    <ClInclude Include="Sources\Graphics\ColorTarget.h" />
+    <ClInclude Include="Sources\Graphics\DepthTarget.h" />
     <ClInclude Include="Sources\Graphics\DescriptorPool\DescriptorPool.h" />
+    <ClInclude Include="Sources\Graphics\Mesh\Material\Material.h" />
     <ClInclude Include="Sources\Graphics\Mesh\Mesh.h" />
-    <ClInclude Include="Sources\Graphics\Model\Model.h" />
+    <ClInclude Include="Sources\Graphics\Mesh\ResMesh.h" />
     <ClInclude Include="Sources\Graphics\Polygon\Polygon.h" />
     <ClInclude Include="Sources\Graphics\Pool\Pool.h" />
     <ClInclude Include="Sources\Graphics\Renderer.h" />
@@ -246,9 +256,16 @@
     <ClInclude Include="Sources\System\ComPtr.h" />
     <ClInclude Include="Sources\System\FileUtil.h" />
     <ClInclude Include="Sources\System\Logger.h" />
+    <ClInclude Include="Sources\System\SimpleMath.h" />
     <ClInclude Include="Sources\System\window.h" />
   </ItemGroup>
   <ItemGroup>
+    <FxCompile Include="Sources\HLSL\PixelShader\PS_Lambert.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+    </FxCompile>
     <FxCompile Include="Sources\HLSL\PixelShader\PS_Mesh.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
@@ -266,6 +283,12 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+    </FxCompile>
+    <FxCompile Include="Sources\HLSL\VertexShader\VS_Lambert.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
     </FxCompile>
     <FxCompile Include="Sources\HLSL\VertexShader\VS_Mesh.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
@@ -287,6 +310,7 @@
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
+    <None Include="Sources\HLSL\ShaderHeader\inc_Lambert.hlsli" />
     <None Include="Sources\HLSL\ShaderHeader\inc_Mesh.hlsli" />
     <None Include="Sources\HLSL\ShaderHeader\inc_Simple.hlsli" />
     <None Include="Sources\HLSL\ShaderHeader\inc_Texture.hlsli" />

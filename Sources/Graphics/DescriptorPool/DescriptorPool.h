@@ -33,7 +33,7 @@ public:
 	/// <param name="pDesc">ディスクリプタヒープの構成設定</param>
 	/// <param name="ppPool">生成されたディスクリプタプールの格納先</param>
 	/// <returns>生成に成功したらtrue</returns>
-	static bool Create(ID3D12Device* pDevice, const D3D12_DESCRIPTOR_HEAP_DESC* pDesc, DescriptorPool** ppPool);
+	static bool Create(const D3D12_DESCRIPTOR_HEAP_DESC* pDesc, DescriptorPool** ppPool);
 
 	/// <summary>
 	/// 参照カウントを増やす

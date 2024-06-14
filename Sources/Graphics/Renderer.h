@@ -9,8 +9,20 @@
 // ====== インクルード部 ======
 #include <System/window.h>
 #include <System/ComPtr.h>
+#include <Graphics/ColorTarget.h>
+#include <Graphics/DepthTarget.h>
 
 using namespace std;
+
+// 列挙体
+enum DescriptorPoolType
+{
+	POOL_TYPE_RES = 0,     // CBV / SRV / UAV
+	POOL_TYPE_SMP = 1,     // Sampler
+	POOL_TYPE_RTV = 2,     // RTV
+	POOL_TYPE_DSV = 3,     // DSV
+	POOL_COUNT = 4,
+};
 
 // ====== クラス定義 ======
 class Renderer
@@ -62,6 +74,12 @@ public:		// アクセサ関数
 	ID3D12CommandQueue* GetCmdQueue() { return m_pCmdQueue.Get(); }
 
 	/// <summary>
+	/// スワップチェインの取得
+	/// </summary>
+	/// <returns>スワップチェインの参照</returns>
+	IDXGISwapChain3* GetSwapChain() { return m_pSwapChain.Get(); }
+
+	/// <summary>
 	/// フレームバッファのインデックスを取得
 	/// </summary>
 	/// <returns>フレームバッファのインデックス</returns>
@@ -78,6 +96,25 @@ public:		// アクセサ関数
 	/// </summary>
 	/// <returns>ウィンドウの縦幅</returns>
 	int GetHeight() { return m_pWindow->GetHeight(); }
+
+	/// <summary>
+	/// ビューポートの取得
+	/// </summary>
+	/// <returns>ビューポート</returns>
+	D3D12_VIEWPORT GetViewport() { return m_viewport; }
+
+	/// <summary>
+	/// シザー矩形の取得
+	/// </summary>
+	/// <returns>シザー矩形</returns>
+	D3D12_RECT GetScissor() { return m_scissor; }
+
+	/// <summary>
+	/// ディスクリプタプールの取得
+	/// </summary>
+	/// <param name="type">ディスクリプタプールの種類</param>
+	/// <returns>ディスクリプタプールの参照</returns>
+	DescriptorPool* GetDescriptorPool(DescriptorPoolType type) { return m_pPool[type]; }
 
 private:	// プライベート関数
 
@@ -96,13 +133,14 @@ private:	// プライベート関数
 	bool CreateCommandAllocator();
 	// コマンドリストの生成
 	bool CreateCommandList();
-	// RTVの生成
-	bool CreateRTV();
 	// フェンスの生成
 	bool CreateFence();
-	// 深度ステンシルバッファの生成
-	bool CreateDepthStencilBuffer();
-
+	// レンダーターゲットビューの生成
+	bool CreateRenderTargetView();
+	// 深度ステンシルビューの生成
+	bool CreateDepthStencilView();
+	// ディスクリプタプールの生成
+	bool CreateDescriptorPool();
 
 private:	// メンバ変数
 	// フレームバッファ数
@@ -124,19 +162,15 @@ private:	// メンバ変数
 	uint64_t m_FenceCounter[FRAME_BUFFER_COUNT] = {};					// フェンスカウンタ
 	uint32_t m_FrameIndex = 0;											// フレーム番号
 
-	// レンダーターゲットビュー関連
-	ComPtr<ID3D12DescriptorHeap> m_pRTVHeap;							// RTVヒープ
-	D3D12_CPU_DESCRIPTOR_HANDLE m_RTVHandle[FRAME_BUFFER_COUNT] = {};	// RTVハンドル
-	ComPtr<ID3D12Resource> m_pColorBuffer[FRAME_BUFFER_COUNT];			// カラーバッファ
+	// バックバッファ関連
+	ColorTarget m_ColorTarget[FRAME_BUFFER_COUNT];	// カラーターゲット
+	DepthTarget m_DepthTarget;						// 深度ターゲット
 
-	// 深度ステンシルバッファ関連
-	ComPtr<ID3D12DescriptorHeap> m_pDSVHeap;							// DSVヒープ
-	D3D12_CPU_DESCRIPTOR_HANDLE m_DSVHandle;							// DSVハンドル
-	ComPtr<ID3D12Resource> m_pDepthStencilBuffer;						// 深度ステンシルバッファ
+	DescriptorPool* m_pPool[POOL_COUNT];	// ディスクリプタプール
 
 	// ビューポート関連
 	D3D12_VIEWPORT m_viewport;	// ビューポート
-	D3D12_RECT m_scissorRect;	// シザー矩形
+	D3D12_RECT m_scissor;	// シザー矩形
 
 public:
 	// シングルトン関連

@@ -1,61 +1,60 @@
-//_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-// [Mesh.cpp]
-// ì¬Ò : “c’†ƒ~ƒmƒ‹
-// ì¬“ú : 2024/05/25 19:00
-// ŠT—v   : ƒƒbƒVƒ…ƒNƒ‰ƒX‚Ì’è‹`
-// XV—š—ğ
-// 2024/06/11 ì¬
-// 2024/06/13 ÄÀ‘•
-//_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+ï»¿// _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+// [Mesh.h]
+// ä½œæˆè€… : ç”°ä¸­ãƒŸãƒãƒ«
+// ä½œæˆæ—¥ : 2024/06/14 11:55 : ä½œæˆ
+// æ¦‚è¦   : ãƒ¡ãƒƒã‚·ãƒ¥ã‚¯ãƒ©ã‚¹ã®å®šç¾©
+// æ›´æ–°å±¥æ­´
+// 2024/06/14  ä½œæˆ
+// _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 #pragma once
-// ====== ƒCƒ“ƒNƒ‹[ƒh•” ======
-#include <string>
-#include <vector>
+// ====== ã‚¤ãƒ³ã‚¯ãƒ«ãƒ¼ãƒ‰éƒ¨ ======
+#include "ResMesh.h"
+#include <Graphics/Buffer/VertexBuffer/VertexBuffer.h>
+#include <Graphics/Buffer/IndexBuffer/IndexBuffer.h>
 
-
-// ====== \‘¢‘Ì’è‹` ======
-struct MeshVertex
+// ====== ã‚¯ãƒ©ã‚¹å®šç¾© ======
+class Mesh
 {
-	DirectX::XMFLOAT3 pos;
-	DirectX::XMFLOAT3 normal;
-	DirectX::XMFLOAT2 texcoord;
-	DirectX::XMFLOAT3 tangent;
-	MeshVertex() = default;
-	MeshVertex(
-		DirectX::XMFLOAT3 const& Pos,
-		DirectX::XMFLOAT3 const& Normal,
-		DirectX::XMFLOAT2 const& Texcoord,
-		DirectX::XMFLOAT3 const& Tangent)
-		: pos(Pos), normal(Normal), texcoord(Texcoord), tangent(Tangent) {}
-	static const D3D12_INPUT_LAYOUT_DESC InputLayout;
+public:
+	/// <summary>
+	/// ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿
+	/// </summary>
+	Mesh();
 
-private:
-	static const int InputElementCount = 4;
-	static const D3D12_INPUT_ELEMENT_DESC InputElements[InputElementCount];
+	/// <summary>
+	/// ãƒ‡ã‚¹ãƒˆãƒ©ã‚¯ã‚¿
+	/// </summary>
+	virtual ~Mesh();
 
+	/// <summary>
+	/// åˆæœŸåŒ–å‡¦ç†
+	/// </summary>
+	/// <param name="resource">ãƒªã‚½ãƒ¼ã‚¹ãƒ¡ãƒƒã‚·ãƒ¥</param>
+	/// <returns>åˆæœŸåŒ–ã«æˆåŠŸã—ãŸã‚‰true</returns>
+	bool Init(const ResMesh& resource);
+
+	/// <summary>
+	/// çµ‚äº†å‡¦ç†
+	/// </summary>
+	void Uninit();
+
+	/// <summary>
+	/// æç”»å‡¦ç†
+	/// </summary>
+	void Draw();
+
+	/// <summary>
+	/// ãƒãƒ†ãƒªã‚¢ãƒ«IDã‚’å–å¾—
+	/// </summary>
+	uint32_t GetMaterialId() const;
+
+private:	// ãƒ¡ãƒ³ãƒå¤‰æ•°
+	VertexBuffer    m_VB;               //!< é ‚ç‚¹ãƒãƒƒãƒ•ã‚¡ã§ã™.
+	IndexBuffer     m_IB;               //!< ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ãƒãƒƒãƒ•ã‚¡ã§ã™.
+	uint32_t        m_MaterialId;       //!< ãƒãƒ†ãƒªã‚¢ãƒ«IDã§ã™.
+	uint32_t        m_IndexCount;       //!< ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹æ•°ã§ã™.
+
+private:	// ã‚³ãƒ”ãƒ¼ç¦æ­¢
+	Mesh(const Mesh&) = delete;     // ã‚¢ã‚¯ã‚»ã‚¹ç¦æ­¢.
+	void operator = (const Mesh&) = delete;     // ã‚¢ã‚¯ã‚»ã‚¹ç¦æ­¢.
 };
-
-struct Material
-{
-	DirectX::XMFLOAT3 Diffuse;	// ŠgU”½Ë¬•ª
-	DirectX::XMFLOAT3 Specular;	// ‹¾–Ê”½Ë¬•ª
-	float Alpha;				// “§‰ß¬•ª
-	float Shininess;			// ‹¾–Ê”½Ë‹­“x
-	std::string DiffuseMap;		// ƒeƒNƒXƒ`ƒƒƒtƒ@ƒCƒ‹ƒpƒX
-};
-
-struct Mesh
-{
-	std::vector<MeshVertex> vertices;	// ’¸“_ƒf[ƒ^
-	std::vector<uint32_t> indices;		// ƒCƒ“ƒfƒbƒNƒXƒf[ƒ^
-	uint32_t materialIdx;				// ƒ}ƒeƒŠƒAƒ‹”Ô†
-};
-
-/// <summary>
-/// ƒƒbƒVƒ…‚ğƒ[ƒh‚·‚é
-/// </summary>
-/// <param name="fileName">ƒtƒ@ƒCƒ‹–¼</param>
-/// <param name="meshes">ƒƒbƒVƒ…‚ÌŠi”[æ</param>
-/// <param name="materials">ƒ}ƒeƒŠƒAƒ‹‚ÌŠi”[æ</param>
-/// <returns>ƒ[ƒh‚É¬Œ÷‚µ‚½‚çtrue</returns>
-bool LoadMesh(const wchar_t* fileName, std::vector<Mesh>& meshes, std::vector<Material>& materials);

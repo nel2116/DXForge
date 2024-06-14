@@ -59,6 +59,13 @@ bool Renderer::Init(Window* window)
 		return false;
 	}
 
+	if (!CreateDescriptorPool())
+	{
+		// ディスクリプタプールの生成に失敗した場合
+		assert(0 && "ディスクリプタプールの生成に失敗しました。");
+		return false;
+	}
+
 	// 4.コマンドアロケータの生成
 	if (!CreateCommandAllocator())
 	{
@@ -78,7 +85,7 @@ bool Renderer::Init(Window* window)
 	}
 
 	// 6.RTVの生成
-	if (!CreateRTV())
+	if (!CreateRenderTargetView())
 	{
 		// RTVの生成に失敗した場合
 		assert(0 && "RTVの生成に失敗しました。");
@@ -94,7 +101,7 @@ bool Renderer::Init(Window* window)
 	}
 
 	// 8.深度ステンシルバッファの生成
-	if (!CreateDepthStencilBuffer())
+	if (!CreateDepthStencilView())
 	{
 		// 深度ステンシルバッファの生成に失敗した場合
 		assert(0 && "深度ステンシルバッファの生成に失敗しました。");
@@ -103,6 +110,24 @@ bool Renderer::Init(Window* window)
 
 	// コマンドリストを閉じる
 	m_pCmdList->Close();
+
+	// ビューポートの設定.
+	{
+		m_viewport.TopLeftX = 0.0f;
+		m_viewport.TopLeftY = 0.0f;
+		m_viewport.Width = float(WIDTH);
+		m_viewport.Height = float(HEIGHT);
+		m_viewport.MinDepth = 0.0f;
+		m_viewport.MaxDepth = 1.0f;
+	}
+
+	// シザー矩形の設定.
+	{
+		m_scissor.left = 0;
+		m_scissor.right = WIDTH;
+		m_scissor.top = 0;
+		m_scissor.bottom = HEIGHT;
+	}
 
 	// 初期化成功
 	return true;
@@ -118,7 +143,7 @@ void Renderer::Begin()
 	D3D12_RESOURCE_BARRIER barrier = {};
 	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;	// リソースバリアの種類 : リソースの状態遷移
 	barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;		// フラグ : 特になし
-	barrier.Transition.pResource = m_pColorBuffer[m_FrameIndex].Get();	// 
+	barrier.Transition.pResource = m_ColorTarget[m_FrameIndex].GetResource();	// 
 	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;	// 遷移前のリソースの状態 : プレゼント
 	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;	// 遷移後のリソースの状態 : レンダーターゲット
 	barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;	// サブリソース : 全て
@@ -126,16 +151,19 @@ void Renderer::Begin()
 	// リソースバリア
 	m_pCmdList->ResourceBarrier(1, &barrier);
 
+	auto handleRTV = m_ColorTarget[m_FrameIndex].GetHandleRTV();
+	auto handleDSV = m_DepthTarget.GetHandleDSV();
+
 	// レンダーターゲットの設定
-	m_pCmdList->OMSetRenderTargets(1, &m_RTVHandle[m_FrameIndex], FALSE, &m_DSVHandle);
+	m_pCmdList->OMSetRenderTargets(1, &handleRTV->HandleCPU, FALSE, &handleDSV->HandleCPU);
 
 	// クリアカラー
 	float clearColor[] = { 0.25f, 0.25f, 0.25f, 1.0f };
 
 	// レンダーターゲットビューをクリア
-	m_pCmdList->ClearRenderTargetView(m_RTVHandle[m_FrameIndex], clearColor, 0, nullptr);
+	m_pCmdList->ClearRenderTargetView(handleRTV->HandleCPU, clearColor, 0, nullptr);
 	// 深度ステンシルビューをクリア.
-	m_pCmdList->ClearDepthStencilView(m_DSVHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+	m_pCmdList->ClearDepthStencilView(handleDSV->HandleCPU, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 }
 
 void Renderer::End()
@@ -144,7 +172,7 @@ void Renderer::End()
 	D3D12_RESOURCE_BARRIER barrier = {};
 	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;	// リソースバリアの種類 : リソースの状態遷移
 	barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;		// フラグ :
-	barrier.Transition.pResource = m_pColorBuffer[m_FrameIndex].Get();	// リソース
+	barrier.Transition.pResource = m_ColorTarget[m_FrameIndex].GetResource();	// リソース
 	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;	// 遷移前のリソースの状態
 	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;	// 遷移後のリソースの状態
 	barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;	// サブリソース
@@ -339,58 +367,6 @@ bool Renderer::CreateCommandList()
 	return true;
 }
 
-bool Renderer::CreateRTV()
-{
-	// ====== レンダーターゲットビュー(RTV) ======
-	// レンダーターゲットはDirect3Dの描画先
-	// 実体はバックバッファやテクスチャといったリソース
-	// リソースは単にメモリ領域を持つオブジェクトがわかっているだけでGPUのアドレスがどこになるのかわからない
-	// また、バッファ要領はわかっているが、バッファの区切り方によって2次元のテクスチャとして使うのか、3次元のテクスチャとして使うのかわからない
-	// そこで、リソースをどのように使うのかを指定するのがビュー
-	// RTVの作成方法
-	// 1,リソースの生成
-	// 2,ディスクリプタヒープの生成
-	// 3,レンダーターゲットビューの生成
-	// 今回の場合はスワップチェインのバックバッファをリソースとするため、1は不要
-	// 次にやるべきことはディスクリプタのアドレス取得
-
-	// ディスクリプタヒープの設定
-	D3D12_DESCRIPTOR_HEAP_DESC desc = {};
-	desc.NumDescriptors = FRAME_BUFFER_COUNT;	// ディスクリプタ数 : バッファ数
-	desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;	// ヒープの種類	: RTV
-	desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;	// フラグ : 特になし
-	desc.NodeMask = 0;	// ノードマスク : GPUが複数ある場合に使用
-
-	// ディスクリプタヒープの生成
-	auto hr = m_pDevice->CreateDescriptorHeap(&desc, IID_PPV_ARGS(m_pRTVHeap.ReleaseAndGetAddressOf()));
-	// エラーチェック
-	if (FAILED(hr)) { return false; }
-
-	// レンダーターゲットビューの生成
-	auto handle = m_pRTVHeap->GetCPUDescriptorHandleForHeapStart();
-	// この関数で取得できる値は固定値だが、デバイス依存のため必ず取得する
-	auto incrementSize = m_pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-
-	for (auto i = 0u; i < FRAME_BUFFER_COUNT; ++i)
-	{
-		hr = m_pSwapChain->GetBuffer(i, IID_PPV_ARGS(m_pColorBuffer[i].ReleaseAndGetAddressOf()));
-		// エラーチェック
-		if (FAILED(hr)) { return false; }
-
-		D3D12_RENDER_TARGET_VIEW_DESC viewDesc = {};
-		viewDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;	// フォーマット : sRGBでのRGBA8bit
-		viewDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;	// ビューの次元 : 2D
-		viewDesc.Texture2D.MipSlice = 0;	// ミップマップスライス : 0
-		viewDesc.Texture2D.PlaneSlice = 0;	// プレーンスライス : 0
-
-		m_pDevice->CreateRenderTargetView(m_pColorBuffer[i].Get(), &viewDesc, handle);
-		m_RTVHandle[i] = handle;
-		handle.ptr += incrementSize;
-	}
-
-	return true;
-}
-
 bool Renderer::CreateFence()
 {
 	// CPUとGPUの同期処理はApplication側の責務
@@ -422,69 +398,74 @@ bool Renderer::CreateFence()
 	return true;
 }
 
-bool Renderer::CreateDepthStencilBuffer()
+bool Renderer::CreateRenderTargetView()
 {
-	// 深度ステンシルバッファの設定
-	D3D12_HEAP_PROPERTIES heapProp = {};
-	heapProp.Type = D3D12_HEAP_TYPE_DEFAULT;					// ヒープの種類 : デフォルト
-	heapProp.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;	// CPUページプロパティ : 未指定
-	heapProp.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;	// メモリプールの優先度 : 未指定
-	heapProp.CreationNodeMask = 1;								// 作成ノードマスク : 1
-	heapProp.VisibleNodeMask = 1;								// 可視ノードマスク : 1
+	for (auto i = 0u; i < FRAME_BUFFER_COUNT; ++i)
+	{
+		if (!m_ColorTarget[i].InitFromBackBuffer(m_pPool[POOL_TYPE_RTV], i))
+		{
+			ELOG("[Renderer.cpp]Error : Line 387 : レンダーターゲットビューの生成に失敗しました。");
+			return false;
+		}
+	}
+	return true;
+}
 
-	D3D12_RESOURCE_DESC resDesc = {};
-	resDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;	// リソースの次元 : 2D
-	resDesc.Alignment = 0;									// アライメント : 0
-	resDesc.Width = m_pWindow->GetWidth();					// 幅
-	resDesc.Height = m_pWindow->GetHeight();				// 高さ
-	resDesc.DepthOrArraySize = 1;							// 深度または配列サイズ : 1
-	resDesc.MipLevels = 1;									// ミップレベル : 1
-	resDesc.Format = DXGI_FORMAT_D32_FLOAT;					// フォーマット : D32bit
-	resDesc.SampleDesc.Count = 1;							// サンプル数 : 1
-	resDesc.SampleDesc.Quality = 0;							// サンプル品質 : 0
-	resDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;			// テクスチャレイアウト : 未指定
-	resDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;	// フラグ : 深度ステンシルを許可
+bool Renderer::CreateDepthStencilView()
+{
+	if (!m_DepthTarget.Init(m_pPool[POOL_TYPE_DSV], WIDTH, HEIGHT, DXGI_FORMAT_D32_FLOAT))
+	{
+		ELOG("[Renderer.cpp]Error : Line 398 : 深度ステンシルビューの生成に失敗しました。");
+		return false;
+	}
+	return true;
+}
 
-	D3D12_CLEAR_VALUE clearValue = {};
-	clearValue.Format = DXGI_FORMAT_D32_FLOAT;	// フォーマット : D32bit
-	clearValue.DepthStencil.Depth = 1.0f;		// 深度 : 1.0f
-	clearValue.DepthStencil.Stencil = 0;		// ステンシル : 0
-
-	auto hr = m_pDevice->CreateCommittedResource(
-		&heapProp,
-		D3D12_HEAP_FLAG_NONE,
-		&resDesc,
-		D3D12_RESOURCE_STATE_DEPTH_WRITE,
-		&clearValue,
-		IID_PPV_ARGS(m_pDepthStencilBuffer.ReleaseAndGetAddressOf()));
-
-	// エラーチェック
-	if (FAILED(hr)) { return false; }
+bool Renderer::CreateDescriptorPool()
+{
+	D3D12_DESCRIPTOR_HEAP_DESC desc = {};
 
 	// ディスクリプタヒープの設定
-	D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
-	heapDesc.NumDescriptors = 1;	// ディスクリプタ数 : 1
-	heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;	// ヒープの種類 : DSV
-	heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;	// フラグ : 特になし
-	heapDesc.NodeMask = 0;	// ノードマスク : 0
+	desc.NodeMask = 1;	// ノードマスク : 1
+	desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;	// ヒープの種類 : CBV/SRV/UAV
+	desc.NumDescriptors = 512;	// ディスクリプタ数 : 512
+	desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;	// フラグ : シェーダーから見える
+	if (!DescriptorPool::Create(&desc, &m_pPool[POOL_TYPE_RES]))
+	{
+		ELOG("[Renderer.cpp]Error : Line510 : ディスクリプタプール(RES)の生成に失敗しました。");
+		return false;
+	}
 
-	// ディスクリプタヒープの生成
-	hr = m_pDevice->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(m_pDSVHeap.ReleaseAndGetAddressOf()));
-	// エラーチェック
-	if (FAILED(hr)) { return false; }
+	// ディスクリプタヒープの設定
+	desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER;	// ヒープの種類 : Sampler
+	desc.NumDescriptors = 256;	// ディスクリプタ数 : 256
+	desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;	// フラグ : シェーダーから見える
+	if (!DescriptorPool::Create(&desc, &m_pPool[POOL_TYPE_SMP]))
+	{
+		ELOG("[Renderer.cpp]Error : Line520 : ディスクリプタプール(SMP)の生成に失敗しました。");
+		return false;
+	}
 
-	auto handle = m_pDSVHeap->GetCPUDescriptorHandleForHeapStart();
-	auto incrementSize = m_pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+	// ディスクリプタヒープの設定
+	desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;	// ヒープの種類 : RTV
+	desc.NumDescriptors = 512;	// ディスクリプタ数 : 512
+	desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;	// フラグ : 特になし
+	if (!DescriptorPool::Create(&desc, &m_pPool[POOL_TYPE_RTV]))
+	{
+		ELOG("[Renderer.cpp]Error : Line530 : ディスクリプタプール(RTV)の生成に失敗しました。");
+		return false;
+	}
 
-	// 深度ステンシルビューの設定
-	D3D12_DEPTH_STENCIL_VIEW_DESC viewDesc = {};
-	viewDesc.Format = DXGI_FORMAT_D32_FLOAT;	// フォーマット : D32bit
-	viewDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;	// ビューの次元 : 2D
-	viewDesc.Texture2D.MipSlice = 0;	// ミップスライス : 0
-	viewDesc.Flags = D3D12_DSV_FLAG_NONE;	// フラグ : 特になし
+	// ディスクリプタヒープの設定
+	desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;	// ヒープの種類 : DSV
+	desc.NumDescriptors = 512;	// ディスクリプタ数 : 512
+	desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;	// フラグ : 特になし
+	if (!DescriptorPool::Create(&desc, &m_pPool[POOL_TYPE_DSV]))
+	{
+		ELOG("[Renderer.cpp]Error : Line540 : ディスクリプタプール(DSV)の生成に失敗しました。");
+		return false;
+	}
 
-	m_pDevice->CreateDepthStencilView(m_pDepthStencilBuffer.Get(), &viewDesc, handle);
-
-	m_DSVHandle = handle;
+	// 正常終了
 	return true;
 }
