@@ -221,6 +221,7 @@
     <ClCompile Include="Sources\System\FileUtil.cpp" />
     <ClCompile Include="Sources\System\Logger.cpp" />
     <ClCompile Include="Sources\System\main.cpp" />
+    <ClCompile Include="Sources\System\SimpleMath.cpp" />
     <ClCompile Include="Sources\System\window.cpp" />
   </ItemGroup>
   <ItemGroup>

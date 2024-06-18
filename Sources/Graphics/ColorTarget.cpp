@@ -140,6 +140,7 @@ bool ColorTarget::InitFromBackBuffer(DescriptorPool* pPoolRTV, uint32_t index)
 		m_pHandleRTV->HandleCPU);
 
 	return true;
+
 }
 
 // 終了処理

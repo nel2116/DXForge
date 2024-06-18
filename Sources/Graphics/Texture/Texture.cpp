@@ -12,6 +12,9 @@
 #include <System/Logger.h>
 
 Texture::Texture()
+	: m_pTex(nullptr)
+	, m_pHandle(nullptr)
+	, m_pPool(nullptr)
 {
 }
 
@@ -156,7 +159,7 @@ bool Texture::CreateTexture(const wchar_t* filename)
 {
 	// ファイルパスを検索
 	std::wstring texPath;
-	if (!SearchFilePath(filename, texPath))
+	if (!SearchFilePathW(filename, texPath))
 	{
 		assert(0 && "[Texture.cpp]テクスチャファイルが見つかりませんでした。");
 		return false;

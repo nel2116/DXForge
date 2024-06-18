@@ -1,64 +1,75 @@
-// _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-// 作成日 : 2024/06/13 16:30
-// 作成者 : 田中ミノル
-// 概要   : プールクラスの定義
-// 更新履歴
-// 2024/06/13 作成
-// _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+//-----------------------------------------------------------------------------
+// File : Pool.h
+// Desc : Item Pool.
+// Copyright(c) Pocol. All right reserved.
+//-----------------------------------------------------------------------------
 #pragma once
-// ====== インクルード部 ======
+
+//-----------------------------------------------------------------------------
+// Includes
+//-----------------------------------------------------------------------------
 #include <cstdint>
 #include <mutex>
 #include <cassert>
 #include <functional>
 
-// ====== クラス定義 ======
-template <typename T>
+
+///////////////////////////////////////////////////////////////////////////////
+// Pool class
+///////////////////////////////////////////////////////////////////////////////
+template<typename T>
 class Pool
 {
-public:	// 構造体定義
-	struct Item
-	{
-		T m_Value;
-		uint32_t m_Index = 0;	// インデックス
-		Item* m_pNext = nullptr;	// 次のアイテム
-		Item* m_pPrev = nullptr;	// 前のアイテム
+	//=========================================================================
+	// list of friend classes and methods.
+	//=========================================================================
+	/* NOTHING */
 
-		Item()
-			: m_Value()
-			, m_Index(0)
-			, m_pNext(nullptr)
-			, m_pPrev(nullptr)
-		{}
+public:
+	//=========================================================================
+	// public variablse.
+	//=========================================================================
 
-		~Item() {}
-	};
-public:		// パブリック関数
+	//-------------------------------------------------------------------------
+	//! @brief      コンストラクタです.
+	//-------------------------------------------------------------------------
 	Pool()
 		: m_pBuffer(nullptr)
 		, m_pActive(nullptr)
 		, m_pFree(nullptr)
 		, m_Capacity(0)
 		, m_Count(0)
-	{}
-	~Pool() { Uninit(); }
+	{ /* DO_NOTHING */
+	}
 
-	/// <summary>
-	/// 初期化処理
-	/// </summary>
-	/// <param name="count">確保するアイテム数
-	/// <returns>初期化に成功したらtrue</returns>
+	//-------------------------------------------------------------------------
+	//! @brief      デストラクタです.
+	//-------------------------------------------------------------------------
+	~Pool()
+	{
+		Uninit();
+	}
+
+	//-------------------------------------------------------------------------
+	//! @brief      初期化処理を行います.
+	//!
+	//! @param[in]      count       確保するアイテム数です.
+	//! @retval true    初期化に成功.
+	//! @retval false   初期化に失敗.
+	//-------------------------------------------------------------------------
 	bool Init(uint32_t count)
 	{
-		std::lock_guard<std::mutex>gurand(m_Mutex);
+		std::lock_guard<std::mutex> guard(m_Mutex);
 
-		m_pBuffer = static_cast<uint32_t*>(malloc(sizeof(Item) * (count + 2)));
-		// メモリ確保に失敗
-		if (!m_pBuffer) { return false; }
+		m_pBuffer = static_cast<uint8_t*>(malloc(sizeof(Item) * (count + 2)));
+		if (m_pBuffer == nullptr)
+		{
+			return false;
+		}
 
 		m_Capacity = count;
 
-		// インデックスを振る
+		// インデックスを振る.
 		for (auto i = 2u, j = 0u; i < m_Capacity + 2; ++i, ++j)
 		{
 			auto item = GetItem(i);
@@ -79,39 +90,41 @@ public:		// パブリック関数
 		}
 
 		GetItem(m_Capacity + 1)->m_pPrev = m_pFree;
+
 		m_Count = 0;
 
 		return true;
 	}
 
-	/// <summary>
-	/// 終了処理
-	/// </summary>
+	//-------------------------------------------------------------------------
+	//! @brief      終了処理を行います.
+	//-------------------------------------------------------------------------
 	void Uninit()
 	{
-		std::lock_guard<std::mutex>gurand(m_Mutex);
+		std::lock_guard<std::mutex> guard(m_Mutex);
 
 		if (m_pBuffer)
 		{
 			free(m_pBuffer);
 			m_pBuffer = nullptr;
 		}
+
 		m_pActive = nullptr;
 		m_pFree = nullptr;
 		m_Capacity = 0;
 		m_Count = 0;
 	}
 
-	/// <summary>
-	/// アイテムを確保する
-	/// </summary>
-	/// <param name="func">ユーザーによる初期化処理</param>
-	/// <returns>アイテムのポインタ、確保に失敗した場合はnullptr</returns>
+	//-------------------------------------------------------------------------
+	//! @brief      アイテムを確保します.
+	//!
+	//! @param[in]      func        ユーザによる初期化処理です.
+	//! @return     確保したアイテムへのポインタ. 確保に失敗した場合は nullptr が返却されます.
+	//-------------------------------------------------------------------------
 	T* Alloc(std::function<void(uint32_t, T*)> func = nullptr)
 	{
-		std::lock_guard<std::mutex>gurand(m_Mutex);
+		std::lock_guard<std::mutex> guard(m_Mutex);
 
-		// 空きアイテムを取得
 		if (m_pFree->m_pNext == m_pFree || m_Count + 1 > m_Capacity)
 		{
 			return nullptr;
@@ -126,27 +139,31 @@ public:		// パブリック関数
 
 		m_Count++;
 
-		// メモリ割り当て
-		auto val = NEW((void*)item)T();
+		// メモリ割り当て.
+		auto val = new ((void*)item) T();
 
-		// ユーザー初期化処理
-		if (func)
+		// 初期化の必要があれば呼び出す.
+		if (func != nullptr)
 		{
 			func(item->m_Index, val);
 		}
+
 		return val;
 	}
 
-	/// <summary>
-	/// アイテムを解放する
-	/// </summary>
-	/// <param name="pValue">解放するアイテムのポインタ</param>
+	//-------------------------------------------------------------------------
+	//! @brief      アイテムを解放します.
+	//!
+	//! @param[in]      pValue      解放するアイテムへのポインタ.
+	//-------------------------------------------------------------------------
 	void Free(T* pValue)
 	{
-		// ポインタがnullptr
-		if (!pValue) { return; }
+		if (pValue == nullptr)
+		{
+			return;
+		}
 
-		std::lock_guard<std::mutex>gurand(m_Mutex);
+		std::lock_guard<std::mutex> guard(m_Mutex);
 
 		auto item = reinterpret_cast<Item*>(pValue);
 
@@ -160,65 +177,99 @@ public:		// パブリック関数
 		m_Count--;
 	}
 
-	/// <summary>
-	/// 総アイテム数を取得する
-	/// </summary>
-	/// <returns>総アイテム数</returns>
+	//-------------------------------------------------------------------------
+	//! @brief      総アイテム数を取得します.
+	//!
+	//! @return     総アイテム数を返却します.
+	//-------------------------------------------------------------------------
 	uint32_t GetSize() const
 	{
 		return m_Capacity;
 	}
 
-	/// <summary>
-	///	使用中のアイテム数を取得する
-	/// </summary>
-	///	<returns>使用中のアイテム数</returns>
+	//-------------------------------------------------------------------------
+	//! @brief      使用中のアイテム数を取得します.
+	//!
+	//! @return     使用中のアイテム数を返却します.
+	//-------------------------------------------------------------------------
 	uint32_t GetUsedCount() const
 	{
 		return m_Count;
 	}
 
-	/// <summary>
-	/// 使用可能なアイテム数を取得する
-	/// </summary>
-	/// <returns>使用可能なアイテム数</returns>
+	//-------------------------------------------------------------------------
+	//! @brief      利用可能なアイテム数を取得します.
+	//!
+	//! @return     利用可能なアイテム数を返却します.
+	//-------------------------------------------------------------------------
 	uint32_t GetAvailableCount() const
 	{
 		return m_Capacity - m_Count;
 	}
 
-private:	// プライベート関数
-	/// <summary>
-	/// アイテムを取得する
-	/// </summary>
-	/// <param name="index">取得するアイテムのインデックス</param>
-	/// <returns>アイテムのポインタ</returns>
+private:
+	///////////////////////////////////////////////////////////////////////////
+	// Item structure
+	///////////////////////////////////////////////////////////////////////////
+	struct Item
+	{
+		T           m_Value;        //!< 値です.
+		uint32_t    m_Index;        //!< インデックスです.
+		Item* m_pNext;        //!< 次のアイテムへのポインタ.
+		Item* m_pPrev;        //!< 前のアイテムへのポインタ.
+
+		Item()
+			: m_Value()
+			, m_Index(0)
+			, m_pNext(nullptr)
+			, m_pPrev(nullptr)
+		{ /* DO_NOTHING */
+		}
+
+		~Item()
+		{ /* DO_NOTHING */
+		}
+	};
+
+	//=========================================================================
+	// private variables.
+	//=========================================================================
+	uint8_t* m_pBuffer;      //!< バッファです.
+	Item* m_pActive;      //!< アクティブアイテムの先頭です.
+	Item* m_pFree;        //!< フリーアイテムの先頭です.
+	uint32_t    m_Capacity;     //!< 総アイテム数です.
+	uint32_t    m_Count;        //!< 確保したアイテム数です.
+	std::mutex  m_Mutex;        //!< ミューテックスです.
+
+	//=========================================================================
+	// private methods.
+	//=========================================================================
+
+	//-------------------------------------------------------------------------
+	//! @brief      アイテムを取得します.
+	//!
+	//! @param[in]      index       取得するアイテムのインデックス.
+	//! @return     アイテムへのポインタを返却します.
+	//-------------------------------------------------------------------------
 	Item* GetItem(uint32_t index)
 	{
 		assert(0 <= index && index <= m_Capacity + 2);
 		return reinterpret_cast<Item*>(m_pBuffer + sizeof(Item) * index);
 	}
 
-	/// <summary>
-	/// アイテムにメモリを割り当てる
-	/// </summary>
-	/// <param name="index">取得するアイテムのインデックス</param>
-	/// <returns>アイテムへのポインタ
-	Item* AllocItem(uint32_t index)
+	//-------------------------------------------------------------------------
+	//! @brief      アイテムにメモリを割り当てます.
+	//!
+	//! @param[in]      index       取得するアイテムのインデックス.
+	//! @return     アイテムへのポインタを返却します.
+	//-------------------------------------------------------------------------
+	Item* AssignItem(uint32_t index)
 	{
 		assert(0 <= index && index <= m_Capacity + 2);
 		auto buf = (m_pBuffer + sizeof(Item) * index);
-		return NEW(buf)Item();
+		return new (buf) Item;
 	}
+
 	Pool(const Pool&) = delete;
-	Pool& operator=(const Pool&) = delete;
-
-private:
-	uint8_t* m_pBuffer = nullptr;	// バッファ
-	Item* m_pActive = nullptr;	// アクティブなアイテム
-
-	Item* m_pFree = nullptr;	// アイテムの先頭
-	uint32_t m_Capacity = 0;	// 総アイテム数
-	uint32_t m_Count = 0;	// 現在のアイテム数
-	std::mutex m_Mutex;	// ミューテックス
+	void operator = (const Pool&) = delete;
 };

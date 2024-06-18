@@ -49,9 +49,9 @@ DescriptorHandle* DescriptorPool::AllocHandle()
 	auto func = [&](uint32_t index, DescriptorHandle* pHandle)
 	{
 		auto handleCPU = m_pHeap->GetCPUDescriptorHandleForHeapStart();
-		auto handleGPU = m_pHeap->GetGPUDescriptorHandleForHeapStart();
-
 		handleCPU.ptr += m_DescriptorSize * index;
+
+		auto handleGPU = m_pHeap->GetGPUDescriptorHandleForHeapStart();
 		handleGPU.ptr += m_DescriptorSize * index;
 
 		pHandle->HandleCPU = handleCPU;

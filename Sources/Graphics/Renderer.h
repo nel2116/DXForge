@@ -14,6 +14,8 @@
 
 using namespace std;
 
+#define FRAME_BUFFER_COUNT 2	// フレームバッファの数
+
 // 列挙体
 enum DescriptorPoolType
 {
@@ -28,7 +30,6 @@ enum DescriptorPoolType
 class Renderer
 {
 public:		// パブリック関数
-
 	/// <summary>
 	/// レンダラーの初期化
 	/// </summary>
@@ -86,6 +87,13 @@ public:		// アクセサ関数
 	uint32_t GetFrameIndex() { return m_FrameIndex; }
 
 	/// <summary>
+	/// カラーターゲットの取得
+	/// </summary>
+	/// <param name="index">カラーターゲットのインデックス</param>
+	/// <returns>カラーターゲット</returns>
+	ColorTarget& GetColorTarget(uint32_t index) { return m_ColorTarget[index]; }
+
+	/// <summary>
 	/// ウィンドウの横幅を取得
 	/// </summary>
 	/// <returns>ウィンドウの横幅</returns>
@@ -116,6 +124,12 @@ public:		// アクセサ関数
 	/// <returns>ディスクリプタプールの参照</returns>
 	DescriptorPool* GetDescriptorPool(DescriptorPoolType type) { return m_pPool[type]; }
 
+	/// <summary>
+	/// デプスターゲットの取得
+	/// </summary>
+	/// <returns>デプスターゲット</returns>
+	DepthTarget& GetDepthTarget() { return m_DepthTarget; }
+
 private:	// プライベート関数
 
 	// 画面フリップ
@@ -143,8 +157,6 @@ private:	// プライベート関数
 	bool CreateDescriptorPool();
 
 private:	// メンバ変数
-	// フレームバッファ数
-	static const int FRAME_BUFFER_COUNT = 2;
 
 	// ウィンドウ関連
 	Window* m_pWindow = nullptr;	// ウィンドウクラスのポインタ

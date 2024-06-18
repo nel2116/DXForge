@@ -8,7 +8,6 @@
 // ====== インクルード部 ======
 #include "stdafx.h"
 #include "Renderer.h"
-#include "Polygon/Polygon.h"
 
 void EnableDebugLayer()
 {
@@ -220,6 +219,25 @@ void Renderer::Uninit()
 {
 	// GPUの処理完了を待つ
 	WaitGpu();
+
+	// レンダーターゲットビューの破棄.
+	for (auto i = 0u; i < FRAME_BUFFER_COUNT; ++i)
+	{
+		m_ColorTarget[i].Uninit();
+	}
+
+	// 深度ステンシルビューの破棄.
+	m_DepthTarget.Uninit();
+
+	// ディスクリプタプールの破棄.
+	for (auto i = 0; i < POOL_COUNT; ++i)
+	{
+		if (m_pPool[i] != nullptr)
+		{
+			m_pPool[i]->Release();
+			m_pPool[i] = nullptr;
+		}
+	}
 
 	// イベント破棄
 	if (m_fenceEvent != nullptr)

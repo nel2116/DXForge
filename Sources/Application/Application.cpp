@@ -12,10 +12,18 @@
 
 using namespace DirectX::SimpleMath;
 
+
+struct Transform
+{
+	Matrix World;		// ワールド行列
+	Matrix View;		// ビュー行列
+	Matrix Proj;		// 射影行列
+};
+
 struct LigBuffer
 {
-	Vector4 LigPos;	// ライトの位置
-	Color LigColor;	// ライトの色
+	Vector4 LigPos;		// ライトの位置
+	Color LigColor;		// ライトの色
 };
 
 struct MaterialBufer
@@ -56,7 +64,8 @@ bool Application::Init()
 	{
 		std::wstring path;
 		// ファイルパスを検索
-		if (!SearchFilePathW(L"Assets/Models/teapot/teapot.obj", path));
+
+		if (!SearchFilePathW(L"Assets/Models/teapot/teapot.obj", path))
 		{
 			ELOG("[App.cpp]Error : Line61 : ファイルが見つかりませんでした。");
 			return false;
@@ -108,7 +117,7 @@ bool Application::Init()
 		DescriptorPool* pPool = RENDERER.GetDescriptorPool(POOL_TYPE_RES);
 
 		// マテリアルの初期化
-		if (!m_Material.Init(pPool, sizeof(MaterialBufer), resMaterial.size()));
+		if (!m_Material.Init(pPool, sizeof(MaterialBufer), resMaterial.size()))
 		{
 			ELOG("[App.cpp]Error : Line111 : マテリアルの初期化に失敗しました。");
 			return false;
@@ -125,6 +134,9 @@ bool Application::Init()
 			std::wstring path = dir + resMaterial[i].DiffuseMap;
 			m_Material.SetTexture(i, TU_DIFFUSE, path);
 		}
+
+		// 使い終わったので解放
+		pPool->Release();
 	}
 
 	// ライトバッファの設定
@@ -151,6 +163,9 @@ bool Application::Init()
 		ptr->LigColor = Color(1.0f, 1.0f, 1.0f, 0.0f);
 
 		m_pLight = pCB;
+
+		// 使い終わったので解放
+		pPool->Release();
 	}
 
 	// ルートシグネチャーの生成
@@ -163,11 +178,11 @@ bool Application::Init()
 
 		// ディスクリプタレンジを設定
 		D3D12_DESCRIPTOR_RANGE range = {};
-		range[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-		range[0].NumDescriptors = 1;
-		range[0].BaseShaderRegister = 0;
-		range[0].RegisterSpace = 0;
-		range[0].OffsetInDescriptorsFromTableStart = 0;
+		range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		range.NumDescriptors = 1;
+		range.BaseShaderRegister = 0;
+		range.RegisterSpace = 0;
+		range.OffsetInDescriptorsFromTableStart = 0;
 
 		// ルートパラメーターを設定
 		D3D12_ROOT_PARAMETER param[4] = {};
@@ -189,9 +204,199 @@ bool Application::Init()
 		param[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 		param[3].DescriptorTable.NumDescriptorRanges = 1;
 		param[3].DescriptorTable.pDescriptorRanges = &range;
+		param[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
+		// スタティックサンプラーの設定
+		D3D12_STATIC_SAMPLER_DESC sampler = {};
+		sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+		sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		sampler.MipLODBias = D3D12_DEFAULT_MIP_LOD_BIAS;
+		sampler.MaxAnisotropy = 1;
+		sampler.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+		sampler.BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
+		sampler.MinLOD = -D3D12_FLOAT32_MAX;
+		sampler.MaxLOD = +D3D12_FLOAT32_MAX;
+		sampler.ShaderRegister = 0;
+		sampler.RegisterSpace = 0;
+		sampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+		// ルートシグネチャーの設定
+		D3D12_ROOT_SIGNATURE_DESC desc = {};
+		desc.NumParameters = _countof(param);
+		desc.NumStaticSamplers = 1;
+		desc.pParameters = param;
+		desc.pStaticSamplers = &sampler;
+		desc.Flags = flag;
+
+		// ルートシグネチャーの生成
+		ComPtr<ID3DBlob> pBlob;
+		ComPtr<ID3DBlob> pError;
+
+		// シリアライズ
+		auto hr = D3D12SerializeRootSignature(&desc, D3D_ROOT_SIGNATURE_VERSION_1, pBlob.GetAddressOf(), pError.GetAddressOf());
+		if (FAILED(hr))
+		{
+			ELOG("[App.cpp]Error : Line222 : ルートシグネチャーのシリアライズに失敗しました。");
+			return false;
+		}
+
+		// ルートシグネチャーの生成
+		hr = RENDERER.GetDevice()->CreateRootSignature(0, pBlob->GetBufferPointer(), pBlob->GetBufferSize(), IID_PPV_ARGS(m_pRootSig.GetAddressOf()));
+		if (FAILED(hr))
+		{
+			ELOG("[App.cpp]Error : Line231 : ルートシグネチャーの生成に失敗しました。");
+			return false;
+		}
 	}
 
+	// パイプラインステートの生成
+	{
+		std::wstring vsPath;
+		std::wstring psPath;
+
+		// 頂点シェーダを検索
+		if (!SearchFilePathW(L"Assets/Shaders/VS_Lambert.cso", vsPath))
+		{
+			ELOG("[App.cpp]Error : Line245 : 頂点シェーダが見つかりませんでした。");
+			return false;
+		}
+
+		// ピクセルシェーダを検索
+		if (!SearchFilePathW(L"Assets/Shaders/PS_Lambert.cso", psPath))
+		{
+			ELOG("[App.cpp]Error : Line253 : ピクセルシェーダが見つかりませんでした。");
+			return false;
+		}
+
+		ComPtr<ID3DBlob> pVS;
+		ComPtr<ID3DBlob> pPS;
+
+		// 頂点シェーダの読み込み
+		auto hr = D3DReadFileToBlob(vsPath.c_str(), pVS.GetAddressOf());
+		if (FAILED(hr))
+		{
+			ELOG("[App.cpp]Error : Line272 : 頂点シェーダの読み込みに失敗しました。");
+			return false;
+		}
+
+		// ピクセルシェーダの読み込み
+		hr = D3DReadFileToBlob(psPath.c_str(), pPS.GetAddressOf());
+		if (FAILED(hr))
+		{
+			ELOG("[App.cpp]Error : Line280 : ピクセルシェーダの読み込みに失敗しました。");
+			return false;
+		}
+
+		// ラスタライザステートの設定
+		D3D12_RASTERIZER_DESC rsDesc = {};
+		rsDesc.FillMode = D3D12_FILL_MODE_SOLID;								// 頂点によって形作られている三角形で描画
+		rsDesc.CullMode = D3D12_CULL_MODE_NONE;									// カリングしない	
+		rsDesc.FrontCounterClockwise = FALSE;									// 時計回りが表面
+		rsDesc.DepthBias = D3D12_DEFAULT_DEPTH_BIAS;							// 使用しないのでデフォルト
+		rsDesc.DepthBiasClamp = D3D12_DEFAULT_DEPTH_BIAS_CLAMP;					// 使用しないのでデフォルト
+		rsDesc.SlopeScaledDepthBias = D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS;	// 使用しないのでデフォルト
+		rsDesc.DepthClipEnable = FALSE;											// 使用しないのでFALSE
+		rsDesc.MultisampleEnable = FALSE;										// 使用しないのでFALSE
+		rsDesc.AntialiasedLineEnable = FALSE;									// 使用しないのでFALSE
+		rsDesc.ForcedSampleCount = 0;											// 0 : サンプル数が強制されない
+		rsDesc.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;	// D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF : 保守的なラスタライゼーションを無効にする
+
+		// レンダーターゲットのブレンド設定
+		D3D12_RENDER_TARGET_BLEND_DESC rtDesc =
+		{
+			FALSE,FALSE,
+			D3D12_BLEND_ONE,D3D12_BLEND_ZERO,D3D12_BLEND_OP_ADD,
+			D3D12_BLEND_ONE,D3D12_BLEND_ZERO,D3D12_BLEND_OP_ADD,
+			D3D12_LOGIC_OP_NOOP,
+			D3D12_COLOR_WRITE_ENABLE_ALL
+		};
+
+		// ブレンドステートの設定
+		D3D12_BLEND_DESC bsDesc = {};
+		bsDesc.AlphaToCoverageEnable = FALSE;
+		bsDesc.IndependentBlendEnable = FALSE;
+		for (int i = 0; i < D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i)
+		{
+			bsDesc.RenderTarget[i] = rtDesc;
+		}
+
+		// 深度ステンシルステートの設定
+		D3D12_DEPTH_STENCIL_DESC dsDesc = {};
+		dsDesc.DepthEnable = TRUE;
+		dsDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+		dsDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+		dsDesc.StencilEnable = FALSE;
+
+		// パイプラインステートの設定
+		D3D12_GRAPHICS_PIPELINE_STATE_DESC desc = {};
+		desc.InputLayout = MeshVertex::InputLayout;
+		desc.pRootSignature = m_pRootSig.Get();
+		desc.VS = { pVS->GetBufferPointer(), pVS->GetBufferSize() };
+		desc.PS = { pPS->GetBufferPointer(), pPS->GetBufferSize() };
+		desc.RasterizerState = rsDesc;
+		desc.BlendState = bsDesc;
+		desc.DepthStencilState = dsDesc;
+		desc.SampleMask = UINT_MAX;
+		desc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+		desc.NumRenderTargets = 1;
+		desc.RTVFormats[0] = RENDERER.GetColorTarget(0).GetViewDesc().Format;
+		desc.DSVFormat = RENDERER.GetDepthTarget().GetViewDesc().Format;
+		desc.SampleDesc.Count = 1;
+		desc.SampleDesc.Quality = 0;
+
+		// パイプラインステートの生成
+		hr = RENDERER.GetDevice()->CreateGraphicsPipelineState(&desc, IID_PPV_ARGS(m_pPSO.GetAddressOf()));
+		if (FAILED(hr))
+		{
+			ELOG("[App.cpp]Error : Line345 : パイプラインステートの生成に失敗しました。");
+			return false;
+		}
+	}
+
+	// 変換行列用の定数バッファの生成
+	{
+		m_Transform.reserve(FRAME_BUFFER_COUNT);
+
+		for (auto i = 0u; i < FRAME_BUFFER_COUNT; ++i)
+		{
+			auto pCB = NEW ConstantBuffer();
+			// チェック
+			if (!pCB)
+			{
+				ELOG("[App.cpp]Error : Line360 : メモリの確保に失敗しました。");
+				return false;
+			}
+
+			// 初期化
+			DescriptorPool* pPool = RENDERER.GetDescriptorPool(POOL_TYPE_RES);
+			if (!pCB->Init(pPool, sizeof(Transform) * 2))
+			{
+				ELOG("[App.cpp]Error : Line376 : 変換行列用の定数バッファの初期化に失敗しました。");
+				SAFE_DELETE(pCB);
+				return false;
+			}
+
+			// カメラ設定.
+			auto eyePos = Vector3(0.0f, 1.0f, 2.0f);
+			auto targetPos = Vector3::Zero;
+			auto upward = Vector3::UnitY;
+
+			// 垂直画角とアスペクト比の設定.
+			auto constexpr fovY = DirectX::XMConvertToRadians(37.5f);
+			auto aspect = static_cast<float>(WIDTH) / static_cast<float>(HEIGHT);
+
+			// 変換行列を設定.
+			auto ptr = pCB->GetPtr<Transform>();
+			ptr->World = Matrix::Identity;
+			ptr->View = Matrix::CreateLookAt(eyePos, targetPos, upward);
+			ptr->Proj = Matrix::CreatePerspectiveFieldOfView(fovY, aspect, 1.0f, 1000.0f);
+
+			m_Transform.push_back(pCB);
+		}
+		m_RotateAngle = DirectX::XMConvertToRadians(-60.0f);
+	}
 
 	// タイマーの初期化
 	timeBeginPeriod(1);
@@ -220,6 +425,43 @@ void Application::Run()
 			// ------ 描画処理 ------
 			RENDERER.Begin();
 
+			// teapotの描画
+			{
+				auto pCmdList = RENDERER.GetCmdList();
+
+				auto frameIndex = RENDERER.GetFrameIndex();
+				ID3D12DescriptorHeap* const pHeaps[] = { RENDERER.GetDescriptorPool(POOL_TYPE_RES)->GetHeap() };
+
+				// パイプラインステートの設定
+				pCmdList->SetGraphicsRootSignature(m_pRootSig.Get());
+				pCmdList->SetDescriptorHeaps(1, pHeaps);
+				pCmdList->SetGraphicsRootConstantBufferView(0, m_Transform[frameIndex]->GetAddress());
+				pCmdList->SetGraphicsRootConstantBufferView(1, m_pLight->GetAddress());
+				pCmdList->SetPipelineState(m_pPSO.Get());
+				auto viewport = RENDERER.GetViewport();
+				auto scissor = RENDERER.GetScissor();
+				pCmdList->RSSetViewports(1, &viewport);
+				pCmdList->RSSetScissorRects(1, &scissor);
+
+				// メッシュの描画
+				for (size_t i = 0; i < m_pMesh.size(); ++i)
+				{
+					// マテリアルの設定
+					auto id = m_pMesh[i]->GetMaterialId();
+
+					// 定数バッファを設定
+					pCmdList->SetGraphicsRootConstantBufferView(2, m_Material.GetBufferAddress(i));
+
+					// テクスチャを設定
+					auto pTexture = m_Material.GetTextureHandle(id, TU_DIFFUSE);
+					pCmdList->SetGraphicsRootDescriptorTable(3, pTexture);
+
+					// 描画
+					m_pMesh[i]->Draw();
+				}
+
+			}
+
 			// --- 以下ゲームの描画処理
 			ACTOR_MANAGER.Draw();
 
@@ -236,6 +478,23 @@ void Application::Run()
 void Application::Uninit()
 {
 	// ====== 終了処理 ======
+
+	// メッシュの解放
+	for (auto& mesh : m_pMesh)
+	{
+		SAFE_DELETE(mesh);
+	}
+
+	m_pMesh.clear();
+
+	// マテリアルの解放
+	m_Material.Uninit();
+
+	// ライトバッファの解放
+	SAFE_DELETE(m_pLight);
+
+	// ルートシグネチャーの解放
+	m_pRootSig.Reset();
 
 	// ----- Managerの終了処理 -----
 	ACTOR_MANAGER.Uninit();	// ActorManagerの終了処理

@@ -49,13 +49,13 @@ private:	// メンバ変数
 	float m_fFPS;
 
 	// テスト用
-	std::vector<Mesh*>              m_pMesh;            //!< メッシュです.
-	std::vector<ConstantBuffer*>    m_Transform;        //!< 変換行列です.
-	ConstantBuffer* m_pLight;           //!< ライトです.
-	Material                        m_Material;         //!< マテリアルです.
-	ComPtr<ID3D12PipelineState>     m_pPSO;             //!< パイプラインステートです.
-	ComPtr<ID3D12RootSignature>     m_pRootSig;         //!< ルートシグニチャです.
-	float                           m_RotateAngle;      //!< 回転角です.
+	std::vector<Mesh*> m_pMesh;					// メッシュ
+	std::vector<ConstantBuffer*> m_Transform;	// 変換行列
+	ConstantBuffer* m_pLight;					// ライト
+	Material m_Material;						// マテリアル
+	ComPtr<ID3D12PipelineState> m_pPSO;			// パイプラインステート
+	ComPtr<ID3D12RootSignature> m_pRootSig;		// ルートシグニチャ
+	float m_RotateAngle;						// 回転角
 
 public:		// シングルトン関連
 	/// <summary>
