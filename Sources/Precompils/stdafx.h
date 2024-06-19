@@ -101,6 +101,7 @@ const float PI = 3.1415926f;
 #define NEW new
 #endif
 // ƒƒ‚ƒŠ‚ÌŠJ•ú
+#define SAFE_UNINIT(p) { if(p) { p->Uninit(); delete(p); (p) = nullptr; } }
 #define SAFE_DELETE(p) { if(p) { delete(p); (p) = nullptr; } }
 #define SAFE_DELETE_ARRAY(p) { if(p) { delete[](p); (p) = nullptr; } }
 #define SAFE_RELEASE(p) { if(p) { (p)->Release(); (p) = nullptr; } }

@@ -422,7 +422,7 @@ bool Renderer::CreateRenderTargetView()
 	{
 		if (!m_ColorTarget[i].InitFromBackBuffer(m_pPool[POOL_TYPE_RTV], i))
 		{
-			ELOG("[Renderer.cpp]Error : Line 387 : レンダーターゲットビューの生成に失敗しました。");
+			ELOG("[Renderer.cpp]Error : Line 425 : レンダーターゲットビューの生成に失敗しました。");
 			return false;
 		}
 	}
@@ -433,7 +433,7 @@ bool Renderer::CreateDepthStencilView()
 {
 	if (!m_DepthTarget.Init(m_pPool[POOL_TYPE_DSV], WIDTH, HEIGHT, DXGI_FORMAT_D32_FLOAT))
 	{
-		ELOG("[Renderer.cpp]Error : Line 398 : 深度ステンシルビューの生成に失敗しました。");
+		ELOG("[Renderer.cpp]Error : Line 436 : 深度ステンシルビューの生成に失敗しました。");
 		return false;
 	}
 	return true;
@@ -450,7 +450,7 @@ bool Renderer::CreateDescriptorPool()
 	desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;	// フラグ : シェーダーから見える
 	if (!DescriptorPool::Create(&desc, &m_pPool[POOL_TYPE_RES]))
 	{
-		ELOG("[Renderer.cpp]Error : Line510 : ディスクリプタプール(RES)の生成に失敗しました。");
+		ELOG("[Renderer.cpp]Error : Line 453 : ディスクリプタプール(RES)の生成に失敗しました。");
 		return false;
 	}
 
@@ -460,7 +460,7 @@ bool Renderer::CreateDescriptorPool()
 	desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;	// フラグ : シェーダーから見える
 	if (!DescriptorPool::Create(&desc, &m_pPool[POOL_TYPE_SMP]))
 	{
-		ELOG("[Renderer.cpp]Error : Line520 : ディスクリプタプール(SMP)の生成に失敗しました。");
+		ELOG("[Renderer.cpp]Error : Line 463 : ディスクリプタプール(SMP)の生成に失敗しました。");
 		return false;
 	}
 
@@ -470,7 +470,7 @@ bool Renderer::CreateDescriptorPool()
 	desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;	// フラグ : 特になし
 	if (!DescriptorPool::Create(&desc, &m_pPool[POOL_TYPE_RTV]))
 	{
-		ELOG("[Renderer.cpp]Error : Line530 : ディスクリプタプール(RTV)の生成に失敗しました。");
+		ELOG("[Renderer.cpp]Error : Line 473 : ディスクリプタプール(RTV)の生成に失敗しました。");
 		return false;
 	}
 
@@ -480,7 +480,7 @@ bool Renderer::CreateDescriptorPool()
 	desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;	// フラグ : 特になし
 	if (!DescriptorPool::Create(&desc, &m_pPool[POOL_TYPE_DSV]))
 	{
-		ELOG("[Renderer.cpp]Error : Line540 : ディスクリプタプール(DSV)の生成に失敗しました。");
+		ELOG("[Renderer.cpp]Error : Line 483 : ディスクリプタプール(DSV)の生成に失敗しました。");
 		return false;
 	}
 

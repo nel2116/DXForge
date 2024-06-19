@@ -106,5 +106,4 @@ private:
 	Pool<DescriptorHandle> m_Pool;	// プール
 	ComPtr<ID3D12DescriptorHeap> m_pHeap;	// ディスクリプタヒープ
 	uint32_t m_DescriptorSize;	// ディスクリプタサイズ
-
 };

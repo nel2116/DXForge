@@ -130,12 +130,15 @@ public:		// アクセサ関数
 	/// <returns>デプスターゲット</returns>
 	DepthTarget& GetDepthTarget() { return m_DepthTarget; }
 
+	/// <summary>
+	/// GPUの処理完了を待つ
+	/// </summary>
+	void WaitGpu();
+
 private:	// プライベート関数
 
 	// 画面フリップ
 	void Present(uint32_t interval);
-	// GPUの処理完了を待つ
-	void WaitGpu();
 
 	// デバイスの生成
 	bool CreateDevice();

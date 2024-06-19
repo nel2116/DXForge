@@ -12,7 +12,6 @@
 
 using namespace DirectX::SimpleMath;
 
-
 struct Transform
 {
 	Matrix World;		// ワールド行列
@@ -425,11 +424,19 @@ void Application::Run()
 			// ------ 描画処理 ------
 			RENDERER.Begin();
 
+			auto frameIndex = RENDERER.GetFrameIndex();
+			// teapotの更新
+			{
+				m_RotateAngle += 0.025f;
+
+				auto pTransform = m_Transform[frameIndex]->GetPtr<Transform>();
+				pTransform->World = Matrix::CreateRotationY(m_RotateAngle);
+			}
+
 			// teapotの描画
 			{
 				auto pCmdList = RENDERER.GetCmdList();
 
-				auto frameIndex = RENDERER.GetFrameIndex();
 				ID3D12DescriptorHeap* const pHeaps[] = { RENDERER.GetDescriptorPool(POOL_TYPE_RES)->GetHeap() };
 
 				// パイプラインステートの設定
@@ -478,14 +485,15 @@ void Application::Run()
 void Application::Uninit()
 {
 	// ====== 終了処理 ======
+	RENDERER.WaitGpu();
 
 	// メッシュの解放
 	for (auto& mesh : m_pMesh)
 	{
-		SAFE_DELETE(mesh);
+		SAFE_UNINIT(mesh);
 	}
-
 	m_pMesh.clear();
+	m_pMesh.shrink_to_fit();
 
 	// マテリアルの解放
 	m_Material.Uninit();
@@ -493,8 +501,13 @@ void Application::Uninit()
 	// ライトバッファの解放
 	SAFE_DELETE(m_pLight);
 
-	// ルートシグネチャーの解放
-	m_pRootSig.Reset();
+	// 変換行列用の定数バッファの開放
+	for (auto& cb : m_Transform)
+	{
+		SAFE_UNINIT(cb);
+	}
+	m_Transform.clear();
+	m_Transform.shrink_to_fit();
 
 	// ----- Managerの終了処理 -----
 	ACTOR_MANAGER.Uninit();	// ActorManagerの終了処理

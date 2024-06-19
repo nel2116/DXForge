@@ -25,8 +25,7 @@ ColorTarget::~ColorTarget()
 }
 
 // 初期化処理
-bool ColorTarget::Init
-(DescriptorPool* pPoolRTV, uint32_t width, uint32_t height, DXGI_FORMAT format)
+bool ColorTarget::Init(DescriptorPool* pPoolRTV, uint32_t width, uint32_t height, DXGI_FORMAT format)
 {
 	auto pDevice = RENDERER.GetDevice();
 	if (pDevice == nullptr || pPoolRTV == nullptr || width == 0 || height == 0)

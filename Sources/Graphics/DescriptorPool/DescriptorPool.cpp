@@ -50,12 +50,18 @@ DescriptorHandle* DescriptorPool::AllocHandle()
 	{
 		auto handleCPU = m_pHeap->GetCPUDescriptorHandleForHeapStart();
 		handleCPU.ptr += m_DescriptorSize * index;
-
-		auto handleGPU = m_pHeap->GetGPUDescriptorHandleForHeapStart();
-		handleGPU.ptr += m_DescriptorSize * index;
-
 		pHandle->HandleCPU = handleCPU;
-		pHandle->HandleGPU = handleGPU;
+
+		if (m_pHeap->GetDesc().Flags == D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE)
+		{
+			auto handleGPU = m_pHeap->GetGPUDescriptorHandleForHeapStart();
+			handleGPU.ptr += m_DescriptorSize * index;
+			pHandle->HandleGPU = handleGPU;
+		}
+		else
+		{
+			pHandle->HandleGPU.ptr = 0;
+		}
 	};
 
 	// ‰Šú‰»ŠÖ”‚ğÀs‚µ‚Ä‚©‚çƒnƒ“ƒhƒ‹‚ğ•Ô‚·
