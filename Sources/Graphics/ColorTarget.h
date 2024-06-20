@@ -33,7 +33,7 @@ public:		// パブリック関数
 	/// <param name="height">縦幅</param>
 	/// <param name="format">ピクセルフォーマット</param>
 	/// <returns>初期化に成功したらtrue</returns>
-	bool Init(DescriptorPool* pPoolRTV, uint32_t width, uint32_t height, DXGI_FORMAT format);
+	bool Init(DescriptorPool* pPoolRTV, uint32_t width, uint32_t height, DXGI_FORMAT format, bool useSRGB);
 
 	/// <summary>
 	/// バックバッファから初期化処理を行う
@@ -41,7 +41,7 @@ public:		// パブリック関数
 	/// <param name="pPoolRTV">ディスクリプタプール</param>
 	/// <param name="index">バックバッファ番号</param>
 	/// <returns>初期化に成功したらtrue</returns>
-	bool InitFromBackBuffer(DescriptorPool* pPoolRTV, uint32_t index);
+	bool InitFromBackBuffer(DescriptorPool* pPoolRTV, uint32_t index, bool useSRGB);
 
 	/// <summary>
 	/// 終了処理

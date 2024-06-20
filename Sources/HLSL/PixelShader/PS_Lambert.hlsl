@@ -8,10 +8,12 @@ float4 main(VS_OUTPUT pin) : SV_TARGET
     float3 N = normalize(pin.normal);
     float3 L = normalize(ligPos - pin.WorldPos.xyz);
     
-    float4 color = tex.Sample(samp, pin.uv);
-    float3 diffuse = ligColor * Diffuse * saturate(dot(L, N));
+    float NL = saturate(dot(N, L));
     
-    float4 finalColor = float4(color.rgb * diffuse, color.a * Alpha);
+    float4 color = tex.Sample(samp, pin.uv);
+    float3 diffuse = Diffuse * (1.0f / F_PI);
+    
+    float4 finalColor = float4(ligColor * color.rgb * diffuse * NL, color.a * Alpha);
     
     return finalColor;
 }

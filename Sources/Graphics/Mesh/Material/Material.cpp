@@ -69,7 +69,7 @@ bool Material::Init(DescriptorPool* pPool, size_t bufferSize, size_t count)
 		desc.SampleDesc.Count = 1;
 		desc.SampleDesc.Quality = 0;
 
-		if (!pTexture->Init(pPool, &desc, false))
+		if (!pTexture->Init(pPool, &desc, true, false))
 		{
 			ELOG("[Material.cpp]Error : Line74 : Texture::Init() Failed.");
 			pTexture->Uninit();
@@ -202,9 +202,9 @@ bool Material::SetTexture(size_t index, TEXTURE_USAGE usage, const std::wstring&
 	}
 
 	// 初期化.
-	if (!pTexture->Init(m_pPool, findPath.c_str()))
+	if (!pTexture->Init(m_pPool, findPath.c_str(), true))
 	{
-		ELOG("[Material.cpp]Error : Line211 : Texture::Init() Failed.");
+		ELOG("[Material.cpp]Error : Line207 : Texture::Init() Failed.");
 		pTexture->Uninit();
 		delete pTexture;
 		return false;

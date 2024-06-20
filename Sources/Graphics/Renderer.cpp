@@ -420,7 +420,7 @@ bool Renderer::CreateRenderTargetView()
 {
 	for (auto i = 0u; i < FRAME_BUFFER_COUNT; ++i)
 	{
-		if (!m_ColorTarget[i].InitFromBackBuffer(m_pPool[POOL_TYPE_RTV], i))
+		if (!m_ColorTarget[i].InitFromBackBuffer(m_pPool[POOL_TYPE_RTV], i, true))
 		{
 			ELOG("[Renderer.cpp]Error : Line 425 : レンダーターゲットビューの生成に失敗しました。");
 			return false;

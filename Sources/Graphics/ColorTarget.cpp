@@ -10,6 +10,49 @@
 #include "ColorTarget.h"
 #include <Graphics/DescriptorPool/DescriptorPool.h>
 
+namespace
+{
+	// SRGB形式に変換する
+	DXGI_FORMAT ConvertToSRGB(DXGI_FORMAT format)
+	{
+		DXGI_FORMAT result = format;
+		switch (format)
+		{
+		case DXGI_FORMAT_R8G8B8A8_UNORM:
+		{ result = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB; }
+		break;
+
+		case DXGI_FORMAT_BC1_UNORM:
+		{ result = DXGI_FORMAT_BC1_UNORM_SRGB; }
+		break;
+
+		case DXGI_FORMAT_BC2_UNORM:
+		{ result = DXGI_FORMAT_BC2_UNORM_SRGB; }
+		break;
+
+		case DXGI_FORMAT_BC3_UNORM:
+		{ result = DXGI_FORMAT_BC3_UNORM_SRGB; }
+		break;
+
+		case DXGI_FORMAT_B8G8R8A8_UNORM:
+		{ result = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB; }
+		break;
+
+		case DXGI_FORMAT_B8G8R8X8_UNORM:
+		{ result = DXGI_FORMAT_B8G8R8X8_UNORM_SRGB; }
+		break;
+
+		case DXGI_FORMAT_BC7_UNORM:
+		{ result = DXGI_FORMAT_BC7_UNORM_SRGB; }
+		break;
+
+		default:
+			break;
+		}
+		return result;
+	}
+} // namespace 
+
 // コンストラクタ
 ColorTarget::ColorTarget()
 	: m_pTarget(nullptr)
@@ -25,7 +68,7 @@ ColorTarget::~ColorTarget()
 }
 
 // 初期化処理
-bool ColorTarget::Init(DescriptorPool* pPoolRTV, uint32_t width, uint32_t height, DXGI_FORMAT format)
+bool ColorTarget::Init(DescriptorPool* pPoolRTV, uint32_t width, uint32_t height, DXGI_FORMAT format, bool useSRGB)
 {
 	auto pDevice = RENDERER.GetDevice();
 	if (pDevice == nullptr || pPoolRTV == nullptr || width == 0 || height == 0)
@@ -84,6 +127,13 @@ bool ColorTarget::Init(DescriptorPool* pPoolRTV, uint32_t width, uint32_t height
 		return false;
 	}
 
+	// SRGB形式に変換する
+	auto view_format = format;
+	if (useSRGB)
+	{
+		view_format = ConvertToSRGB(view_format);
+	}
+
 	m_ViewDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
 	m_ViewDesc.Format = format;
 	m_ViewDesc.Texture2D.MipSlice = 0;
@@ -98,7 +148,7 @@ bool ColorTarget::Init(DescriptorPool* pPoolRTV, uint32_t width, uint32_t height
 }
 
 // バックバッファから初期化処理を行う
-bool ColorTarget::InitFromBackBuffer(DescriptorPool* pPoolRTV, uint32_t index)
+bool ColorTarget::InitFromBackBuffer(DescriptorPool* pPoolRTV, uint32_t index, bool useSRGB)
 {
 	auto pDevice = RENDERER.GetDevice();
 	auto pSwapChain = RENDERER.GetSwapChain();
@@ -127,6 +177,12 @@ bool ColorTarget::InitFromBackBuffer(DescriptorPool* pPoolRTV, uint32_t index)
 
 	DXGI_SWAP_CHAIN_DESC desc;
 	pSwapChain->GetDesc(&desc);
+
+	auto format = desc.BufferDesc.Format;
+	if (useSRGB)
+	{
+		format = ConvertToSRGB(format);
+	}
 
 	m_ViewDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
 	m_ViewDesc.Format = desc.BufferDesc.Format;

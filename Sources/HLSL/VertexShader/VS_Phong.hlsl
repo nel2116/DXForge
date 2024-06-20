@@ -1,8 +1,8 @@
-#include "../ShaderHeader/inc_Texture.hlsli"
+#include "../ShaderHeader/inc_Phong.hlsli"
 
-VSOutput main(VSInput vin)
+VS_OUTPUT main(VS_INPUT vin)
 {
-    VSOutput vout = (VSOutput) 0;
+    VS_OUTPUT vout = (VS_OUTPUT) 0;
     
     float4 localPos = float4(vin.pos, 1.0f);
     float4 worldPos = mul(World, localPos);
@@ -11,5 +11,7 @@ VSOutput main(VSInput vin)
 
     vout.pos = projPos;
     vout.uv = vin.uv;
+    vout.WorldPos = worldPos;
+    vout.normal = normalize(mul((float3x3) World, vin.normal));
     return vout;
 }

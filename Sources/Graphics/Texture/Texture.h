@@ -16,8 +16,8 @@ class Texture
 public:	// パブリック関数
 	Texture();	// コンストラクタ
 	~Texture();	// デストラクタ
-	bool Init(DescriptorPool* pPool, const wchar_t* filename);
-	bool Init(DescriptorPool* pPool, const D3D12_RESOURCE_DESC* pDesc, bool isCube);	// 初期化
+	bool Init(DescriptorPool* pPool, const wchar_t* filename, bool isSRGB);
+	bool Init(DescriptorPool* pPool, const D3D12_RESOURCE_DESC* pDesc, bool isSRGB, bool isCube);	// 初期化
 	void Uninit();	// 終了処理
 
 	D3D12_CPU_DESCRIPTOR_HANDLE GetHandleCPU() const;	// CPUハンドルの取得
@@ -25,7 +25,7 @@ public:	// パブリック関数
 
 private:	// プライベート関数
 	D3D12_SHADER_RESOURCE_VIEW_DESC GetViewDesc(bool isCube);
-	bool CreateTexture(const wchar_t* filename);
+	bool CreateTexture(const wchar_t* filename, bool isSRGB);
 
 private:	// メンバ変数
 	ComPtr<ID3D12Resource> m_pTex;

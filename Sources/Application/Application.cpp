@@ -27,8 +27,8 @@ struct LigBuffer
 
 struct MaterialBufer
 {
-	Vector3 Diffuse;	// ディフューズ
-	float Alpha;		// アルファ
+	Vector3 Diffuse;	// 拡散反射率
+	float Alpha;		// 透過度
 };
 
 // ====== メンバ関数 ======
@@ -66,7 +66,7 @@ bool Application::Init()
 
 		if (!SearchFilePathW(L"Assets/Models/teapot/teapot.obj", path))
 		{
-			ELOG("[App.cpp]Error : Line61 : ファイルが見つかりませんでした。");
+			ELOG("[App.cpp]Error : Line72 : ファイルが見つかりませんでした。");
 			return false;
 		}
 
@@ -237,7 +237,7 @@ bool Application::Init()
 		auto hr = D3D12SerializeRootSignature(&desc, D3D_ROOT_SIGNATURE_VERSION_1, pBlob.GetAddressOf(), pError.GetAddressOf());
 		if (FAILED(hr))
 		{
-			ELOG("[App.cpp]Error : Line222 : ルートシグネチャーのシリアライズに失敗しました。");
+			ELOG("[App.cpp]Error : Line257 : ルートシグネチャーのシリアライズに失敗しました。");
 			return false;
 		}
 
@@ -245,7 +245,7 @@ bool Application::Init()
 		hr = RENDERER.GetDevice()->CreateRootSignature(0, pBlob->GetBufferPointer(), pBlob->GetBufferSize(), IID_PPV_ARGS(m_pRootSig.GetAddressOf()));
 		if (FAILED(hr))
 		{
-			ELOG("[App.cpp]Error : Line231 : ルートシグネチャーの生成に失敗しました。");
+			ELOG("[App.cpp]Error : Line265 : ルートシグネチャーの生成に失敗しました。");
 			return false;
 		}
 	}

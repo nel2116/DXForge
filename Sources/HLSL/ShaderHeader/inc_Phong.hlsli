@@ -1,7 +1,3 @@
-
-static const float F_PI = 3.141596535f;
-
-// ランバート反射の頂点シェーダ
 struct VS_INPUT
 {
     float3 pos : POSITION; // 位置
@@ -10,7 +6,6 @@ struct VS_INPUT
     float3 tangent : TANGENT; // 接線
 };
 
-// ランバート反射のピクセルシェーダ
 struct VS_OUTPUT
 {
     float4 pos : SV_POSITION; // 位置
@@ -19,7 +14,6 @@ struct VS_OUTPUT
     float4 WorldPos : WORLD_POS; // ワールド空間での座標
 };
 
-// ランバート反射の定数バッファ
 cbuffer Transform : register(b0)
 {
     float4x4 World : packoffset(c0); // ワールド行列
@@ -31,10 +25,13 @@ cbuffer LightBuff : register(b1)
 {
     float3 ligPos : packoffset(c0); // ライトの位置
     float3 ligColor : packoffset(c1); // ライトの色
+    float3 CameraPos : packoffset(c2); // カメラの位置
 }
 
 cbuffer MaterialBuff : register(b2)
 {
     float3 Diffuse : packoffset(c0); // 拡散反射率
     float Alpha : packoffset(c0.w); // 透明度
+    float3 Specular : packoffset(c1); // 鏡面反射率
+    float Shininess : packoffset(c1.w); // 輝き係数
 }

@@ -11,6 +11,50 @@
 #include <System/FileUtil.h>
 #include <System/Logger.h>
 
+namespace
+{
+	// テクスチャフォーマットをSRGBに変換
+	DXGI_FORMAT ConvertToSRGB(DXGI_FORMAT format)
+	{
+		DXGI_FORMAT result = format;
+		switch (format)
+		{
+		case DXGI_FORMAT_R8G8B8A8_UNORM:
+		{ result = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB; }
+		break;
+
+		case DXGI_FORMAT_BC1_UNORM:
+		{ result = DXGI_FORMAT_BC1_UNORM_SRGB; }
+		break;
+
+		case DXGI_FORMAT_BC2_UNORM:
+		{ result = DXGI_FORMAT_BC2_UNORM_SRGB; }
+		break;
+
+		case DXGI_FORMAT_BC3_UNORM:
+		{ result = DXGI_FORMAT_BC3_UNORM_SRGB; }
+		break;
+
+		case DXGI_FORMAT_B8G8R8A8_UNORM:
+		{ result = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB; }
+		break;
+
+		case DXGI_FORMAT_B8G8R8X8_UNORM:
+		{ result = DXGI_FORMAT_B8G8R8X8_UNORM_SRGB; }
+		break;
+
+		case DXGI_FORMAT_BC7_UNORM:
+		{ result = DXGI_FORMAT_BC7_UNORM_SRGB; }
+		break;
+
+		default:
+			break;
+		}
+
+		return result;
+	}
+} // namespace 
+
 Texture::Texture()
 	: m_pTex(nullptr)
 	, m_pHandle(nullptr)
@@ -23,7 +67,7 @@ Texture::~Texture()
 	Uninit();
 }
 
-bool Texture::Init(DescriptorPool* pPool, const wchar_t* filename)
+bool Texture::Init(DescriptorPool* pPool, const wchar_t* filename, bool isSRGB)
 {
 	auto pDevice = RENDERER.GetDevice();
 
@@ -50,7 +94,7 @@ bool Texture::Init(DescriptorPool* pPool, const wchar_t* filename)
 
 	// ファイルからテクスチャを生成
 	bool isCube = false;
-	if (!CreateTexture(filename))
+	if (!CreateTexture(filename, isSRGB))
 	{
 		assert(0 && "[Texture.cpp]テクスチャの生成に失敗しました。");
 		return false;
@@ -66,7 +110,7 @@ bool Texture::Init(DescriptorPool* pPool, const wchar_t* filename)
 	return true;
 }
 
-bool Texture::Init(DescriptorPool* pPool, const D3D12_RESOURCE_DESC* pDesc, bool isCube)
+bool Texture::Init(DescriptorPool* pPool, const D3D12_RESOURCE_DESC* pDesc, bool isSRGB, bool isCube)
 {
 	auto pDevice = RENDERER.GetDevice();
 	if (pDevice == nullptr || pPool == nullptr || pDesc == nullptr)
@@ -86,6 +130,12 @@ bool Texture::Init(DescriptorPool* pPool, const D3D12_RESOURCE_DESC* pDesc, bool
 	if (m_pHandle == nullptr)
 	{
 		return false;
+	}
+
+	D3D12_RESOURCE_DESC desc = *pDesc;
+	if (isSRGB)
+	{
+		desc.Format = ConvertToSRGB(desc.Format);
 	}
 
 	D3D12_HEAP_PROPERTIES prop = {};
@@ -155,7 +205,7 @@ D3D12_GPU_DESCRIPTOR_HANDLE Texture::GetHandleGPU() const
 	return D3D12_GPU_DESCRIPTOR_HANDLE();
 }
 
-bool Texture::CreateTexture(const wchar_t* filename)
+bool Texture::CreateTexture(const wchar_t* filename, bool isSRGB)
 {
 	// ファイルパスを検索
 	std::wstring texPath;
@@ -170,7 +220,8 @@ bool Texture::CreateTexture(const wchar_t* filename)
 		// テクスチャの読み込み
 		DirectX::TexMetadata metadata = {};
 		DirectX::ScratchImage scratch = {};
-		auto hr = DirectX::LoadFromWICFile(texPath.c_str(), DirectX::WIC_FLAGS_NONE, &metadata, scratch);
+		DirectX::WIC_FLAGS flag = isSRGB ? DirectX::WIC_FLAGS_FORCE_SRGB : DirectX::WIC_FLAGS_NONE;
+		auto hr = DirectX::LoadFromWICFile(texPath.c_str(), flag, &metadata, scratch);
 		if (FAILED(hr))
 		{
 			ELOG("Error : DirectX::LoadFromWICFile() Failed. retcode = 0x%x", hr);
@@ -200,7 +251,7 @@ bool Texture::CreateTexture(const wchar_t* filename)
 		resDesc.SampleDesc.Count = 1;								// 1 : サンプリング数
 		resDesc.SampleDesc.Quality = 0;								// 0 : サンプリング品質
 		resDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;				// D3D12_TEXTURE_LAYOUT_UNKNOWN : テクスチャデータのレイアウトを未指定
-		resDesc.Flags = D3D12_RESOURCE_FLAG_NONE;					// D3D12_RESOURCE_FLAG_NONE : オプションを特に指定しない
+		resDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
 
 		// リソースの生成
 		hr = RENDERER.GetDevice()->CreateCommittedResource(

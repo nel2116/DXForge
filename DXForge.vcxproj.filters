@@ -202,19 +202,16 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="Sources\HLSL\PixelShader\PS_Simple.hlsl" />
-    <FxCompile Include="Sources\HLSL\VertexShader\VS_Simple.hlsl" />
-    <FxCompile Include="Sources\HLSL\PixelShader\PS_Texture.hlsl" />
-    <FxCompile Include="Sources\HLSL\VertexShader\VS_Texture.hlsl" />
-    <FxCompile Include="Sources\HLSL\PixelShader\PS_Mesh.hlsl" />
-    <FxCompile Include="Sources\HLSL\VertexShader\VS_Mesh.hlsl" />
     <FxCompile Include="Sources\HLSL\VertexShader\VS_Lambert.hlsl" />
     <FxCompile Include="Sources\HLSL\PixelShader\PS_Lambert.hlsl" />
+    <FxCompile Include="Sources\HLSL\PixelShader\PS_Phong.hlsl" />
+    <FxCompile Include="Sources\HLSL\VertexShader\VS_Phong.hlsl" />
+    <FxCompile Include="Sources\HLSL\PixelShader\PS_Bump.hlsl" />
+    <FxCompile Include="Sources\HLSL\VertexShader\VS_Bump.hlsl" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Sources\HLSL\ShaderHeader\inc_Simple.hlsli" />
-    <None Include="Sources\HLSL\ShaderHeader\inc_Texture.hlsli" />
-    <None Include="Sources\HLSL\ShaderHeader\inc_Mesh.hlsli" />
     <None Include="Sources\HLSL\ShaderHeader\inc_Lambert.hlsli" />
+    <None Include="Sources\HLSL\ShaderHeader\inc_Phong.hlsli" />
+    <None Include="Sources\HLSL\ShaderHeader\inc_Bump.hlsli" />
   </ItemGroup>
 </Project>
