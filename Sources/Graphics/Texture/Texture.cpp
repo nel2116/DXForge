@@ -10,6 +10,8 @@
 #include <Graphics/DescriptorPool/DescriptorPool.h>
 #include <System/FileUtil.h>
 #include <System/Logger.h>
+#include <System/DDSTextureLoader12.h>
+#include <System/d3dx12.h>
 
 namespace
 {
@@ -93,12 +95,26 @@ bool Texture::Init(DescriptorPool* pPool, const wchar_t* filename, bool isSRGB)
 	}
 
 	// ファイルからテクスチャを生成
-	bool isCube = false;
-	if (!CreateTexture(filename, isSRGB))
+	// DDSファイルの場合
+	if (wcsstr(filename, L".dds") != nullptr || wcsstr(filename, L".DDS") != nullptr)
 	{
-		assert(0 && "[Texture.cpp]テクスチャの生成に失敗しました。");
-		return false;
+		if (!CreateDDSTexture(filename, isSRGB))
+		{
+			assert(0 && "[Texture.cpp]CreateDDSTexture() Failed.");
+			return false;
+		}
 	}
+	// それ以外の場合
+	else
+	{
+		if (!CreateTexture(filename, isSRGB))
+		{
+			assert(0 && "[Texture.cpp]CreateTexture() Failed.");
+			return false;
+		}
+	}
+
+	bool isCube = false;
 
 	// シェーダリソースビューの設定を求める
 	auto viewDesc = GetViewDesc(isCube);
@@ -308,6 +324,99 @@ bool Texture::CreateTexture(const wchar_t* filename, bool isSRGB)
 			ELOG("Error : ID3D12Resource::WriteToSubresource() Failed. retcode = 0x%x", hr);
 			return false;
 		}
+	}
+	return true;
+}
+
+bool Texture::CreateDDSTexture(const wchar_t* filename, bool isSRGB)
+{
+	// ファイルパスを検索
+	std::wstring texPath;
+	if (!SearchFilePathW(filename, texPath))
+	{
+		assert(0 && "[Texture.cpp]テクスチャファイルが見つかりませんでした。");
+		return false;
+	}
+
+	// テクスチャの生成
+	{
+		// テクスチャの読み込み
+		ComPtr<ID3D12Resource> texture;
+		std::unique_ptr<uint8_t[]> ddsData;
+		std::vector<D3D12_SUBRESOURCE_DATA> subresources;
+
+		unsigned int loadFlags = isSRGB ? DirectX::DDS_LOADER_FORCE_SRGB : DirectX::DDS_LOADER_DEFAULT;
+		HRESULT hr = DirectX::LoadDDSTextureFromFileEx(
+			RENDERER.GetDevice(),                // Direct3Dデバイス
+			texPath.c_str(),                     // テクスチャファイルのパス
+			0,                                   // 最大サイズ（省略可能）
+			D3D12_RESOURCE_FLAG_NONE,            // リソースフラグ
+			loadFlags,                           // ロードフラグ
+			&texture,                            // テクスチャリソース
+			ddsData,                             // DDSデータ
+			subresources                         // サブリソースデータ
+		);
+		if (FAILED(hr))
+		{
+			ELOG("Error : DirectX::LoadDDSTextureFromFileEx() Failed. retcode = 0x%x", hr);
+			return false;
+		}
+
+		// テクスチャの設定
+		D3D12_RESOURCE_DESC resDesc = texture->GetDesc();
+
+		// ヒーププロパティ
+		D3D12_HEAP_PROPERTIES heapProp = {};
+		heapProp.Type = D3D12_HEAP_TYPE_DEFAULT;
+		heapProp.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+		heapProp.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+		heapProp.CreationNodeMask = 1;
+		heapProp.VisibleNodeMask = 1;
+
+		// リソースの設定
+		hr = RENDERER.GetDevice()->CreateCommittedResource(
+			&heapProp,
+			D3D12_HEAP_FLAG_NONE,
+			&resDesc,
+			D3D12_RESOURCE_STATE_COPY_DEST,
+			nullptr,
+			IID_PPV_ARGS(m_pTex.ReleaseAndGetAddressOf()));
+		if (FAILED(hr))
+		{
+			ELOG("Error : ID3D12Device::CreateCommittedResource() Failed. retcode = 0x%x", hr);
+			return false;
+		}
+
+		// コマンドリストのリセット
+		auto allocator = RENDERER.GetCmdAllocator(RENDERER.GetFrameIndex());
+		RENDERER.GetCmdList()->Reset(allocator, nullptr);
+
+		// コマンドリストにコピーコマンドを記録
+		UpdateSubresources(
+			RENDERER.GetCmdList(),
+			m_pTex.Get(),
+			texture.Get(),
+			0, 0, static_cast<UINT>(subresources.size()),
+			subresources.data());
+
+		// テクスチャリソースの状態をコピー先からピクセルシェーダリソースに変更
+		D3D12_RESOURCE_BARRIER barrier = {};
+		barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+		barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+		barrier.Transition.pResource = m_pTex.Get();
+		barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
+		barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+		barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+
+		RENDERER.GetCmdList()->ResourceBarrier(1, &barrier);
+
+		// コマンドリストの実行
+		RENDERER.GetCmdList()->Close();
+		ID3D12CommandList* cmdLists[] = { RENDERER.GetCmdList() };
+		RENDERER.GetCmdQueue()->ExecuteCommandLists(_countof(cmdLists), cmdLists);
+
+		// コマンドリストの待機
+		RENDERER.WaitGpu();
 	}
 	return true;
 }

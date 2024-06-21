@@ -159,6 +159,20 @@ namespace
 
 	void MeshLoader::ParseMaterial(ResMaterial& dstMaterial, const aiMaterial* pSrcMaterial)
 	{
+		// “§‰ß“x
+		{
+			float alpha = 1.0f;
+			if (pSrcMaterial->Get(AI_MATKEY_OPACITY, alpha) == AI_SUCCESS)
+			{
+				dstMaterial.Alpha = alpha;
+			}
+			else
+			{
+				dstMaterial.Alpha = 1.0f;
+			}
+
+		}
+
 		// ŠgU”½Ë¬•ª
 		{
 			aiColor3D color(0.0f, 0.0f, 0.0f);

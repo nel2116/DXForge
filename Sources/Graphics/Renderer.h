@@ -69,6 +69,13 @@ public:		// アクセサ関数
 	ID3D12GraphicsCommandList* GetCmdList() { return m_pCmdList.Get(); }
 
 	/// <summary>
+	/// コマンドアロケータの取得
+	/// </summary>
+	/// <param name="index">コマンドアロケータのインデックス</param>
+	/// <returns>コマンドアロケータの参照</returns>
+	ID3D12CommandAllocator* GetCmdAllocator(uint32_t index) { return m_pCmdAllocator[index].Get(); }
+
+	/// <summary>
 	/// コマンドキューの取得
 	/// </summary>
 	/// <returns>コマンドキューの参照</returns>

@@ -26,6 +26,7 @@ public:	// パブリック関数
 private:	// プライベート関数
 	D3D12_SHADER_RESOURCE_VIEW_DESC GetViewDesc(bool isCube);
 	bool CreateTexture(const wchar_t* filename, bool isSRGB);
+	bool CreateDDSTexture(const wchar_t* filename, bool isSRGB);
 
 private:	// メンバ変数
 	ComPtr<ID3D12Resource> m_pTex;

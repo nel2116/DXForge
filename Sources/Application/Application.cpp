@@ -23,12 +23,15 @@ struct LigBuffer
 {
 	Vector4 LigPos;		// ライトの位置
 	Color LigColor;		// ライトの色
+	Vector4 CameraPos;	// カメラの位置
 };
 
 struct MaterialBufer
 {
-	Vector3 Diffuse;	// 拡散反射率
+	Vector3 BaseColor;	// 拡散反射率
 	float Alpha;		// 透過度
+	float Metallic;		// 金属度
+	float Shininess;	// 鏡面反射強度
 };
 
 // ====== メンバ関数 ======
@@ -126,8 +129,10 @@ bool Application::Init()
 		for (size_t i = 0; i < resMaterial.size(); ++i)
 		{
 			auto ptr = m_Material.GetBufferPtr<MaterialBufer>(i);
-			ptr->Diffuse = resMaterial[i].Diffuse;
+			ptr->BaseColor = resMaterial[i].Diffuse;
 			ptr->Alpha = resMaterial[i].Alpha;
+			ptr->Metallic = 0.5f;
+			ptr->Shininess = resMaterial[i].Shininess;
 
 			// テクスチャの設定
 			std::wstring path = dir + resMaterial[i].DiffuseMap;
@@ -160,6 +165,7 @@ bool Application::Init()
 		auto ptr = pCB->GetPtr<LigBuffer>();
 		ptr->LigPos = Vector4(0.0f, 50.0f, 100.0f, 1.0f);
 		ptr->LigColor = Color(1.0f, 1.0f, 1.0f, 0.0f);
+		ptr->CameraPos = Vector4(0.0f, 1.0f, 2.0f, 1.0f);
 
 		m_pLight = pCB;
 
@@ -256,14 +262,14 @@ bool Application::Init()
 		std::wstring psPath;
 
 		// 頂点シェーダを検索
-		if (!SearchFilePathW(L"Assets/Shaders/VS_Lambert.cso", vsPath))
+		if (!SearchFilePathW(L"Assets/Shaders/VS_Phong.cso", vsPath))
 		{
 			ELOG("[App.cpp]Error : Line245 : 頂点シェーダが見つかりませんでした。");
 			return false;
 		}
 
 		// ピクセルシェーダを検索
-		if (!SearchFilePathW(L"Assets/Shaders/PS_Lambert.cso", psPath))
+		if (!SearchFilePathW(L"Assets/Shaders/PS_Phong.cso", psPath))
 		{
 			ELOG("[App.cpp]Error : Line253 : ピクセルシェーダが見つかりませんでした。");
 			return false;

@@ -1,3 +1,5 @@
+#define F_PI (3.14159265359f)
+
 struct VS_INPUT
 {
     float3 pos : POSITION; // ˆÊ’u
@@ -30,8 +32,8 @@ cbuffer LightBuff : register(b1)
 
 cbuffer MaterialBuff : register(b2)
 {
-    float3 Diffuse : packoffset(c0); // ŠgU”½Ë—¦
+    float3 BaseColor : packoffset(c0); // ŠgU”½Ë—¦
     float Alpha : packoffset(c0.w); // “§–¾“x
-    float3 Specular : packoffset(c1); // ‹¾–Ê”½Ë—¦
-    float Shininess : packoffset(c1.w); // ‹P‚«ŒW”
+    float3 Metallic : packoffset(c1); // ‹à‘®“x
+    float Shininess : packoffset(c1.w); // ‹¾–Ê”½Ë‹­“x
 }
