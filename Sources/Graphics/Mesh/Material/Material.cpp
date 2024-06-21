@@ -69,7 +69,7 @@ bool Material::Init(DescriptorPool* pPool, size_t bufferSize, size_t count)
 		desc.SampleDesc.Count = 1;
 		desc.SampleDesc.Quality = 0;
 
-		if (!pTexture->Init(pPool, &desc, true, false))
+		if (!pTexture->Init(pPool, &desc, false, false))
 		{
 			ELOG("[Material.cpp]Error : Line74 : Texture::Init() Failed.");
 			pTexture->Uninit();

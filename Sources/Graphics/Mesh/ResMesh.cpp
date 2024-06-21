@@ -161,14 +161,14 @@ namespace
 	{
 		// “§‰ß“x
 		{
-			float alpha = 1.0f;
+			float alpha = 0.0f;
 			if (pSrcMaterial->Get(AI_MATKEY_OPACITY, alpha) == AI_SUCCESS)
 			{
 				dstMaterial.Alpha = alpha;
 			}
 			else
 			{
-				dstMaterial.Alpha = 1.0f;
+				dstMaterial.Alpha = 0.0f;
 			}
 
 		}

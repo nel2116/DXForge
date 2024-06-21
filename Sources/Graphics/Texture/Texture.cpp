@@ -341,7 +341,6 @@ bool Texture::CreateDDSTexture(const wchar_t* filename, bool isSRGB)
 	// テクスチャの生成
 	{
 		// テクスチャの読み込み
-		ComPtr<ID3D12Resource> texture;
 		std::unique_ptr<uint8_t[]> ddsData;
 		std::vector<D3D12_SUBRESOURCE_DATA> subresources;
 
@@ -352,7 +351,7 @@ bool Texture::CreateDDSTexture(const wchar_t* filename, bool isSRGB)
 			0,                                   // 最大サイズ（省略可能）
 			D3D12_RESOURCE_FLAG_NONE,            // リソースフラグ
 			loadFlags,                           // ロードフラグ
-			&texture,                            // テクスチャリソース
+			m_pTex.GetAddressOf(),               // テクスチャリソース
 			ddsData,                             // DDSデータ
 			subresources                         // サブリソースデータ
 		);
@@ -363,24 +362,25 @@ bool Texture::CreateDDSTexture(const wchar_t* filename, bool isSRGB)
 		}
 
 		// テクスチャの設定
-		D3D12_RESOURCE_DESC resDesc = texture->GetDesc();
+		D3D12_RESOURCE_DESC resDesc = m_pTex->GetDesc();
 
-		// ヒーププロパティ
-		D3D12_HEAP_PROPERTIES heapProp = {};
-		heapProp.Type = D3D12_HEAP_TYPE_DEFAULT;
-		heapProp.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
-		heapProp.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
-		heapProp.CreationNodeMask = 1;
-		heapProp.VisibleNodeMask = 1;
+		const UINT subresourceSize = static_cast<UINT>(subresources.size());
+		const UINT64 uploadBufferSize = GetRequiredIntermediateSize(m_pTex.Get(), 0, subresourceSize);
+
+		// アップロードバッファの生成
+		Microsoft::WRL::ComPtr<ID3D12Resource> texture;
+
+		auto heapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+		auto heapDesc = CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize);
 
 		// リソースの設定
 		hr = RENDERER.GetDevice()->CreateCommittedResource(
 			&heapProp,
 			D3D12_HEAP_FLAG_NONE,
-			&resDesc,
-			D3D12_RESOURCE_STATE_COPY_DEST,
+			&heapDesc,
+			D3D12_RESOURCE_STATE_GENERIC_READ,
 			nullptr,
-			IID_PPV_ARGS(m_pTex.ReleaseAndGetAddressOf()));
+			IID_PPV_ARGS(texture.ReleaseAndGetAddressOf()));
 		if (FAILED(hr))
 		{
 			ELOG("Error : ID3D12Device::CreateCommittedResource() Failed. retcode = 0x%x", hr);
@@ -396,17 +396,11 @@ bool Texture::CreateDDSTexture(const wchar_t* filename, bool isSRGB)
 			RENDERER.GetCmdList(),
 			m_pTex.Get(),
 			texture.Get(),
-			0, 0, static_cast<UINT>(subresources.size()),
-			subresources.data());
+			0, 0, subresourceSize,
+			&subresources[0]);
 
 		// テクスチャリソースの状態をコピー先からピクセルシェーダリソースに変更
-		D3D12_RESOURCE_BARRIER barrier = {};
-		barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-		barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-		barrier.Transition.pResource = m_pTex.Get();
-		barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
-		barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-		barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+		D3D12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_pTex.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 		RENDERER.GetCmdList()->ResourceBarrier(1, &barrier);
 
