@@ -11,7 +11,7 @@ VS_OUTPUT main(VS_INPUT vin)
 
     vout.pos = projPos;
     vout.uv = vin.uv;
-    vout.WorldPos = worldPos;
+    vout.WorldPos = worldPos.xyz;
     vout.normal = normalize(mul((float3x3) World, vin.normal));
     return vout;
 }

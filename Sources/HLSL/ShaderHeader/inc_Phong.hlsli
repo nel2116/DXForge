@@ -13,7 +13,7 @@ struct VS_OUTPUT
     float4 pos : SV_POSITION; // 位置
     float3 normal : NORMAL; // 法線
     float2 uv : TEXCOORD; // テクスチャ座標
-    float4 WorldPos : WORLD_POS; // ワールド空間での座標
+    float3 WorldPos : WORLD_POS; // ワールド空間での座標
 };
 
 cbuffer Transform : register(b0)
@@ -35,5 +35,5 @@ cbuffer MaterialBuff : register(b2)
     float3 BaseColor : packoffset(c0); // 拡散反射率
     float Alpha : packoffset(c0.w); // 透明度
     float3 Metallic : packoffset(c1); // 金属度
-    float Shininess : packoffset(c1.w); // 鏡面反射強度
+    float Shininess : packoffset(c1.y); // 鏡面反射強度
 }

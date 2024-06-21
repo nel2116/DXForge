@@ -6,9 +6,8 @@ SamplerState samp : register(s0);
 float4 main(VS_OUTPUT pin) : SV_TARGET
 {
     float3 N = normalize(pin.normal);
-    float3 L = normalize(ligPos - pin.WorldPos.xyz);
-    float3 V = normalize(CameraPos - pin.WorldPos.xyz);
-    
+    float3 L = normalize(ligPos - pin.WorldPos);
+    float3 V = normalize(CameraPos - pin.WorldPos);
     float3 R = normalize(-V + 2.0f * dot(N, V) * N);
     
     float NL = saturate(dot(N, L));
