@@ -60,14 +60,15 @@ bool Material::Init(DescriptorPool* pPool, size_t bufferSize, size_t count)
 
 		D3D12_RESOURCE_DESC desc = {};
 		desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-		desc.Width = 1;
-		desc.Height = 1;
+		desc.Width = 4;
+		desc.Height = 4;
 		desc.DepthOrArraySize = 1;
 		desc.MipLevels = 1;
 		desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 		desc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
 		desc.SampleDesc.Count = 1;
 		desc.SampleDesc.Quality = 0;
+		desc.Flags = D3D12_RESOURCE_FLAG_NONE;
 
 		if (!pTexture->Init(pPool, &desc, false, false))
 		{
@@ -162,29 +163,29 @@ void Material::Uninit()
 // テクスチャの設定
 bool Material::SetTexture(size_t index, TEXTURE_USAGE usage, const std::wstring& path)
 {
-	// 範囲内であるかチェック.
+	// 範囲内であるかチェック
 	if (index >= GetCount())
 	{
 		return false;
 	}
 
-	// 既に登録済みかチェック.
+	// 既に登録済みかチェック
 	if (m_pTexture.find(path) != m_pTexture.end())
 	{
 		m_Subset[index].TextureHandle[usage] = m_pTexture[path]->GetHandleGPU();
 		return true;
 	}
 
-	// ファイルパスが存在するかチェックします.
+	// ファイルパスが存在するかチェック
 	std::wstring findPath;
 	if (!SearchFilePathW(path.c_str(), findPath))
 	{
-		// 存在しない場合はダミーテクスチャを設定.
+		// 存在しない場合はダミーテクスチャを設定
 		m_Subset[index].TextureHandle[usage] = m_pTexture[DummyTag]->GetHandleGPU();
 		return true;
 	}
 
-	// ファイル名であることをチェック.
+	// ファイル名であることをチェック
 	{
 		if (PathIsDirectoryW(findPath.c_str()) != FALSE)
 		{
@@ -193,7 +194,7 @@ bool Material::SetTexture(size_t index, TEXTURE_USAGE usage, const std::wstring&
 		}
 	}
 
-	// インスタンス生成.
+	// インスタンス生成
 	auto pTexture = new (std::nothrow) Texture();
 	if (pTexture == nullptr)
 	{
@@ -201,7 +202,7 @@ bool Material::SetTexture(size_t index, TEXTURE_USAGE usage, const std::wstring&
 		return false;
 	}
 
-	// 初期化.
+	// 初期化
 	if (!pTexture->Init(m_pPool, findPath.c_str(), true))
 	{
 		ELOG("[Material.cpp]Error : Line207 : Texture::Init() Failed.");
@@ -210,11 +211,11 @@ bool Material::SetTexture(size_t index, TEXTURE_USAGE usage, const std::wstring&
 		return false;
 	}
 
-	// 登録.
+	// 登録
 	m_pTexture[path] = pTexture;
 	m_Subset[index].TextureHandle[usage] = pTexture->GetHandleGPU();
 
-	// 正常終了.
+	// 正常終了
 	return true;
 }
 

@@ -67,7 +67,7 @@ bool Application::Init()
 		std::wstring path;
 		// ファイルパスを検索
 
-		if (!SearchFilePathW(L"Assets/Models/teapot/teapot.obj", path))
+		if (!SearchFilePathW(L"Assets/Models/Cube/Cube.gltf", path))
 		{
 			ELOG("[App.cpp]Error : Line72 : ファイルが見つかりませんでした。");
 			return false;
@@ -163,9 +163,9 @@ bool Application::Init()
 		}
 
 		auto ptr = pCB->GetPtr<LigBuffer>();
-		ptr->LigPos = Vector4(0.0f, 50.0f, 100.0f, 1.0f);
+		ptr->LigPos = Vector4(0.0f, 50.0f, 100.0f, 0.0f);
 		ptr->LigColor = Color(1.0f, 1.0f, 1.0f, 0.0f);
-		ptr->CameraPos = Vector4(0.0f, 1.0f, 2.0f, 1.0f);
+		ptr->CameraPos = Vector4(0.0f, 1.0f, 2.0f, 0.0f);
 
 		m_pLight = pCB;
 
@@ -297,8 +297,8 @@ bool Application::Init()
 		// ラスタライザステートの設定
 		D3D12_RASTERIZER_DESC rsDesc = {};
 		rsDesc.FillMode = D3D12_FILL_MODE_SOLID;								// 頂点によって形作られている三角形で描画
-		rsDesc.CullMode = D3D12_CULL_MODE_NONE;									// カリングしない	
-		rsDesc.FrontCounterClockwise = FALSE;									// 時計回りが表面
+		rsDesc.CullMode = D3D12_CULL_MODE_BACK;									// 背面カリング
+		rsDesc.FrontCounterClockwise = TRUE;									// 反時計回りが表面
 		rsDesc.DepthBias = D3D12_DEFAULT_DEPTH_BIAS;							// 使用しないのでデフォルト
 		rsDesc.DepthBiasClamp = D3D12_DEFAULT_DEPTH_BIAS_CLAMP;					// 使用しないのでデフォルト
 		rsDesc.SlopeScaledDepthBias = D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS;	// 使用しないのでデフォルト
@@ -308,11 +308,11 @@ bool Application::Init()
 		rsDesc.ForcedSampleCount = 0;											// 0 : サンプル数が強制されない
 		rsDesc.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;	// D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF : 保守的なラスタライゼーションを無効にする
 
-		// レンダーターゲットのブレンド設定
+		// レンダーターゲットのブレンド設定(aブレンド)
 		D3D12_RENDER_TARGET_BLEND_DESC rtDesc =
 		{
-			FALSE,FALSE,
-			D3D12_BLEND_ONE,D3D12_BLEND_ZERO,D3D12_BLEND_OP_ADD,
+			TRUE,FALSE,
+			D3D12_BLEND_SRC_ALPHA,D3D12_BLEND_INV_SRC_ALPHA,D3D12_BLEND_OP_ADD,
 			D3D12_BLEND_ONE,D3D12_BLEND_ZERO,D3D12_BLEND_OP_ADD,
 			D3D12_LOGIC_OP_NOOP,
 			D3D12_COLOR_WRITE_ENABLE_ALL
@@ -384,7 +384,7 @@ bool Application::Init()
 			}
 
 			// カメラ設定.
-			auto eyePos = Vector3(0.0f, 1.0f, 2.0f);
+			auto eyePos = Vector3(0.0f, 1.0f, 10.0f);
 			auto targetPos = Vector3::Zero;
 			auto upward = Vector3::UnitY;
 

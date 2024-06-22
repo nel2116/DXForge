@@ -137,11 +137,11 @@ bool Texture::Init(DescriptorPool* pPool, const D3D12_RESOURCE_DESC* pDesc, bool
 	assert(m_pPool == nullptr);
 	assert(m_pHandle == nullptr);
 
-	// ディスクリプタプールを設定.
+	// ディスクリプタプールを設定
 	m_pPool = pPool;
 	m_pPool->AddRef();
 
-	// ディスクリプタハンドルを取得.
+	// ディスクリプタハンドルを取得
 	m_pHandle = pPool->AllocHandle();
 	if (m_pHandle == nullptr)
 	{
@@ -155,9 +155,9 @@ bool Texture::Init(DescriptorPool* pPool, const D3D12_RESOURCE_DESC* pDesc, bool
 	}
 
 	D3D12_HEAP_PROPERTIES prop = {};
-	prop.Type = D3D12_HEAP_TYPE_DEFAULT;
-	prop.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
-	prop.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+	prop.Type = D3D12_HEAP_TYPE_CUSTOM;
+	prop.MemoryPoolPreference = D3D12_MEMORY_POOL_L0;
+	prop.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_WRITE_BACK;
 	prop.CreationNodeMask = 0;
 	prop.VisibleNodeMask = 0;
 
@@ -175,10 +175,21 @@ bool Texture::Init(DescriptorPool* pPool, const D3D12_RESOURCE_DESC* pDesc, bool
 		return false;
 	}
 
-	// シェーダリソースビューの設定を求める.
+	vector<unsigned char> data(4 * 4 * 4);
+	std::fill(data.begin(), data.end(), 0xff);	// すべて255で埋める
+
+	// データ転送
+	hr = m_pTex->WriteToSubresource(0, nullptr, data.data(), 4 * 4, data.size());
+	if (FAILED(hr))
+	{
+		ELOG("Error : WriteToSubresource() Failed. retcode = 0x%x", hr);
+		return false;
+	}
+
+	// シェーダリソースビューの設定を求める
 	auto viewDesc = GetViewDesc(isCube);
 
-	// シェーダリソースビューを生成します.
+	// シェーダリソースビューを生成します
 	pDevice->CreateShaderResourceView(m_pTex.Get(), &viewDesc, m_pHandle->HandleCPU);
 
 	return true;
