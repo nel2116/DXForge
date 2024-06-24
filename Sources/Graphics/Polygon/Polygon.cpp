@@ -242,7 +242,7 @@ bool MyPolygon::Init()
 			auto focus = DirectX::XMVectorZero();
 			auto up = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 
-			auto fovY = DirectX::XMConvertToRadians(37.5f);
+			constexpr auto fovY = DirectX::XMConvertToRadians(37.5f);
 			auto aspect = static_cast<float>(WIDTH) / static_cast<float>(HEIGHT);
 
 			// ïœä∑çsóÒÇÃê›íË
@@ -405,9 +405,9 @@ bool MyPolygon::Init()
 		m_viewport.MaxDepth = 1.0f;
 
 		m_scissorRect.left = 0;
-		m_scissorRect.right = WIDTH;
+		m_scissorRect.right = static_cast<LONG>(WIDTH);
 		m_scissorRect.top = 0;
-		m_scissorRect.bottom = HEIGHT;
+		m_scissorRect.bottom = static_cast<LONG>(HEIGHT);
 	}
 	return true;
 }

@@ -196,6 +196,15 @@ private:	// シングルトン関連
 		, m_IsHDR(false)
 		, m_MaxLuminance(0.0f)
 		, m_MinLuminance(0.0f)
+		, m_pWindow(nullptr)
+		, m_pFactory(nullptr)
+		, m_pDevice(nullptr)
+		, m_pQueue(nullptr)
+		, m_pSwapChain(nullptr)
+		, m_CommandList()
+		, m_Fence()
+		, m_Viewport()
+		, m_Scissor()
 	{
 		for (auto i = 0; i < POOL_COUNT; ++i)
 		{

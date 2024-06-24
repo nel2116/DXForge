@@ -179,7 +179,7 @@ bool Texture::Init(DescriptorPool* pPool, const D3D12_RESOURCE_DESC* pDesc, bool
 	std::fill(data.begin(), data.end(), 0xff);	// すべて255で埋める
 
 	// データ転送
-	hr = m_pTex->WriteToSubresource(0, nullptr, data.data(), 4 * 4, data.size());
+	hr = m_pTex->WriteToSubresource(0, nullptr, data.data(), 4 * 4, static_cast<UINT>(data.size()));
 	if (FAILED(hr))
 	{
 		ELOG("Error : WriteToSubresource() Failed. retcode = 0x%x", hr);
@@ -270,8 +270,8 @@ bool Texture::CreateTexture(const wchar_t* filename, bool isSRGB)
 		D3D12_RESOURCE_DESC resDesc = {};
 		resDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;		// D3D12_RESOURCE_DIMENSION_TEXTURE2D : リソースが2次元テクスチャであることを示す
 		resDesc.Alignment = 0;										// 0 : リソースのアライメントを指定しない
-		resDesc.Width = metadata.width;								// テクスチャの横幅
-		resDesc.Height = metadata.height;							// テクスチャの縦幅
+		resDesc.Width = static_cast<UINT>(metadata.width);			// テクスチャの横幅
+		resDesc.Height = static_cast<UINT>(metadata.height);		// テクスチャの縦幅
 		resDesc.DepthOrArraySize = 1;								// 1 : テクスチャの深度または配列サイズ
 		resDesc.MipLevels = 1;										// 1 : ミップマップレベル数
 		resDesc.Format = metadata.format;							// テクスチャのフォーマット
@@ -305,12 +305,12 @@ bool Texture::CreateTexture(const wchar_t* filename, bool isSRGB)
 
 		D3D12_RESOURCE_DESC resDescUpload = {};
 		resDescUpload.Format = metadata.format;									// テクスチャのフォーマット
-		resDescUpload.Width = metadata.width;									// テクスチャの横幅
-		resDescUpload.Height = metadata.height;									// テクスチャの縦幅
-		resDescUpload.DepthOrArraySize = metadata.arraySize;
+		resDescUpload.Width = static_cast<UINT>(metadata.width);				// テクスチャの横幅
+		resDescUpload.Height = static_cast<UINT>(metadata.height);				// テクスチャの縦幅
+		resDescUpload.DepthOrArraySize = static_cast<UINT16>(metadata.arraySize);
 		resDescUpload.SampleDesc.Count = 1;
 		resDescUpload.SampleDesc.Quality = 0;
-		resDescUpload.MipLevels = metadata.mipLevels;
+		resDescUpload.MipLevels = static_cast<UINT16>(metadata.mipLevels);
 		resDescUpload.Dimension = static_cast<D3D12_RESOURCE_DIMENSION>(metadata.dimension);	// D3D12_RESOURCE_DIMENSION_BUFFER : リソースがバッファであることを示す
 		resDescUpload.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
 		resDescUpload.Flags = D3D12_RESOURCE_FLAG_NONE;									// D3D12_RESOURCE_FLAG_NONE : オプションを特に指定しない
@@ -329,7 +329,7 @@ bool Texture::CreateTexture(const wchar_t* filename, bool isSRGB)
 		}
 
 		// テクスチャデータのコピー
-		hr = m_pTex->WriteToSubresource(0, nullptr, img->pixels, img->rowPitch, img->slicePitch);
+		hr = m_pTex->WriteToSubresource(0, nullptr, img->pixels, static_cast<UINT>(img->rowPitch), static_cast<UINT>(img->slicePitch));
 		if (FAILED(hr))
 		{
 			ELOG("Error : ID3D12Resource::WriteToSubresource() Failed. retcode = 0x%x", hr);

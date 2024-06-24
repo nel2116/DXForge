@@ -63,6 +63,10 @@ ColorTarget::ColorTarget()
 	, m_RTVDesc()
 	, m_SRVDesc()
 {
+	m_ClearColor[0] = 0.25f;
+	m_ClearColor[1] = 0.25f;
+	m_ClearColor[2] = 0.25f;
+	m_ClearColor[3] = 1.0f;
 }
 
 // デストラクタ

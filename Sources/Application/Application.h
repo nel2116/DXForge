@@ -68,7 +68,22 @@ public:		// シングルトン関連
 		return instance;
 	}
 private:	// シングルトン関連
-	Application() = default;
+	Application()
+		: m_dwExecLastTime(0)
+		, m_dwCurrentTime(0)
+		, m_dwFrameCount(0)
+		, m_dwLsatFPSTime(0)
+		, m_fFPS(0.0f)
+		, m_RotateAngle(0.0f)
+		, m_pLight(nullptr)
+		, m_pPSO(nullptr)
+		, m_pRootSig(nullptr)
+		, m_Material()
+		, m_pMesh()
+		, m_Transform()
+		, m_window()
+	{
+	}
 	Application(const Application&) = delete;
 	Application& operator=(const Application&) = delete;
 };
