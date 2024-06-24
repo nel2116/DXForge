@@ -3,14 +3,19 @@
 // 作成者 : 田中ミノル
 // 作成日 : 2024/05/25 17:00
 // 概要   : レンダラークラスの定義
-// 更新履歴 : 2024/05/25 作成
+// 更新履歴
+// 2024/05/25 作成
+// 2024/06/24 リファクタリング
 // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 #pragma once
 // ====== インクルード部 ======
+#include <Manager/Manager.h>
 #include <System/window.h>
 #include <System/ComPtr.h>
-#include <Graphics/ColorTarget.h>
-#include <Graphics/DepthTarget.h>
+#include "Target/ColorTarget.h"
+#include "Target/DepthTarget.h"
+#include "CommandList/CommandList.h"
+#include "Fence/Fence.h"
 
 using namespace std;
 
@@ -27,7 +32,7 @@ enum DescriptorPoolType
 };
 
 // ====== クラス定義 ======
-class Renderer
+class Renderer : public Manager<Renderer>
 {
 public:		// パブリック関数
 	/// <summary>
@@ -55,162 +60,161 @@ public:		// パブリック関数
 	/// <returns></returns>
 	void End();
 
+	/// <summary>
+	/// リソースの状態遷移
+	/// </summary>
+	/// <param name="resource"></param>
+	/// <param name="stateBefore"></param>
+	/// <param name="stateAfter"></param>
+	void TransitionResource(ID3D12Resource* pResource, D3D12_RESOURCE_STATES stateBefore, D3D12_RESOURCE_STATES stateAfter, UINT subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, D3D12_RESOURCE_BARRIER_FLAGS flags = D3D12_RESOURCE_BARRIER_FLAG_NONE);
+
+	/// <summary>
+	/// GPUの完了を待つ
+	/// </summary>
+	void WaitGpu();
+
 public:		// アクセサ関数
+
 	/// <summary>
 	/// デバイスの取得
 	/// </summary>
-	/// <returns>デバイスの参照</returns>
-	ID3D12Device* GetDevice() { return m_pDevice.Get(); }
-
-	/// <summary>
-	/// コマンドリストの取得
-	///	</summary>
-	/// <returns>コマンドリストの参照</returns>
-	ID3D12GraphicsCommandList* GetCmdList() { return m_pCmdList.Get(); }
-
-	/// <summary>
-	/// コマンドアロケータの取得
-	/// </summary>
-	/// <param name="index">コマンドアロケータのインデックス</param>
-	/// <returns>コマンドアロケータの参照</returns>
-	ID3D12CommandAllocator* GetCmdAllocator(uint32_t index) { return m_pCmdAllocator[index].Get(); }
+	/// <returns>デバイス</returns>
+	ID3D12Device* GetDevice() const { return m_pDevice.Get(); }
 
 	/// <summary>
 	/// コマンドキューの取得
 	/// </summary>
-	/// <returns>コマンドキューの参照</returns>
-	ID3D12CommandQueue* GetCmdQueue() { return m_pCmdQueue.Get(); }
+	/// <returns>コマンドキュー</returns>
+	ID3D12CommandQueue* GetCmdQueue() const { return m_pQueue.Get(); }
+
+	/// <summary>
+	/// コマンドリストの取得
+	/// </summary>
+	/// <returns>コマンドリスト</returns>
+	CommandList* GetCmdList() { return &m_CommandList; }
 
 	/// <summary>
 	/// スワップチェインの取得
 	/// </summary>
-	/// <returns>スワップチェインの参照</returns>
-	IDXGISwapChain3* GetSwapChain() { return m_pSwapChain.Get(); }
-
-	/// <summary>
-	/// フレームバッファのインデックスを取得
-	/// </summary>
-	/// <returns>フレームバッファのインデックス</returns>
-	uint32_t GetFrameIndex() { return m_FrameIndex; }
-
-	/// <summary>
-	/// カラーターゲットの取得
-	/// </summary>
-	/// <param name="index">カラーターゲットのインデックス</param>
-	/// <returns>カラーターゲット</returns>
-	ColorTarget& GetColorTarget(uint32_t index) { return m_ColorTarget[index]; }
-
-	/// <summary>
-	/// ウィンドウの横幅を取得
-	/// </summary>
-	/// <returns>ウィンドウの横幅</returns>
-	int GetWidth() { return m_pWindow->GetWidth(); }
-
-	/// <summary>
-	/// ウィンドウの縦幅を取得
-	/// </summary>
-	/// <returns>ウィンドウの縦幅</returns>
-	int GetHeight() { return m_pWindow->GetHeight(); }
-
-	/// <summary>
-	/// ビューポートの取得
-	/// </summary>
-	/// <returns>ビューポート</returns>
-	D3D12_VIEWPORT GetViewport() { return m_viewport; }
-
-	/// <summary>
-	/// シザー矩形の取得
-	/// </summary>
-	/// <returns>シザー矩形</returns>
-	D3D12_RECT GetScissor() { return m_scissor; }
+	/// <returns>スワップチェイン</returns>
+	IDXGISwapChain4* GetSwapChain() const { return m_pSwapChain.Get(); }
 
 	/// <summary>
 	/// ディスクリプタプールの取得
 	/// </summary>
 	/// <param name="type">ディスクリプタプールの種類</param>
-	/// <returns>ディスクリプタプールの参照</returns>
-	DescriptorPool* GetDescriptorPool(DescriptorPoolType type) { return m_pPool[type]; }
+	/// <returns>ディスクリプタプール</returns>
+	DescriptorPool* GetPool(DescriptorPoolType type) const { return m_pPool[type]; }
 
 	/// <summary>
-	/// デプスターゲットの取得
+	/// フレーム番号の取得
 	/// </summary>
-	/// <returns>デプスターゲット</returns>
-	DepthTarget& GetDepthTarget() { return m_DepthTarget; }
+	/// <returns>フレーム番号</returns>
+	uint32_t GetFrameIndex() const { return m_FrameIndex; }
 
 	/// <summary>
-	/// GPUの処理完了を待つ
+	/// カラーターゲットの取得
 	/// </summary>
-	void WaitGpu();
+	/// <param name="index">インデックス</param>
+	/// <returns>カラーターゲット</returns>
+	ColorTarget* GetColorTarget(uint32_t index) { return &m_ColorTarget[index]; }
+
+	/// <summary>
+	/// 深度ターゲットの取得
+	/// </summary>
+	/// <returns>深度ターゲット</returns>
+	DepthTarget* GetDepthTarget() { return &m_DepthTarget; }
+
+	/// <summary>
+	/// ビューポートの取得
+	/// </summary>
+	/// <returns>ビューポート</returns>
+	const D3D12_VIEWPORT& GetViewport() const { return m_Viewport; }
+
+	/// <summary>
+	/// シザー矩形の取得
+	/// </summary>
+	/// <returns>シザー矩形</returns>
+	const D3D12_RECT& GetScissor() const { return m_Scissor; }
+
+	/// <summary>
+	/// windowの取得
+	/// </summary>
+	/// <returns>ウィンドウクラスのポインタ</returns>
+	Window* GetWindow() const { return m_pWindow; }
+
+	/// <summary>
+	/// windowの縦幅の取得
+	/// </summary>
+	/// <returns>ウィンドウの縦幅</returns>
+	float GetHeight() const { return static_cast<float>(m_pWindow->GetHeight()); }
+
+	/// <summary>
+	/// windowの横幅の取得
+	/// </summary>
+	/// <returns>ウィンドウの横幅</returns>
+	float GetWidth() const { return static_cast<float>(m_pWindow->GetWidth()); }
 
 private:	// プライベート関数
-
-	// 画面フリップ
 	void Present(uint32_t interval);
-
-	// デバイスの生成
-	bool CreateDevice();
-	// コマンドキューの生成
-	bool CreateCommandQueue();
-	// スワップチェインの生成
-	bool CreateSwapChain();
-	// コマンドアロケータの生成
-	bool CreateCommandAllocator();
-	// コマンドリストの生成
-	bool CreateCommandList();
-	// フェンスの生成
-	bool CreateFence();
-	// レンダーターゲットビューの生成
-	bool CreateRenderTargetView();
-	// 深度ステンシルビューの生成
-	bool CreateDepthStencilView();
-	// ディスクリプタプールの生成
-	bool CreateDescriptorPool();
+	void CheckSupportHDR();
+	bool  IsSupportHDR() const;
+	float GetMaxLuminance() const;
+	float GetMinLuminance() const;
 
 private:	// メンバ変数
-
 	// ウィンドウ関連
-	Window* m_pWindow = nullptr;	// ウィンドウクラスのポインタ
-
-	// デバイス関連
-	ComPtr<ID3D12Device> m_pDevice;										// デバイス
-	ComPtr<ID3D12CommandQueue> m_pCmdQueue;								// コマンドキュー
-	ComPtr<IDXGISwapChain3> m_pSwapChain;								// スワップチェイン
-	ComPtr<ID3D12CommandAllocator> m_pCmdAllocator[FRAME_BUFFER_COUNT];	// コマンドアロケータ
-	ComPtr<ID3D12GraphicsCommandList> m_pCmdList;						// コマンドリスト
-
-	// フェンス関連
-	ComPtr<ID3D12Fence> m_pFence;										// フェンス
-	HANDLE m_fenceEvent = nullptr;										// フェンスイベント
-	uint64_t m_FenceCounter[FRAME_BUFFER_COUNT] = {};					// フェンスカウンタ
-	uint32_t m_FrameIndex = 0;											// フレーム番号
-
-	// バックバッファ関連
+	Window* m_pWindow = nullptr;					// ウィンドウクラスのポインタ
+	ComPtr<IDXGIFactory4> m_pFactory;				// DXGIファクトリー
+	ComPtr<ID3D12Device> m_pDevice;					// デバイス
+	ComPtr<ID3D12CommandQueue> m_pQueue;			// コマンドキュー
+	ComPtr<IDXGISwapChain4> m_pSwapChain;			// スワップチェイン
 	ColorTarget m_ColorTarget[FRAME_BUFFER_COUNT];	// カラーターゲット
 	DepthTarget m_DepthTarget;						// 深度ターゲット
+	DescriptorPool* m_pPool[POOL_COUNT];			// ディスクリプタプール
+	CommandList m_CommandList;						// コマンドリスト
+	Fence m_Fence;									// フェンス
+	uint32_t m_FrameIndex;							// フレーム番号
+	D3D12_VIEWPORT m_Viewport;						// ビューポート
+	D3D12_RECT m_Scissor;							// シザー矩形
+	DXGI_FORMAT m_BackBufferFormat;					// バックバッファフォーマット
 
-	DescriptorPool* m_pPool[POOL_COUNT];	// ディスクリプタプール
+	// ウィンドウ関連
+	bool m_IsFullScreen;	// フルスクリーンかどうか
+	bool m_IsVSync;			// 垂直同期を行うかどうか
+	bool m_IsHDR;			// HDRをサポートしているかどうか
+	float m_MaxLuminance;	// 最大輝度
+	float m_MinLuminance;	// 最小輝度
 
-	// ビューポート関連
-	D3D12_VIEWPORT m_viewport;	// ビューポート
-	D3D12_RECT m_scissor;	// シザー矩形
-
-public:
-	// シングルトン関連
-	/// <summary>
-	/// Rendererクラスのインスタンスを取得
-	/// </summary>
-	/// <returns>Rendererクラスのインスタンス参照</returns>
-	static Renderer& Instance()
+private:	// シングルトン関連
+	friend class Manager<Renderer>;
+	Renderer(DXGI_FORMAT format)
+		: m_BackBufferFormat(format)
+		, m_FrameIndex(0)
+		, m_IsFullScreen(false)
+		, m_IsVSync(true)
+		, m_IsHDR(false)
+		, m_MaxLuminance(0.0f)
+		, m_MinLuminance(0.0f)
 	{
-		static Renderer instance;
-		return instance;
+		for (auto i = 0; i < POOL_COUNT; ++i)
+		{
+			m_pPool[i] = nullptr;
+		}
 	}
-private:
-	Renderer() = default;
-	Renderer(const Renderer&) = delete;
-	Renderer& operator=(const Renderer&) = delete;
+
+	static Renderer* createInstance()
+	{
+		return NEW Renderer(DXGI_FORMAT_R8G8B8A8_UNORM);
+	}
 };
 
-#define RENDERER Renderer::Instance()	// レンダラーのインスタンスを取得
-#define WIDTH RENDERER.GetWidth()		// ウィンドウの幅
-#define HEIGHT RENDERER.GetHeight()		// ウィンドウの高さ
+// インスタンスの取得
+#define RENDERER Renderer::manager()
+// ウィンドウの縦幅の取得
+#define HEIGHT RENDERER.GetHeight()
+// ウィンドウの横幅の取得
+#define WIDTH RENDERER.GetWidth()
+
+
+

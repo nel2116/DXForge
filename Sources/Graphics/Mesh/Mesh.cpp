@@ -53,7 +53,7 @@ void Mesh::Uninit()
 // 描画処理
 void Mesh::Draw()
 {
-	auto pCmdList = RENDERER.GetCmdList();
+	auto pCmdList = RENDERER.GetCmdList()->Get();
 	auto VBV = m_VB.GetView();
 	auto IBV = m_IB.GetView();
 	pCmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);

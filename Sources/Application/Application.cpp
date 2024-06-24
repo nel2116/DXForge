@@ -116,7 +116,7 @@ bool Application::Init()
 		// メモリ最適化
 		resMesh.shrink_to_fit();
 
-		DescriptorPool* pPool = RENDERER.GetDescriptorPool(POOL_TYPE_RES);
+		DescriptorPool* pPool = RENDERER.GetPool(POOL_TYPE_RES);
 
 		// マテリアルの初期化
 		if (!m_Material.Init(pPool, sizeof(MaterialBufer), resMaterial.size()))
@@ -154,7 +154,7 @@ bool Application::Init()
 		}
 
 		// 初期化
-		DescriptorPool* pPool = RENDERER.GetDescriptorPool(POOL_TYPE_RES);
+		DescriptorPool* pPool = RENDERER.GetPool(POOL_TYPE_RES);
 		if (!pCB->Init(pPool, sizeof(LigBuffer)))
 		{
 			ELOG("[App.cpp]Error : Line144 : ライトバッファの初期化に失敗しました。");
@@ -346,8 +346,8 @@ bool Application::Init()
 		desc.SampleMask = UINT_MAX;
 		desc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 		desc.NumRenderTargets = 1;
-		desc.RTVFormats[0] = RENDERER.GetColorTarget(0).GetViewDesc().Format;
-		desc.DSVFormat = RENDERER.GetDepthTarget().GetViewDesc().Format;
+		desc.RTVFormats[0] = RENDERER.GetColorTarget(0)->GetRTVDesc().Format;
+		desc.DSVFormat = RENDERER.GetDepthTarget()->GetDSVDesc().Format;
 		desc.SampleDesc.Count = 1;
 		desc.SampleDesc.Quality = 0;
 
@@ -375,7 +375,7 @@ bool Application::Init()
 			}
 
 			// 初期化
-			DescriptorPool* pPool = RENDERER.GetDescriptorPool(POOL_TYPE_RES);
+			DescriptorPool* pPool = RENDERER.GetPool(POOL_TYPE_RES);
 			if (!pCB->Init(pPool, sizeof(Transform) * 2))
 			{
 				ELOG("[App.cpp]Error : Line376 : 変換行列用の定数バッファの初期化に失敗しました。");
@@ -441,9 +441,9 @@ void Application::Run()
 
 			// teapotの描画
 			{
-				auto pCmdList = RENDERER.GetCmdList();
+				auto pCmdList = RENDERER.GetCmdList()->Get();
 
-				ID3D12DescriptorHeap* const pHeaps[] = { RENDERER.GetDescriptorPool(POOL_TYPE_RES)->GetHeap() };
+				ID3D12DescriptorHeap* const pHeaps[] = { RENDERER.GetPool(POOL_TYPE_RES)->GetHeap() };
 
 				// パイプラインステートの設定
 				pCmdList->SetGraphicsRootSignature(m_pRootSig.Get());

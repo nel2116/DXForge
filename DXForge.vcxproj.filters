@@ -87,16 +87,28 @@
     <ClCompile Include="Sources\Graphics\Mesh\Material\Material.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\Graphics\ColorTarget.cpp">
+    <ClCompile Include="Sources\Graphics\Target\ColorTarget.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\Graphics\DepthTarget.cpp">
+    <ClCompile Include="Sources\Graphics\Target\DepthTarget.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Sources\System\SimpleMath.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Sources\System\DDSTextureLoader12.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Sources\Graphics\RootSignature\RootSignature.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Sources\Graphics\Fence\Fence.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Sources\Graphics\CommandList\CommandList.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Sources\Graphics\Camera\Camera.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>
@@ -197,16 +209,31 @@
     <ClInclude Include="Sources\System\SimpleMath.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\Graphics\ColorTarget.h">
+    <ClInclude Include="Sources\Graphics\Target\ColorTarget.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\Graphics\DepthTarget.h">
+    <ClInclude Include="Sources\Graphics\Target\DepthTarget.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Sources\System\d3dx12.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Sources\System\DDSTextureLoader12.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Sources\Graphics\RootSignature\RootSignature.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Sources\Graphics\Fence\Fence.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Sources\Graphics\CommandList\CommandList.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Sources\Graphics\Camera\Camera.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Sources\System\Macro.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>
@@ -217,10 +244,14 @@
     <FxCompile Include="Sources\HLSL\VertexShader\VS_Phong.hlsl" />
     <FxCompile Include="Sources\HLSL\PixelShader\PS_Bump.hlsl" />
     <FxCompile Include="Sources\HLSL\VertexShader\VS_Bump.hlsl" />
+    <FxCompile Include="Sources\HLSL\PixelShader\PS_Basic.hlsl" />
+    <FxCompile Include="Sources\HLSL\VertexShader\VS_Basic.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Sources\HLSL\ShaderHeader\inc_Lambert.hlsli" />
     <None Include="Sources\HLSL\ShaderHeader\inc_Phong.hlsli" />
     <None Include="Sources\HLSL\ShaderHeader\inc_Bump.hlsli" />
+    <None Include="Sources\HLSL\ShaderHeader\inc_Basic.hlsli" />
+    <None Include="Sources\HLSL\ShaderHeader\inc_BRDF.hlsli" />
   </ItemGroup>
 </Project>

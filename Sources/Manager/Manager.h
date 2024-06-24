@@ -8,7 +8,7 @@
 #pragma once
 // ====== インクルード部 ======
 #include <memory>
-
+#include <System/Macro.h>
 
 // ====== クラスの定義 ======
 template<class T>

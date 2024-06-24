@@ -33,7 +33,7 @@ public:		// パブリック関数
 	/// <param name="height">縦幅</param>
 	/// <param name="format">ピクセルフォーマット</param>
 	/// <returns>初期化に成功したらtrue</returns>
-	bool Init(DescriptorPool* pPoolRTV, uint32_t width, uint32_t height, DXGI_FORMAT format, bool useSRGB);
+	bool Init(DescriptorPool* pPoolRTV, DescriptorPool* pPoolSRV, uint32_t width, uint32_t height, DXGI_FORMAT format, float clearColor[4]);
 
 	/// <summary>
 	/// バックバッファから初期化処理を行う
@@ -55,6 +55,12 @@ public:		// パブリック関数
 	DescriptorHandle* GetHandleRTV() const;
 
 	/// <summary>
+	/// ディスクリプタハンドル(SRV用)を取得する
+	/// </summary>
+	/// <returns>ディスクリプタハンドル(SRV用)</returns>
+	DescriptorHandle* GetHandleSRV() const;
+
+	/// <summary>
 	/// リソースを取得する
 	/// </summary>
 	/// <returns>リソース</returns>
@@ -67,16 +73,32 @@ public:		// パブリック関数
 	D3D12_RESOURCE_DESC GetDesc() const;
 
 	/// <summary>
-	/// レンダーターゲットビューの設定を取得する
+	/// レンダーターゲットビュー設定を取得する
 	/// </summary>
-	/// <returns>レンダーターゲットビューの設定</returns>
-	D3D12_RENDER_TARGET_VIEW_DESC GetViewDesc() const;
+	/// <returns>レンダーターゲットビュー設定</returns>
+	D3D12_RENDER_TARGET_VIEW_DESC GetRTVDesc() const;
+
+	/// <summary>
+	/// シェーダリソースビュー設定を取得する
+	/// </summary>
+	/// <returns>シェーダリソースビュー設定</returns>
+	D3D12_SHADER_RESOURCE_VIEW_DESC GetSRVDesc() const;
+
+	/// <summary>
+	/// ビューをクリアする
+	/// </summary>
+	/// <param name="pCmdList">コマンドリスト</param>
+	void ClearView(ID3D12GraphicsCommandList* pCmdList);
 
 private:		// メンバ変数
-	ComPtr<ID3D12Resource> m_pTarget;			// リソース
-	DescriptorHandle* m_pHandleRTV;				// ディスクリプタハンドル(RTV用)
-	DescriptorPool* m_pPoolRTV;					// ディスクリプタプール(RTV用)
-	D3D12_RENDER_TARGET_VIEW_DESC m_ViewDesc;	// レンダーターゲットビューの構成
+	ComPtr<ID3D12Resource> m_pTarget;			// リソース	
+	DescriptorHandle* m_pHandleRTV;				// ディスクリプタハンドル(RTV用)	
+	DescriptorHandle* m_pHandleSRV;				// ディスクリプタハンドル(SRV用)	
+	DescriptorPool* m_pPoolRTV;					// ディスクリプタプール(RTV用)	
+	DescriptorPool* m_pPoolSRV;					// ディスクリプタプール(SRV用)	
+	D3D12_RENDER_TARGET_VIEW_DESC m_RTVDesc;	// レンダーターゲットビューの構成	
+	D3D12_SHADER_RESOURCE_VIEW_DESC m_SRVDesc;	// シェーダリソースビューの構成	
+	float m_ClearColor[4];						// クリアカラー	
 
 private:		// コピー禁止
 	ColorTarget(const ColorTarget&) = delete;

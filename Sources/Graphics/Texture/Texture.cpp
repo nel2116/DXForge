@@ -399,25 +399,22 @@ bool Texture::CreateDDSTexture(const wchar_t* filename, bool isSRGB)
 		}
 
 		// コマンドリストのリセット
-		auto allocator = RENDERER.GetCmdAllocator(RENDERER.GetFrameIndex());
-		RENDERER.GetCmdList()->Reset(allocator, nullptr);
+		auto pCmdList = RENDERER.GetCmdList()->Reset();
 
 		// コマンドリストにコピーコマンドを記録
 		UpdateSubresources(
-			RENDERER.GetCmdList(),
+			pCmdList,
 			m_pTex.Get(),
 			texture.Get(),
 			0, 0, subresourceSize,
 			&subresources[0]);
 
 		// テクスチャリソースの状態をコピー先からピクセルシェーダリソースに変更
-		D3D12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_pTex.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-
-		RENDERER.GetCmdList()->ResourceBarrier(1, &barrier);
+		RENDERER.TransitionResource(m_pTex.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 		// コマンドリストの実行
-		RENDERER.GetCmdList()->Close();
-		ID3D12CommandList* cmdLists[] = { RENDERER.GetCmdList() };
+		pCmdList->Close();
+		ID3D12CommandList* cmdLists[] = { pCmdList };
 		RENDERER.GetCmdQueue()->ExecuteCommandLists(_countof(cmdLists), cmdLists);
 
 		// コマンドリストの待機

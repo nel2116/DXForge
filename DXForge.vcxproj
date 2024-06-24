@@ -198,8 +198,12 @@
     <ClCompile Include="Sources\Graphics\Buffer\ConstantBuffer\ConstantBuffer.cpp" />
     <ClCompile Include="Sources\Graphics\Buffer\IndexBuffer\IndexBuffer.cpp" />
     <ClCompile Include="Sources\Graphics\Buffer\VertexBuffer\VertexBuffer.cpp" />
-    <ClCompile Include="Sources\Graphics\ColorTarget.cpp" />
-    <ClCompile Include="Sources\Graphics\DepthTarget.cpp" />
+    <ClCompile Include="Sources\Graphics\Camera\Camera.cpp" />
+    <ClCompile Include="Sources\Graphics\CommandList\CommandList.cpp" />
+    <ClCompile Include="Sources\Graphics\Fence\Fence.cpp" />
+    <ClCompile Include="Sources\Graphics\RootSignature\RootSignature.cpp" />
+    <ClCompile Include="Sources\Graphics\Target\ColorTarget.cpp" />
+    <ClCompile Include="Sources\Graphics\Target\DepthTarget.cpp" />
     <ClCompile Include="Sources\Graphics\DescriptorPool\DescriptorPool.cpp" />
     <ClCompile Include="Sources\Graphics\Mesh\Material\Material.cpp" />
     <ClCompile Include="Sources\Graphics\Mesh\Mesh.cpp" />
@@ -234,8 +238,12 @@
     <ClInclude Include="Sources\Graphics\Buffer\ConstantBuffer\ConstantBuffer.h" />
     <ClInclude Include="Sources\Graphics\Buffer\IndexBuffer\IndexBuffer.h" />
     <ClInclude Include="Sources\Graphics\Buffer\VertexBuffer\VertexBuffer.h" />
-    <ClInclude Include="Sources\Graphics\ColorTarget.h" />
-    <ClInclude Include="Sources\Graphics\DepthTarget.h" />
+    <ClInclude Include="Sources\Graphics\Camera\Camera.h" />
+    <ClInclude Include="Sources\Graphics\CommandList\CommandList.h" />
+    <ClInclude Include="Sources\Graphics\Fence\Fence.h" />
+    <ClInclude Include="Sources\Graphics\RootSignature\RootSignature.h" />
+    <ClInclude Include="Sources\Graphics\Target\ColorTarget.h" />
+    <ClInclude Include="Sources\Graphics\Target\DepthTarget.h" />
     <ClInclude Include="Sources\Graphics\DescriptorPool\DescriptorPool.h" />
     <ClInclude Include="Sources\Graphics\Mesh\Material\Material.h" />
     <ClInclude Include="Sources\Graphics\Mesh\Mesh.h" />
@@ -260,10 +268,17 @@
     <ClInclude Include="Sources\System\DDSTextureLoader12.h" />
     <ClInclude Include="Sources\System\FileUtil.h" />
     <ClInclude Include="Sources\System\Logger.h" />
+    <ClInclude Include="Sources\System\Macro.h" />
     <ClInclude Include="Sources\System\SimpleMath.h" />
     <ClInclude Include="Sources\System\window.h" />
   </ItemGroup>
   <ItemGroup>
+    <FxCompile Include="Sources\HLSL\PixelShader\PS_Basic.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+    </FxCompile>
     <FxCompile Include="Sources\HLSL\PixelShader\PS_Bump.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
@@ -281,6 +296,12 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+    </FxCompile>
+    <FxCompile Include="Sources\HLSL\VertexShader\VS_Basic.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
     </FxCompile>
     <FxCompile Include="Sources\HLSL\VertexShader\VS_Bump.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
@@ -302,9 +323,11 @@
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
+    <None Include="Sources\HLSL\ShaderHeader\inc_BRDF.hlsli" />
     <None Include="Sources\HLSL\ShaderHeader\inc_Bump.hlsli" />
     <None Include="Sources\HLSL\ShaderHeader\inc_Lambert.hlsli" />
     <None Include="Sources\HLSL\ShaderHeader\inc_Phong.hlsli" />
+    <None Include="Sources\HLSL\ShaderHeader\inc_Basic.hlsli" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

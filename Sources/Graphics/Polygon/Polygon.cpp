@@ -423,7 +423,7 @@ void MyPolygon::Draw()
 
 	// •`‰æˆ—
 	{
-		auto cmdList = RENDERER.GetCmdList();
+		auto cmdList = RENDERER.GetCmdList()->Get();
 		cmdList->SetGraphicsRootSignature(m_pRootSignature.Get());
 		cmdList->SetDescriptorHeaps(1, m_pHeapCBV.GetAddressOf());
 		uint32_t frameIndex = RENDERER.GetFrameIndex();

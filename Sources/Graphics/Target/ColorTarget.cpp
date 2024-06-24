@@ -57,7 +57,11 @@ namespace
 ColorTarget::ColorTarget()
 	: m_pTarget(nullptr)
 	, m_pHandleRTV(nullptr)
+	, m_pHandleSRV(nullptr)
 	, m_pPoolRTV(nullptr)
+	, m_pPoolSRV(nullptr)
+	, m_RTVDesc()
+	, m_SRVDesc()
 {
 }
 
@@ -68,7 +72,7 @@ ColorTarget::~ColorTarget()
 }
 
 // 初期化処理
-bool ColorTarget::Init(DescriptorPool* pPoolRTV, uint32_t width, uint32_t height, DXGI_FORMAT format, bool useSRGB)
+bool ColorTarget::Init(DescriptorPool* pPoolRTV, DescriptorPool* pPoolSRV, uint32_t width, uint32_t height, DXGI_FORMAT format, float clearColor[4])
 {
 	auto pDevice = RENDERER.GetDevice();
 	if (pDevice == nullptr || pPoolRTV == nullptr || width == 0 || height == 0)
@@ -86,6 +90,18 @@ bool ColorTarget::Init(DescriptorPool* pPoolRTV, uint32_t width, uint32_t height
 	if (m_pHandleRTV == nullptr)
 	{
 		return false;
+	}
+
+	if (pPoolSRV != nullptr)
+	{
+		m_pPoolSRV = pPoolSRV;
+		m_pPoolSRV->AddRef();
+
+		m_pHandleSRV = m_pPoolSRV->AllocHandle();
+		if (m_pHandleSRV == nullptr)
+		{
+			return false;
+		}
 	}
 
 	D3D12_HEAP_PROPERTIES prop = {};
@@ -108,12 +124,17 @@ bool ColorTarget::Init(DescriptorPool* pPoolRTV, uint32_t width, uint32_t height
 	desc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
 	desc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
 
+	m_ClearColor[0] = clearColor[0];
+	m_ClearColor[1] = clearColor[1];
+	m_ClearColor[2] = clearColor[2];
+	m_ClearColor[3] = clearColor[3];
+
 	D3D12_CLEAR_VALUE clearValue;
 	clearValue.Format = format;
-	clearValue.Color[0] = 1.0f;
-	clearValue.Color[1] = 1.0f;
-	clearValue.Color[2] = 1.0f;
-	clearValue.Color[3] = 1.0f;
+	clearValue.Color[0] = clearColor[0];
+	clearValue.Color[1] = clearColor[1];
+	clearValue.Color[2] = clearColor[2];
+	clearValue.Color[3] = clearColor[3];
 
 	auto hr = pDevice->CreateCommittedResource(
 		&prop,
@@ -127,22 +148,25 @@ bool ColorTarget::Init(DescriptorPool* pPoolRTV, uint32_t width, uint32_t height
 		return false;
 	}
 
-	// SRGB形式に変換する
-	auto view_format = format;
-	if (useSRGB)
+	m_RTVDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+	m_RTVDesc.Format = format;
+	m_RTVDesc.Texture2D.MipSlice = 0;
+	m_RTVDesc.Texture2D.PlaneSlice = 0;
+
+	pDevice->CreateRenderTargetView(m_pTarget.Get(), &m_RTVDesc, m_pHandleRTV->HandleCPU);
+
+	if (pPoolSRV != nullptr)
 	{
-		view_format = ConvertToSRGB(view_format);
+		m_SRVDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+		m_SRVDesc.Format = format;
+		m_SRVDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+		m_SRVDesc.Texture2D.MostDetailedMip = 0;
+		m_SRVDesc.Texture2D.MipLevels = 1;
+		m_SRVDesc.Texture2D.PlaneSlice = 0;
+		m_SRVDesc.Texture2D.ResourceMinLODClamp = 0;
+
+		pDevice->CreateShaderResourceView(m_pTarget.Get(), &m_SRVDesc, m_pHandleSRV->HandleCPU);
 	}
-
-	m_ViewDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
-	m_ViewDesc.Format = format;
-	m_ViewDesc.Texture2D.MipSlice = 0;
-	m_ViewDesc.Texture2D.PlaneSlice = 0;
-
-	pDevice->CreateRenderTargetView(
-		m_pTarget.Get(),
-		&m_ViewDesc,
-		m_pHandleRTV->HandleCPU);
 
 	return true;
 }
@@ -178,24 +202,20 @@ bool ColorTarget::InitFromBackBuffer(DescriptorPool* pPoolRTV, uint32_t index, b
 	DXGI_SWAP_CHAIN_DESC desc;
 	pSwapChain->GetDesc(&desc);
 
-	auto format = desc.BufferDesc.Format;
+	DXGI_FORMAT format = desc.BufferDesc.Format;
 	if (useSRGB)
 	{
 		format = ConvertToSRGB(format);
 	}
 
-	m_ViewDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
-	m_ViewDesc.Format = desc.BufferDesc.Format;
-	m_ViewDesc.Texture2D.MipSlice = 0;
-	m_ViewDesc.Texture2D.PlaneSlice = 0;
+	m_RTVDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+	m_RTVDesc.Format = format;
+	m_RTVDesc.Texture2D.MipSlice = 0;
+	m_RTVDesc.Texture2D.PlaneSlice = 0;
 
-	pDevice->CreateRenderTargetView(
-		m_pTarget.Get(),
-		&m_ViewDesc,
-		m_pHandleRTV->HandleCPU);
+	pDevice->CreateRenderTargetView(m_pTarget.Get(), &m_RTVDesc, m_pHandleRTV->HandleCPU);
 
 	return true;
-
 }
 
 // 終了処理
@@ -214,12 +234,29 @@ void ColorTarget::Uninit()
 		m_pPoolRTV->Release();
 		m_pPoolRTV = nullptr;
 	}
+
+	if (m_pPoolSRV != nullptr && m_pHandleSRV != nullptr)
+	{
+		m_pPoolSRV->FreeHandle(m_pHandleSRV);
+		m_pHandleSRV = nullptr;
+	}
+
+	if (m_pPoolSRV != nullptr)
+	{
+		m_pPoolSRV->Release();
+		m_pPoolSRV = nullptr;
+	}
 }
 
 // ディスクリプタハンドル(RTV用)を取得する
 DescriptorHandle* ColorTarget::GetHandleRTV() const
 {
 	return m_pHandleRTV;
+}
+
+DescriptorHandle* ColorTarget::GetHandleSRV() const
+{
+	return m_pHandleSRV;
 }
 
 // リソースを取得する
@@ -239,8 +276,17 @@ D3D12_RESOURCE_DESC ColorTarget::GetDesc() const
 	return m_pTarget->GetDesc();
 }
 
-// レンダーターゲットビューの設定を取得する
-D3D12_RENDER_TARGET_VIEW_DESC ColorTarget::GetViewDesc() const
+D3D12_RENDER_TARGET_VIEW_DESC ColorTarget::GetRTVDesc() const
 {
-	return m_ViewDesc;
+	return m_RTVDesc;
+}
+
+D3D12_SHADER_RESOURCE_VIEW_DESC ColorTarget::GetSRVDesc() const
+{
+	return m_SRVDesc;
+}
+
+void ColorTarget::ClearView(ID3D12GraphicsCommandList* pCmdList)
+{
+	pCmdList->ClearRenderTargetView(m_pHandleRTV->HandleCPU, m_ClearColor, 0, nullptr);
 }

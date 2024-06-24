@@ -49,7 +49,7 @@ private:	// メンバ変数
 	std::vector<Actor*> m_pDeadActors;	// 破棄されたActorリスト
 
 
-private:	// イングルトン関連
+private:	// シングルトン関連
 	friend class Manager<ActorManager>;
 	ActorManager() = default;
 

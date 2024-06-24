@@ -85,6 +85,8 @@
 #include <Graphics/Mesh/Material/Material.h>
 // 定数バッファ
 #include <Graphics/Buffer/ConstantBuffer/ConstantBuffer.h>
+// マクロ定義
+#include <System/Macro.h>
 
 // ====== 名前空間 ======
 using namespace std;
@@ -92,37 +94,3 @@ using namespace std;
 // ====== 定数定義 ======
 // 円周率
 const float PI = 3.1415926f;
-
-// ====== マクロ定義 ======
-// メモリリーク検出
-#if _DEBUG
-#define NEW new(_NORMAL_BLOCK, __FILE__, __LINE__)
-#else
-#define NEW new
-#endif
-// メモリの開放
-#define SAFE_UNINIT(p) { if(p) { p->Uninit(); delete(p); (p) = nullptr; } }
-#define SAFE_DELETE(p) { if(p) { delete(p); (p) = nullptr; } }
-#define SAFE_DELETE_ARRAY(p) { if(p) { delete[](p); (p) = nullptr; } }
-#define SAFE_RELEASE(p) { if(p) { (p)->Release(); (p) = nullptr; } }
-#define SAFE_DELETE_ARRAY(p) { if(p) { delete[](p); (p) = nullptr; } }
-
-// ====== プロトタイプ宣言 ======
-/// <summary>
-/// コンソール画面にフォーマット付きで文字列を出力する
-/// </summary>
-/// <param name="format">フォーマット</param>
-/// <param name="...">可変長引数</param>
-/// <remarks>この関数はデバッグ用です。デバッグ時にしか動作しません</remarks>
-void DebugOutputFormatString(const char* format, ...);
-
-/// <summary>
-/// ファイルパスから親ディレクトリまでのパスを取得する
-/// </summary>
-/// <param name="path">ファイルパス</param>
-/// <returns>ディレクトリパス</returns>
-inline string GetDirFromPath(const string& path)
-{
-	const string::size_type pos = path.find_last_of("/");
-	return (pos == string::npos) ? string() : path.substr(0, pos + 1);
-}
