@@ -404,7 +404,7 @@ bool Renderer::Init(Window* window)
 		assert(ptr != nullptr);
 		ptr[0].px = -1.0f;  ptr[0].py = -1.0f;  ptr[0].tx = 0.0f;   ptr[0].ty = 1.0f;
 		ptr[1].px = -1.0f;  ptr[1].py = 1.0f;  ptr[1].tx = 0.0f;   ptr[1].ty = 0.0f;
-		ptr[2].px = 1.0f;  ptr[2].py = -3.0f;  ptr[2].tx = 1.0f;   ptr[2].ty = 1.0f;
+		ptr[2].px = 1.0f;  ptr[2].py = -1.0f;  ptr[2].tx = 1.0f;   ptr[2].ty = 1.0f;
 		ptr[3].px = 1.0f;  ptr[3].py = 1.0f;  ptr[3].tx = 1.0f;   ptr[3].ty = 0.0f;
 		m_QuadVB.Unmap();
 	}
