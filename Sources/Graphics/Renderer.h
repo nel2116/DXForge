@@ -185,18 +185,20 @@ private:	// メンバ変数
 	VertexBuffer m_QuadVB;							// 頂点バッファ
 
 	// トーンマップ関連
-	RootSignature m_TonemapRootSig;					// トーンマップ用ルートシグニチャ
-	ConstantBuffer m_TonemapCB[FRAME_BUFFER_COUNT];	// 定数バッファ
-	ComPtr<ID3D12PipelineState> m_pTonemapPSO;		// パイプラインステート
+	RootSignature m_TonemapRootSig;						// トーンマップ用ルートシグニチャ
+	ConstantBuffer m_TonemapCB[FRAME_BUFFER_COUNT];		// 定数バッファ
+	ComPtr<ID3D12PipelineState> m_pTonemapPSO;			// パイプラインステート
+	ConstantBuffer m_TransformCB[FRAME_BUFFER_COUNT];	// 変換用バッファです.
+	ConstantBuffer m_MeshCB[FRAME_BUFFER_COUNT];		// メッシュ用バッファです.
+	bool m_IsHDR;										// HDRをサポートしているかどうか
+	float m_MaxLuminance;								// 最大輝度
+	float m_BaseLuminance;								// 最小輝度
+	int m_TonemapType;									// トーンマップタイプ
+	int m_ColorSpace;									// 出力色空間
 
 	// ウィンドウ関連
 	bool m_IsFullScreen;	// フルスクリーンかどうか
 	bool m_IsVSync;			// 垂直同期を行うかどうか
-	bool m_IsHDR;			// HDRをサポートしているかどうか
-	float m_MaxLuminance;	// 最大輝度
-	float m_BaseLuminance;	// 最小輝度
-	int m_TonemapType;		// トーンマップタイプ
-	int m_ColorSpace;		// 出力色空間
 
 private:	// シングルトン関連
 	friend class Manager<Renderer>;
@@ -219,6 +221,15 @@ private:	// シングルトン関連
 		, m_Scissor()
 		, m_TonemapType(0)
 		, m_ColorSpace(0)
+		, m_QuadVB()
+		, m_TonemapRootSig()
+		, m_pTonemapPSO(nullptr)
+		, m_TonemapCB()
+		, m_TransformCB()
+		, m_MeshCB()
+		, m_pPool()
+		, m_ColorTarget()
+		, m_DepthTarget()
 	{
 		for (auto i = 0; i < POOL_COUNT; ++i)
 		{

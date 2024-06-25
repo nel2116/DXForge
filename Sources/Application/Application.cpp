@@ -357,7 +357,7 @@ bool Application::Init()
 			auto upward = Vector3::UnitY;
 
 			// 垂直画角とアスペクト比の設定.
-			auto fovY = DirectX::XMConvertToRadians(37.5f);
+			auto fovY = DirectX::XMConvertToRadians(90.0f);
 			auto aspect = static_cast<float>(WIDTH) / static_cast<float>(HEIGHT);
 
 			// 変換行列を設定.

@@ -10,7 +10,21 @@
 // ====== インクルード部 ======
 #include "stdafx.h"
 #include "Renderer.h"
+#include <System/SimpleMath.h>
 #include <System/d3dx12.h>
+
+using namespace DirectX::SimpleMath;
+
+struct alignas(256) CbMesh
+{
+	Matrix   World;      //!< ワールド行列です.
+};
+
+struct alignas(256) CbTransform
+{
+	Matrix   View;       //!< ビュー行列です.
+	Matrix   Proj;       //!< 射影行列です.
+};
 
 namespace
 {
@@ -244,9 +258,11 @@ bool Renderer::Init(Window* window)
 	// トーンマップ用ルートシグニチャの生成.
 	{
 		RootSignature::Desc desc;
-		desc.Begin(2)
-			.SetCBV(ShaderStage::PS, 0, 0)
-			.SetSRV(ShaderStage::PS, 1, 0)
+		desc.Begin(4)
+			.SetCBV(ShaderStage::VS, 0, 0)
+			.SetCBV(ShaderStage::VS, 1, 1)
+			.SetCBV(ShaderStage::PS, 2, 0)
+			.SetSRV(ShaderStage::PS, 3, 0)
 			.AddStaticSmp(ShaderStage::PS, 0, SamplerState::LinearWrap)
 			.AllowIL()
 			.End();
@@ -304,7 +320,7 @@ bool Renderer::Init(Window* window)
 		// ラスタライザステートの設定
 		D3D12_RASTERIZER_DESC rsDesc = {};
 		rsDesc.FillMode = D3D12_FILL_MODE_SOLID;								// 頂点によって形作られている三角形で描画
-		rsDesc.CullMode = D3D12_CULL_MODE_BACK;									// 背面カリング
+		rsDesc.CullMode = D3D12_CULL_MODE_NONE;									// 背面カリング
 		rsDesc.FrontCounterClockwise = TRUE;									// 反時計回りが表面
 		rsDesc.DepthBias = D3D12_DEFAULT_DEPTH_BIAS;							// 使用しないのでデフォルト
 		rsDesc.DepthBiasClamp = D3D12_DEFAULT_DEPTH_BIAS_CLAMP;					// 使用しないのでデフォルト
@@ -378,7 +394,7 @@ bool Renderer::Init(Window* window)
 			float ty;
 		};
 
-		if (!m_QuadVB.Init<Vertex>(3))
+		if (!m_QuadVB.Init<Vertex>(4))
 		{
 			ELOG("Error : VertexBuffer::Init() Failed.");
 			return false;
@@ -386,9 +402,10 @@ bool Renderer::Init(Window* window)
 
 		auto ptr = m_QuadVB.Map<Vertex>();
 		assert(ptr != nullptr);
-		ptr[0].px = -1.0f;  ptr[0].py = 1.0f;  ptr[0].tx = 0.0f;   ptr[0].ty = -1.0f;
-		ptr[1].px = 3.0f;  ptr[1].py = 1.0f;  ptr[1].tx = 2.0f;   ptr[1].ty = -1.0f;
-		ptr[2].px = -1.0f;  ptr[2].py = -3.0f;  ptr[2].tx = 0.0f;   ptr[2].ty = 1.0f;
+		ptr[0].px = -1.0f;  ptr[0].py = -1.0f;  ptr[0].tx = 0.0f;   ptr[0].ty = 1.0f;
+		ptr[1].px = -1.0f;  ptr[1].py = 1.0f;  ptr[1].tx = 0.0f;   ptr[1].ty = 0.0f;
+		ptr[2].px = 1.0f;  ptr[2].py = -3.0f;  ptr[2].tx = 1.0f;   ptr[2].ty = 1.0f;
+		ptr[3].px = 1.0f;  ptr[3].py = 1.0f;  ptr[3].tx = 1.0f;   ptr[3].ty = 0.0f;
 		m_QuadVB.Unmap();
 	}
 
@@ -401,6 +418,42 @@ bool Renderer::Init(Window* window)
 			return false;
 		}
 	}
+
+	// 変換行列用の定数バッファの生成.
+	{
+		for (auto i = 0u; i < FRAME_BUFFER_COUNT; ++i)
+		{
+
+			// 定数バッファ初期化.
+			if (!m_TransformCB[i].Init(m_pPool[POOL_TYPE_RES], sizeof(CbTransform)))
+			{
+				ELOG("Error : ConstantBuffer::Init() Failed.");
+				return false;
+			}
+
+			// 変換行列を設定.
+			auto ptr = m_TransformCB[i].GetPtr<CbTransform>();
+			Matrix mat = Matrix::Identity;
+			ptr->View = mat.Transpose();
+			ptr->Proj = mat.Transpose(); //Matrix::CreateOrthographic(WIDTH, HEIGHT, 0.1f, 1000.0f);
+		}
+	}
+
+	// メッシュ用バッファの生成.
+	{
+		for (auto i = 0; i < FRAME_BUFFER_COUNT; ++i)
+		{
+			if (!m_MeshCB[i].Init(m_pPool[POOL_TYPE_RES], sizeof(CbMesh)))
+			{
+				ELOG("Error : ConstantBuffer::Init() Failed.");
+				return false;
+			}
+
+			auto ptr = m_MeshCB[i].GetPtr<CbMesh>();
+			ptr->World = Matrix::Identity;
+		}
+	}
+
 
 	// 初期化成功
 	return true;
@@ -607,17 +660,19 @@ void Renderer::DrawTonemap(ColorTarget* sceneTarget)
 	}
 
 	pCmd->SetGraphicsRootSignature(m_TonemapRootSig.GetPtr());
-	pCmd->SetGraphicsRootDescriptorTable(0, m_TonemapCB[m_FrameIndex].GetHandleGPU());
-	pCmd->SetGraphicsRootDescriptorTable(1, sceneTarget->GetHandleSRV()->HandleGPU);
+	pCmd->SetGraphicsRootDescriptorTable(0, m_TransformCB[m_FrameIndex].GetHandleGPU());
+	pCmd->SetGraphicsRootDescriptorTable(1, m_MeshCB[m_FrameIndex].GetHandleGPU());
+	pCmd->SetGraphicsRootDescriptorTable(2, m_TonemapCB[m_FrameIndex].GetHandleGPU());
+	pCmd->SetGraphicsRootDescriptorTable(3, sceneTarget->GetHandleSRV()->HandleGPU);
 
 	pCmd->SetPipelineState(m_pTonemapPSO.Get());
 	pCmd->RSSetViewports(1, &m_Viewport);
 	pCmd->RSSetScissorRects(1, &m_Scissor);
 
-	pCmd->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	pCmd->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 	auto vbv = m_QuadVB.GetView();
 	pCmd->IASetVertexBuffers(0, 1, &vbv);
-	pCmd->DrawInstanced(3, 1, 0, 0);
+	pCmd->DrawInstanced(4, 1, 0, 0);
 }
 
 void Renderer::Uninit()
@@ -635,6 +690,8 @@ void Renderer::Uninit()
 	for (auto i = 0; i < FRAME_BUFFER_COUNT; ++i)
 	{
 		m_TonemapCB[i].Uninit();
+		m_TransformCB[i].Uninit();
+		m_MeshCB[i].Uninit();
 	}
 
 	// トーンマップ用パイプラインステートの破棄.
