@@ -1,43 +1,99 @@
-#include "../ShaderHeader/inc_Basic.hlsli"
+//-----------------------------------------------------------------------------
+// File : BasicPS.hlsl
+// Desc : Pixel Shader.
+// Copyright(c) Pocol. All right reserved.
+//-----------------------------------------------------------------------------
 
-Texture2D baseColorTex : register(t0);
-SamplerState baseColorSamp : register(s0);
+//-----------------------------------------------------------------------------
+// Includes
+//-----------------------------------------------------------------------------
+#include "../ShaderHeader/inc_BRDF.hlsli"
 
-Texture2D normalTex : register(t1);
-SamplerState normalSamp : register(s1);
 
-Texture2D metallicTex : register(t2);
-SamplerState metallicSamp : register(s2);
-
-Texture2D roughnessTex : register(t3);
-SamplerState roughnessSamp : register(s3);
-
-float4 main(VS_OUTPUT pin) : SV_TARGET
+///////////////////////////////////////////////////////////////////////////////
+// VSOutput structure
+///////////////////////////////////////////////////////////////////////////////
+struct VSOutput
 {
-    float3 L = normalize(ligForward);
-    float3 V = normalize(CameraPos - pin.WorldPos);
-    float3 H = normalize(V + L);
-    float3 N = normalTex.Sample(normalSamp, pin.uv).rgb;
+    float4 Position : SV_POSITION; // 位置座標です.
+    float2 TexCoord : TEXCOORD; // テクスチャ座標です.
+    float3 WorldPos : WORLD_POS; // ワールド空間の位置座標です.
+    float3x3 InvTangentBasis : INV_TANGENT_BASIS; // 接線空間への基底変換行列の逆行列です.
+};
 
-    N = mul(pin.InvTangentBasis, N);
-    
+///////////////////////////////////////////////////////////////////////////////
+// PSOutput structure
+///////////////////////////////////////////////////////////////////////////////
+struct PSOutput
+{
+    float4 Color : SV_TARGET0; // 出力カラーです.
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// LightBuffer 
+///////////////////////////////////////////////////////////////////////////////
+cbuffer LightBuffer : register(b1)
+{
+    float3 LightColor : packoffset(c0); // ライトカラーです.
+    float LightIntensity : packoffset(c0.w); // ライト強度です.
+    float3 LightForward : packoffset(c1); // ライトの照射方向です.
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// CameraBuffer
+///////////////////////////////////////////////////////////////////////////////
+cbuffer CameraBuffer : register(b2)
+{
+    float3 CameraPosition : packoffset(c0); // カメラ位置です.
+}
+
+//-----------------------------------------------------------------------------
+// Textures and Samplers
+//-----------------------------------------------------------------------------
+Texture2D BaseColorMap : register(t0);
+SamplerState BaseColorSmp : register(s0);
+
+Texture2D MetallicMap : register(t1);
+SamplerState MetallicSmp : register(s1);
+
+Texture2D RoughnessMap : register(t2);
+SamplerState RoughnessSmp : register(s2);
+
+Texture2D NormalMap : register(t3);
+SamplerState NormalSmp : register(s3);
+
+
+//-----------------------------------------------------------------------------
+//      ピクセルシェーダのメインエントリーポイントです.
+//-----------------------------------------------------------------------------
+PSOutput main(VSOutput input)
+{
+    PSOutput output = (PSOutput) 0;
+
+    float3 L = normalize(LightForward);
+    float3 V = normalize(CameraPosition - input.WorldPos);
+    float3 H = normalize(V + L);
+    float3 N = NormalMap.Sample(NormalSmp, input.TexCoord).xyz * 2.0f - 1.0f;
+    N = mul(input.InvTangentBasis, N);
+
     float NV = saturate(dot(N, V));
     float NH = saturate(dot(N, H));
     float NL = saturate(dot(N, L));
-    
-    float3 baseColor = baseColorTex.Sample(baseColorSamp, pin.uv).rgb;
-    float metallic = metallicTex.Sample(metallicSamp, pin.uv).r;
-    float roughness = roughnessTex.Sample(roughnessSamp, pin.uv).r;
-    
-    float3 Kd = baseColor * (1.0 - metallic);
+
+    float3 baseColor = BaseColorMap.Sample(BaseColorSmp, input.TexCoord).rgb;
+    float metallic = MetallicMap.Sample(MetallicSmp, input.TexCoord).r;
+    float roughness = RoughnessMap.Sample(RoughnessSmp, input.TexCoord).r;
+
+    float3 Kd = baseColor * (1.0f - metallic);
     float3 diffuse = ComputeLambert(Kd);
-    
+
     float3 Ks = baseColor * metallic;
     float3 specular = ComputeGGX(Ks, roughness, NH, NV, NL);
-    
-    float3 BRDF = diffuse + specular;
-    
-    float4 finalColor = float4(BRDF * NL * ligColor.rgb * ligIntensity, 1.0);
-    
-    return finalColor;
+
+    float3 BRDF = (diffuse + specular);
+
+    output.Color.rgb = BRDF * NL * LightColor.rgb * LightIntensity;
+    output.Color.a = 1.0f;
+
+    return output;
 }

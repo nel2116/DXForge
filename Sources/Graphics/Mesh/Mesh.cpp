@@ -24,13 +24,13 @@ Mesh::~Mesh()
 // 初期化処理
 bool Mesh::Init(const ResMesh& resource)
 {
-	if (!m_VB.Init(sizeof(MeshVertex) * resource.vertices.size(), resource.vertices.data()))
+	if (!m_VB.Init(resource.vertices.size(), resource.vertices.data()))
 	{
 		// 頂点バッファの初期化に失敗
 		return false;
 	}
 
-	if (!m_IB.Init(sizeof(uint32_t) * resource.indices.size(), resource.indices.data()))
+	if (!m_IB.Init(resource.indices.size(), resource.indices.data()))
 	{
 		return false;
 	}

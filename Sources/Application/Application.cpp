@@ -201,10 +201,10 @@ bool Application::Init()
 
 	// ルートシグネチャーの生成
 	{
-		RootSignature::Desc desc = {};
+		RootSignature::Desc desc;
 		desc.Begin(8)
 			.SetCBV(ShaderStage::VS, 0, 0)
-			.SetCBV(ShaderStage::PS, 1, 1)
+			.SetCBV(ShaderStage::VS, 1, 1)
 			.SetCBV(ShaderStage::PS, 2, 1)
 			.SetCBV(ShaderStage::PS, 3, 2)
 			.SetSRV(ShaderStage::PS, 4, 0)
@@ -220,7 +220,7 @@ bool Application::Init()
 
 		if (!m_SceneRootSig.Init(desc.GetDesc()))
 		{
-			ELOG("[App.cpp]Error : Line223 : ルートシグネチャーの生成に失敗しました。");
+			ELOG("Error : RootSignature::Init() Failed.");
 			return false;
 		}
 	}
@@ -324,8 +324,8 @@ bool Application::Init()
 		desc.SampleMask = UINT_MAX;
 		desc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 		desc.NumRenderTargets = 1;
-		desc.RTVFormats[0] = RENDERER.GetColorTarget(0)->GetRTVDesc().Format;
-		desc.DSVFormat = RENDERER.GetDepthTarget()->GetDSVDesc().Format;
+		desc.RTVFormats[0] = m_SceneColorTarget.GetRTVDesc().Format;
+		desc.DSVFormat = m_SceneDepthTarget.GetDSVDesc().Format;
 		desc.SampleDesc.Count = 1;
 		desc.SampleDesc.Quality = 0;
 

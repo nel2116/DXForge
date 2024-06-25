@@ -24,7 +24,7 @@ IndexBuffer::~IndexBuffer()
 }
 
 // 初期化処理
-bool IndexBuffer::Init(size_t size, const uint32_t* pInitData)
+bool IndexBuffer::Init(size_t count, const uint32_t* pInitData)
 {
 	auto pDevice = RENDERER.GetDevice();
 	// ヒーププロパティ
@@ -39,7 +39,7 @@ bool IndexBuffer::Init(size_t size, const uint32_t* pInitData)
 	D3D12_RESOURCE_DESC desc = {};
 	desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
 	desc.Alignment = 0;
-	desc.Width = UINT64(size);
+	desc.Width = UINT64(count * sizeof(uint32_t));
 	desc.Height = 1;
 	desc.DepthOrArraySize = 1;
 	desc.MipLevels = 1;
@@ -66,7 +66,7 @@ bool IndexBuffer::Init(size_t size, const uint32_t* pInitData)
 	// インデックスバッファビューの設定
 	m_View.BufferLocation = m_pIB->GetGPUVirtualAddress();
 	m_View.Format = DXGI_FORMAT_R32_UINT;
-	m_View.SizeInBytes = UINT(size);
+	m_View.SizeInBytes = UINT(desc.Width);
 
 	// 初期化データがあれば，書き込んでおく
 	if (pInitData != nullptr)
@@ -77,10 +77,12 @@ bool IndexBuffer::Init(size_t size, const uint32_t* pInitData)
 			return false;
 		}
 
-		memcpy(ptr, pInitData, size);
+		memcpy(ptr, pInitData, desc.Width);
 
 		m_pIB->Unmap(0, nullptr);
 	}
+
+	m_Count = count;
 
 	// 正常終了
 	return true;
@@ -119,4 +121,9 @@ void IndexBuffer::Unmap()
 D3D12_INDEX_BUFFER_VIEW IndexBuffer::GetView() const
 {
 	return m_View;
+}
+
+size_t IndexBuffer::GetCount() const
+{
+	return m_Count;
 }

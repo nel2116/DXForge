@@ -38,7 +38,7 @@ public:
 	template<typename T>
 	bool Init(size_t size, const T* pInitData = nullptr)
 	{
-		return Init(size, sizeof(T), pInitData);
+		return Init(sizeof(T) * size, sizeof(T), pInitData);
 	}
 
 	/// <summary>
