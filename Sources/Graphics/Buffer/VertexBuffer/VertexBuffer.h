@@ -49,7 +49,7 @@ public:
 	/// <summary>
 	/// メモリマッピング
 	/// </summary>
-	void* Map();
+	void* Map() const;
 
 	/// <summary>
 	/// メモリマッピングを解除

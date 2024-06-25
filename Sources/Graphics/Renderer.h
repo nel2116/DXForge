@@ -12,6 +12,9 @@
 #include <Manager/Manager.h>
 #include <System/window.h>
 #include <System/ComPtr.h>
+#include "Buffer/ConstantBuffer/ConstantBuffer.h"
+#include "Buffer/VertexBuffer/VertexBuffer.h"
+#include "RootSignature/RootSignature.h"
 #include "Target/ColorTarget.h"
 #include "Target/DepthTarget.h"
 #include "CommandList/CommandList.h"
@@ -58,7 +61,7 @@ public:		// パブリック関数
 	///	レンダラーの描画終了処理
 	/// </summary>
 	/// <returns></returns>
-	void End();
+	void End(ColorTarget* sceneTarget);
 
 	/// <summary>
 	/// リソースの状態遷移
@@ -160,7 +163,8 @@ private:	// プライベート関数
 	void CheckSupportHDR();
 	bool  IsSupportHDR() const;
 	float GetMaxLuminance() const;
-	float GetMinLuminance() const;
+	float GetBaseLuminance() const;
+	void DrawTonemap(ColorTarget* sceneTarget);
 
 private:	// メンバ変数
 	// ウィンドウ関連
@@ -178,13 +182,21 @@ private:	// メンバ変数
 	D3D12_VIEWPORT m_Viewport;						// ビューポート
 	D3D12_RECT m_Scissor;							// シザー矩形
 	DXGI_FORMAT m_BackBufferFormat;					// バックバッファフォーマット
+	VertexBuffer m_QuadVB;							// 頂点バッファ
+
+	// トーンマップ関連
+	RootSignature m_TonemapRootSig;					// トーンマップ用ルートシグニチャ
+	ConstantBuffer m_TonemapCB[FRAME_BUFFER_COUNT];	// 定数バッファ
+	ComPtr<ID3D12PipelineState> m_pTonemapPSO;		// パイプラインステート
 
 	// ウィンドウ関連
 	bool m_IsFullScreen;	// フルスクリーンかどうか
 	bool m_IsVSync;			// 垂直同期を行うかどうか
 	bool m_IsHDR;			// HDRをサポートしているかどうか
 	float m_MaxLuminance;	// 最大輝度
-	float m_MinLuminance;	// 最小輝度
+	float m_BaseLuminance;	// 最小輝度
+	int m_TonemapType;		// トーンマップタイプ
+	int m_ColorSpace;		// 出力色空間
 
 private:	// シングルトン関連
 	friend class Manager<Renderer>;
@@ -194,8 +206,8 @@ private:	// シングルトン関連
 		, m_IsFullScreen(false)
 		, m_IsVSync(true)
 		, m_IsHDR(false)
-		, m_MaxLuminance(0.0f)
-		, m_MinLuminance(0.0f)
+		, m_MaxLuminance(100.0f)
+		, m_BaseLuminance(100.0f)
 		, m_pWindow(nullptr)
 		, m_pFactory(nullptr)
 		, m_pDevice(nullptr)
@@ -205,6 +217,8 @@ private:	// シングルトン関連
 		, m_Fence()
 		, m_Viewport()
 		, m_Scissor()
+		, m_TonemapType(0)
+		, m_ColorSpace(0)
 	{
 		for (auto i = 0; i < POOL_COUNT; ++i)
 		{

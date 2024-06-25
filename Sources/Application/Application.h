@@ -39,6 +39,10 @@ private:	// プライベート関数
 	/// </summary>
 	void SetDirectoryAndLoadDll();
 
+	void DrawScene();
+
+	void DrawMesh();
+
 
 private:	// メンバ変数
 	Window m_window;
@@ -49,12 +53,16 @@ private:	// メンバ変数
 	float m_fFPS;
 
 	// テスト用
+	RootSignature m_SceneRootSig;				// ルートシグニチャ
+	ColorTarget m_SceneColorTarget;					// シーンカラーターゲット
+	DepthTarget m_SceneDepthTarget;					// シーンデプスターゲット
 	std::vector<Mesh*> m_pMesh;					// メッシュ
-	std::vector<ConstantBuffer*> m_Transform;	// 変換行列
-	ConstantBuffer* m_pLight;					// ライト
+	ConstantBuffer m_LightCB[FRAME_BUFFER_COUNT];          //!< ライトバッファです.
+	ConstantBuffer m_CameraCB[FRAME_BUFFER_COUNT];         //!< カメラバッファです.
+	ConstantBuffer m_TransformCB[FRAME_BUFFER_COUNT];      //!< 変換用バッファです.
+	ConstantBuffer m_MeshCB[FRAME_BUFFER_COUNT];           //!< メッシュ用バッファです.
 	Material m_Material;						// マテリアル
-	ComPtr<ID3D12PipelineState> m_pPSO;			// パイプラインステート
-	ComPtr<ID3D12RootSignature> m_pRootSig;		// ルートシグニチャ
+	ComPtr<ID3D12PipelineState> m_pScenePSO;	// パイプラインステート
 	float m_RotateAngle;						// 回転角
 
 public:		// シングルトン関連
@@ -75,13 +83,14 @@ private:	// シングルトン関連
 		, m_dwLsatFPSTime(0)
 		, m_fFPS(0.0f)
 		, m_RotateAngle(0.0f)
-		, m_pLight(nullptr)
-		, m_pPSO(nullptr)
-		, m_pRootSig(nullptr)
 		, m_Material()
 		, m_pMesh()
-		, m_Transform()
 		, m_window()
+		, m_SceneRootSig()
+		, m_SceneColorTarget()
+		, m_SceneDepthTarget()
+		, m_LightCB()
+		, m_CameraCB()
 	{
 	}
 	Application(const Application&) = delete;

@@ -48,6 +48,20 @@ public:		// パブリック関数
 	/// </summary>
 	void Uninit();
 
+public: // アクセサ関数
+
+	/// <summary>
+	/// クリアカラーを設定する
+	/// </summary>
+	/// <param name="clearColor">クリアカラー</param>
+	void SetClearColor(float clearColor[4])
+	{
+		m_ClearColor[0] = clearColor[0];
+		m_ClearColor[1] = clearColor[1];
+		m_ClearColor[2] = clearColor[2];
+		m_ClearColor[3] = clearColor[3];
+	}
+
 	/// <summary>
 	/// ディスクリプタハンドル(RTV用)を取得する
 	/// </summary>

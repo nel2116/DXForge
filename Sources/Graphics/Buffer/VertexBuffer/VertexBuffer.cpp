@@ -101,7 +101,7 @@ void VertexBuffer::Uninit()
 }
 
 // メモリマッピング
-void* VertexBuffer::Map()
+void* VertexBuffer::Map() const
 {
 	void* ptr;
 	auto hr = m_pVB->Map(0, nullptr, &ptr);

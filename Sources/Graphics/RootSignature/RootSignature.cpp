@@ -59,13 +59,7 @@ void RootSignature::Desc::CheckStage(ShaderStage stage)
 }
 
 // ƒpƒ‰ƒ[ƒ^Ý’è
-void RootSignature::Desc::SetParam
-(
-	ShaderStage                 stage,
-	int                         index,
-	uint32_t                    reg,
-	D3D12_DESCRIPTOR_RANGE_TYPE type
-)
+void RootSignature::Desc::SetParam(ShaderStage stage, int index, uint32_t reg, D3D12_DESCRIPTOR_RANGE_TYPE type)
 {
 	if (index >= m_Params.size())
 	{

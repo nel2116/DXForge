@@ -85,6 +85,8 @@
 #include <Graphics/Mesh/Material/Material.h>
 // 定数バッファ
 #include <Graphics/Buffer/ConstantBuffer/ConstantBuffer.h>
+// ルートシグネチャー
+#include <Graphics/RootSignature/RootSignature.h>
 // マクロ定義
 #include <System/Macro.h>
 

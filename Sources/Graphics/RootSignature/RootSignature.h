@@ -53,6 +53,7 @@ public:
 		Desc& AllowSO();
 		Desc& End();
 		const D3D12_ROOT_SIGNATURE_DESC* GetDesc() const;
+
 	private:
 		std::vector<D3D12_DESCRIPTOR_RANGE>     m_Ranges;
 		std::vector<D3D12_STATIC_SAMPLER_DESC>  m_Samplers;

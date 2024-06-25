@@ -246,6 +246,8 @@
     <FxCompile Include="Sources\HLSL\VertexShader\VS_Bump.hlsl" />
     <FxCompile Include="Sources\HLSL\PixelShader\PS_Basic.hlsl" />
     <FxCompile Include="Sources\HLSL\VertexShader\VS_Basic.hlsl" />
+    <FxCompile Include="Sources\HLSL\PixelShader\PS_Tonemap.hlsl" />
+    <FxCompile Include="Sources\HLSL\VertexShader\VS_Tonemap.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Sources\HLSL\ShaderHeader\inc_Lambert.hlsli" />
