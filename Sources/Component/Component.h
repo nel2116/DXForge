@@ -1,4 +1,5 @@
 // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+// [Component.h]
 // 制作者 : 田中ミノル
 // 制作日 : 2024/06/04 16:20
 // 概要   : Componentクラスのヘッダファイル
@@ -14,7 +15,7 @@ class Actor;
 class Component
 {
 public:	// メンバ関数
-	Component() : m_pOwner(nullptr), m_bIsActive(true), m_bIsDead(false), m_nOrder(0), m_sTag("none") {}
+	Component(std::string tag) : m_pOwner(nullptr), m_bIsActive(true), m_bIsDead(false), m_nOrder(0), m_sTag(tag) {}
 	virtual ~Component() = default;
 
 	virtual void Update() = 0;

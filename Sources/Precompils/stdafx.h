@@ -62,6 +62,19 @@
 #include <DirectXTex.h>
 #pragma comment(lib, "DirectXTex.lib")
 
+// ------ PhysX ------
+#define _SILENCE_CXX20_CISO646_REMOVED_WARNING
+#include "PxPhysicsAPI.h"
+#pragma comment(lib, "PhysX_64.lib")
+#pragma comment(lib, "PhysXCommon_64.lib")
+#pragma comment(lib, "PhysXCooking_64.lib")
+#pragma comment(lib, "PhysXExtensions_static_64.lib")
+#pragma comment(lib, "PhysXFoundation_64.lib")
+#pragma comment(lib, "PhysXPvdSDK_static_64.lib")
+#pragma comment(lib, "PhysXTask_static_64.lib")
+#pragma comment(lib, "SceneQuery_static_64.lib")
+#pragma comment(lib, "SimulationController_static_64.lib")
+
 // ------ ImGui ------
 #include <imugui/imgui.h>
 #include <imugui/imgui_impl_win32.h>
@@ -72,13 +85,12 @@
 #include <System/window.h>
 // 描画関係のデバイス
 #include <Graphics/Renderer.h>
-// DirectXMathのラッパー
-#include <System/SimpleMath.h>
 // ファイルパスを検索する関数
 #include <System/FileUtil.h>
 // デバッグ関連
 #include <System/Logger.h>
-
+// 数学関連
+#include <System/MyMath.h>
 // メッシュ
 #include <Graphics/Mesh/Mesh.h>
 // マテリアル
@@ -89,6 +101,11 @@
 #include <Graphics/RootSignature/RootSignature.h>
 // マクロ定義
 #include <System/Macro.h>
+
+// マネージャー関連
+#include <Manager/SceneManager.h>
+#include <Manager/ActorManager.h>
+#include <Manager/TimerManager.h>
 
 // ====== 名前空間 ======
 using namespace std;

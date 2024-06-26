@@ -8,7 +8,8 @@
 // ====== インクルード部 ======
 #include "stdafx.h"
 #include "Application.h"
-#include <Manager/ActorManager.h>
+#include <System/Input.h>
+#include <Manager/SceneManager.h>
 
 using namespace DirectX::SimpleMath;
 
@@ -51,25 +52,34 @@ bool Application::Init()
 	// COMの初期化
 	if (FAILED(CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED)))
 	{
-		MessageBox(nullptr, "COMの初期化に失敗しました。", "エラー", MB_OK);
-		assert(0 && "COMの初期化に失敗しました。");
+		ELOG("[App.cpp]Error : Line56 : COMの初期化に失敗しました。");
 		return false;
 	}
 
 	if (!m_window.Create(WINDOW_WIDTH, WINDOW_HEIGHT, CLASS_NAME, WINDOW_NAME))
 	{
-		assert(0 && "ウィンドウの作成に失敗しました。");
+		ELOG("[App.cpp]Error : Line62 : ウィンドウの生成に失敗しました。");
 		return false;
 	}
 
 	if (!RENDERER.Init(&m_window))
 	{
-		assert(0 && "Rendererの初期化に失敗しました。");
+		ELOG("[App.cpp]Error : Line68 : Rendererの初期化に失敗しました。");
 		return false;
 	}
 
-	// ====== Managerの初期化 ======
-	ACTOR_MANAGER.Init();
+	auto hr = InitInput();
+	if (FAILED(hr))
+	{
+		ELOG("[App.cpp]Error : Line75 : 入力の初期化に失敗しました。%s", hr);
+		return false;
+	}
+
+	// タイマーマネージャの初期化
+	TIMER_MANAGER.Init();
+
+	// SceneManagerの初期化
+	SCENE_MANAGER.Init();
 
 	// メッシュをロード
 	{
@@ -172,30 +182,6 @@ bool Application::Init()
 				ELOG("Error : ConstantBuffer::Init() Failed.");
 				return false;
 			}
-		}
-	}
-
-	// シーン用カラーターゲットの生成
-	{
-		DescriptorPool* pRTVPool = RENDERER.GetPool(POOL_TYPE_RTV);
-		DescriptorPool* pSRVPool = RENDERER.GetPool(POOL_TYPE_RES);
-
-		float clearColor[] = { 0.2f, 0.2f, 0.2f, 1.0f };
-		if (!m_SceneColorTarget.Init(pRTVPool, pSRVPool, WIDTH, HEIGHT, DXGI_FORMAT_R10G10B10A2_UNORM, clearColor))
-		{
-			ELOG("[Renderer.cpp]Error : Line 186 : ColorTarget.Init() Failed.");
-			return false;
-		}
-	}
-
-	// シーン用深度ターゲットの生成
-	{
-		DescriptorPool* pDSVPool = RENDERER.GetPool(POOL_TYPE_DSV);
-
-		if (!m_SceneDepthTarget.Init(pDSVPool, nullptr, WIDTH, HEIGHT, DXGI_FORMAT_D32_FLOAT, 1.0f, 0))
-		{
-			ELOG("[Renderer.cpp]Error : Line 197 : DepthTarget.Init() Failed.");
-			return false;
 		}
 	}
 
@@ -324,8 +310,8 @@ bool Application::Init()
 		desc.SampleMask = UINT_MAX;
 		desc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 		desc.NumRenderTargets = 1;
-		desc.RTVFormats[0] = m_SceneColorTarget.GetRTVDesc().Format;
-		desc.DSVFormat = m_SceneDepthTarget.GetDSVDesc().Format;
+		desc.RTVFormats[0] = RENDERER.GetSceneColorTarget()->GetRTVDesc().Format;
+		desc.DSVFormat = RENDERER.GetSceneDepthTarget()->GetDSVDesc().Format;
 		desc.SampleDesc.Count = 1;
 		desc.SampleDesc.Quality = 0;
 
@@ -385,13 +371,6 @@ bool Application::Init()
 		}
 	}
 
-	// タイマーの初期化
-	timeBeginPeriod(1);
-	m_dwExecLastTime = timeGetTime();
-	m_dwCurrentTime = m_dwExecLastTime;
-	m_dwFrameCount = 0;
-	m_dwLsatFPSTime = m_dwExecLastTime;
-	m_fFPS = 0.0f;
 	return true;
 }
 
@@ -401,53 +380,34 @@ void Application::Run()
 	{
 		if (!m_window.ProcessMessage()) { break; }
 
-		m_dwCurrentTime = timeGetTime();
-		if ((m_dwCurrentTime - m_dwExecLastTime) >= FRAME_TIME)
+		// タイマーの更新
+		TIMER_MANAGER.Update();
+
+		if (TIMER_MANAGER.IsFrameGo())
 		{
-			m_dwExecLastTime = m_dwCurrentTime;
 			// ====== ここにゲームの処理を書く ======
 			// ------ 更新処理 ------
-			ACTOR_MANAGER.Update();
+			// 入力の更新
+			UpdateInput();
+
+			// SceneManagerの更新
+			SCENE_MANAGER.Update();
+			RENDERER.Update();
 
 			// ------ 描画処理 ------
 			RENDERER.Begin();
 
-			// 描画
-			{
-				auto pCmd = RENDERER.GetCmdList()->Get();
-				ID3D12DescriptorHeap* ppHeaps[] = { RENDERER.GetPool(POOL_TYPE_RES)->GetHeap(), };
-				pCmd->SetDescriptorHeaps(1, ppHeaps);
-
-
-				// ディスクリプタ取得
-				auto handleRTV = m_SceneColorTarget.GetHandleRTV();
-				auto handleDSV = m_SceneDepthTarget.GetHandleDSV();
-
-				// 書き込み用リソースバリア設定
-				RENDERER.TransitionResource(m_SceneColorTarget.GetResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
-
-				// レンダーターゲットを設定
-				pCmd->OMSetRenderTargets(1, &handleRTV->HandleCPU, FALSE, &handleDSV->HandleCPU);
-
-				// クリア
-				m_SceneColorTarget.ClearView(pCmd);
-				m_SceneDepthTarget.ClearView(pCmd);
-
-				DrawScene();
-
-				RENDERER.TransitionResource(m_SceneColorTarget.GetResource(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-			}
-
-			// --- 以下ゲームの描画処理
-			ACTOR_MANAGER.Draw();
+			// シーンの描画
+			SCENE_MANAGER.Draw();
+			DrawScene();
 
 			// --- ここまでゲームの描画処理
 
 			// ----- 描画終了 -----
-			RENDERER.End(&m_SceneColorTarget);
+			RENDERER.End();
 
 			// ========================================
-			m_dwFrameCount++;
+			TIMER_MANAGER.UpdateFrame();
 		}
 	}
 }
@@ -456,6 +416,8 @@ void Application::Uninit()
 {
 	// ====== 終了処理 ======
 	RENDERER.WaitGpu();
+
+	SCENE_MANAGER.Uninit();
 
 	// メッシュの解放
 	for (auto& mesh : m_pMesh)
@@ -477,22 +439,14 @@ void Application::Uninit()
 		m_MeshCB[i].Uninit();
 	}
 
-	// シーン用カラーターゲットの解放
-	m_SceneColorTarget.Uninit();
-
-	// シーン用深度ターゲットの解放
-	m_SceneDepthTarget.Uninit();
-
 	// ルートシグネチャの解放
 	m_SceneRootSig.Uninit();
 
 	// パイプラインステートの解放
 	m_pScenePSO.Reset();
 
-	// ----- Managerの終了処理 -----
-	ACTOR_MANAGER.Uninit();	// ActorManagerの終了処理
-
 	// ----- システムの終了処理 -----
+	UninitInput();	// 入力の終了処理
 	RENDERER.Uninit();	// Rendererの終了処理
 	timeEndPeriod(1);	// タイマーの終了処理
 	UnregisterClass(CLASS_NAME, m_window.GetHinstance());	// ウィンドウクラスの登録解除
@@ -502,11 +456,45 @@ void Application::Uninit()
 void Application::SetDirectoryAndLoadDll()
 {
 #ifdef _DEBUG
+	// デバッグビルドの場合はデバッグ用のDLLを読み込む
+	// AssimpのDLLを読み込む
+	// DLLのディレクトリを設定
 	SetDllDirectory("Library/assimp/build/lib/Debug");
+	// DLLの読み込み
 	LoadLibraryExA("assimp-vc143-mtd.dll", NULL, NULL);
+
+	// PhysXのDLLを読み込む
+	// DLLのディレクトリを設定
+	SetDllDirectory("Library/PhysX/bin/Debug");
+	// DLLの読み込み
+	LoadLibraryExA("freeglutd.dll", NULL, NULL);
+	LoadLibraryExA("PhysX_64.dll", NULL, NULL);
+	LoadLibraryExA("PhysXCommon_64.dll", NULL, NULL);
+	LoadLibraryExA("PhysXCooking_64.dll", NULL, NULL);
+	LoadLibraryExA("PhysXDevice64.dll", NULL, NULL);
+	LoadLibraryExA("PhysXFoundation_64.dll", NULL, NULL);
+	LoadLibraryExA("PhysXGpu_64.dll", NULL, NULL);
+	LoadLibraryExA("PVDRuntime_64.dll", NULL, NULL);
 #else
+	// リリースビルドの場合はリリース用のDLLを読み込む
+	// AssimpのDLLを読み込む
+	// DLLのディレクトリを設定
 	SetDllDirectory("Library/assimp/build/lib/Release");
+	// DLLの読み込み
 	LoadLibraryExA("assimp-vc143-mt.dll", NULL, NULL);
+
+	// PhysXのDLLを読み込む
+	// DLLのディレクトリを設定
+	SetDllDirectory("Library/PhysX/bin/Debug");
+	// DLLの読み込み
+	LoadLibraryExA("freeglutd.dll", NULL, NULL);
+	LoadLibraryExA("PhysX_64.dll", NULL, NULL);
+	LoadLibraryExA("PhysXCommon_64.dll", NULL, NULL);
+	LoadLibraryExA("PhysXCooking_64.dll", NULL, NULL);
+	LoadLibraryExA("PhysXDevice64.dll", NULL, NULL);
+	LoadLibraryExA("PhysXFoundation_64.dll", NULL, NULL);
+	LoadLibraryExA("PhysXGpu_64.dll", NULL, NULL);
+	LoadLibraryExA("PVDRuntime_64.dll", NULL, NULL);
 #endif // _DEBUG
 
 }
@@ -520,7 +508,7 @@ void Application::DrawScene()
 
 	// ライトバッファの更新
 	{
-		auto matrix = Matrix::CreateRotationY(m_RotateAngle);
+		Matrix matrix = Matrix::CreateRotationY(m_RotateAngle);
 
 		auto ptr = m_LightCB[frameIndex].GetPtr<CbLight>();
 		ptr->LightColor = Vector3(1.0f, 1.0f, 1.0f);

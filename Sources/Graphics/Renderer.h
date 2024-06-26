@@ -51,6 +51,8 @@ public:		// パブリック関数
 	/// <returns></returns>
 	void Uninit();
 
+	void Update();
+
 	/// <summary>
 	/// レンダラーの描画開始処理
 	/// </summary>
@@ -61,7 +63,7 @@ public:		// パブリック関数
 	///	レンダラーの描画終了処理
 	/// </summary>
 	/// <returns></returns>
-	void End(ColorTarget* sceneTarget);
+	void End();
 
 	/// <summary>
 	/// リソースの状態遷移
@@ -129,6 +131,18 @@ public:		// アクセサ関数
 	DepthTarget* GetDepthTarget() { return &m_DepthTarget; }
 
 	/// <summary>
+	/// シーンカラーターゲットの取得
+	/// </summary>
+	/// <returns>シーンカラーターゲット</returns>
+	ColorTarget* GetSceneColorTarget() { return &m_SceneColorTarget; }
+
+	/// <summary>
+	/// シーンデプスターゲットの取得
+	/// </summary>
+	/// <returns>シーンデプスターゲット</returns>
+	DepthTarget* GetSceneDepthTarget() { return &m_SceneDepthTarget; }
+
+	/// <summary>
 	/// ビューポートの取得
 	/// </summary>
 	/// <returns>ビューポート</returns>
@@ -164,7 +178,7 @@ private:	// プライベート関数
 	bool  IsSupportHDR() const;
 	float GetMaxLuminance() const;
 	float GetBaseLuminance() const;
-	void DrawTonemap(ColorTarget* sceneTarget);
+	void DrawTonemap();
 
 private:	// メンバ変数
 	// ウィンドウ関連
@@ -183,6 +197,10 @@ private:	// メンバ変数
 	D3D12_RECT m_Scissor;							// シザー矩形
 	DXGI_FORMAT m_BackBufferFormat;					// バックバッファフォーマット
 	VertexBuffer m_QuadVB;							// 頂点バッファ
+
+	// シーン関連
+	ColorTarget m_SceneColorTarget;					// シーンカラーターゲット
+	DepthTarget m_SceneDepthTarget;					// シーンデプスターゲット
 
 	// トーンマップ関連
 	RootSignature m_TonemapRootSig;						// トーンマップ用ルートシグニチャ

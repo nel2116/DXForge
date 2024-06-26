@@ -31,7 +31,7 @@ public:
 public:	// アクセサ
 	// Actorにオブジェクトを追加
 	template<class T>
-	T* AddComponent();
+	T* AddComponent(std::string tag = "none");
 	// コンポーネントの取得
 	template<class T>
 	T* GetComponent();
@@ -76,10 +76,10 @@ private:
 };
 
 template<class T>
-inline T* Actor::AddComponent()
+inline T* Actor::AddComponent(std::string tag)
 {
 	// コンポーネントの生成
-	T* pCmp = NEW T();
+	T* pCmp = NEW T(tag);
 	pCmp->SetOwner(this);
 	// コンポーネントの追加
 	m_pComponents.push_back(pCmp);

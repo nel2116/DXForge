@@ -10,7 +10,6 @@
 // ====== インクルード部 ======
 #include "stdafx.h"
 #include "Renderer.h"
-#include <System/SimpleMath.h>
 #include <System/d3dx12.h>
 
 using namespace DirectX::SimpleMath;
@@ -83,6 +82,8 @@ bool Renderer::Init(Window* window)
 {
 	// ウィンドウクラスのポインタを設定
 	m_pWindow = window;
+	uint32_t width = static_cast<uint32_t>(m_pWindow->GetWidth());
+	uint32_t height = static_cast<uint32_t>(m_pWindow->GetHeight());
 
 	m_TonemapType = TONEMAP_NONE;
 	m_ColorSpace = COLOR_SPACE_BT709;
@@ -125,8 +126,8 @@ bool Renderer::Init(Window* window)
 
 		// スワップチェインの設定.
 		DXGI_SWAP_CHAIN_DESC desc = {};
-		desc.BufferDesc.Width = m_pWindow->GetWidth();
-		desc.BufferDesc.Height = m_pWindow->GetHeight();
+		desc.BufferDesc.Width = static_cast<UINT>(width);
+		desc.BufferDesc.Height = static_cast<UINT>(height);
 		desc.BufferDesc.RefreshRate.Numerator = 60;
 		desc.BufferDesc.RefreshRate.Denominator = 1;
 		desc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
@@ -225,8 +226,27 @@ bool Renderer::Init(Window* window)
 
 	// 深度ステンシルバッファの生成
 	{
-		if (!m_DepthTarget.Init(m_pPool[POOL_TYPE_DSV], nullptr, m_pWindow->GetWidth(), m_pWindow->GetHeight(), DXGI_FORMAT_D32_FLOAT, 1.0f, 0))
+		if (!m_DepthTarget.Init(m_pPool[POOL_TYPE_DSV], nullptr, width, height, DXGI_FORMAT_D32_FLOAT, 1.0f, 0))
 		{
+			return false;
+		}
+	}
+
+	// シーン用カラーターゲットの生成
+	{
+		float clearColor[] = { 0.2f, 0.2f, 0.2f, 1.0f };
+		if (!m_SceneColorTarget.Init(m_pPool[POOL_TYPE_RTV], m_pPool[POOL_TYPE_RES], width, height, DXGI_FORMAT_R10G10B10A2_UNORM, clearColor))
+		{
+			ELOG("[Renderer.cpp]Error : Line 186 : ColorTarget.Init() Failed.");
+			return false;
+		}
+	}
+
+	// シーン用深度ターゲットの生成
+	{
+		if (!m_SceneDepthTarget.Init(m_pPool[POOL_TYPE_DSV], nullptr, width, height, DXGI_FORMAT_D32_FLOAT, 1.0f, 0))
+		{
+			ELOG("[Renderer.cpp]Error : Line 197 : DepthTarget.Init() Failed.");
 			return false;
 		}
 	}
@@ -241,8 +261,8 @@ bool Renderer::Init(Window* window)
 	{
 		m_Viewport.TopLeftX = 0.0f;
 		m_Viewport.TopLeftY = 0.0f;
-		m_Viewport.Width = float(m_pWindow->GetWidth());
-		m_Viewport.Height = float(m_pWindow->GetHeight());
+		m_Viewport.Width = static_cast<FLOAT>(width);
+		m_Viewport.Height = static_cast<FLOAT>(height);
 		m_Viewport.MinDepth = 0.0f;
 		m_Viewport.MaxDepth = 1.0f;
 	}
@@ -250,9 +270,9 @@ bool Renderer::Init(Window* window)
 	// シザー矩形の設定.
 	{
 		m_Scissor.left = 0;
-		m_Scissor.right = m_pWindow->GetWidth();
+		m_Scissor.right = static_cast<LONG>(width);
 		m_Scissor.top = 0;
-		m_Scissor.bottom = m_pWindow->GetHeight();
+		m_Scissor.bottom = static_cast<LONG>(height);
 	}
 
 	// トーンマップ用ルートシグニチャの生成.
@@ -409,7 +429,7 @@ bool Renderer::Init(Window* window)
 		m_QuadVB.Unmap();
 	}
 
-	// 定数バッファの生成
+	// トーンマップ用定数バッファの生成
 	for (auto i = 0; i < FRAME_BUFFER_COUNT; ++i)
 	{
 		if (!m_TonemapCB[i].Init(m_pPool[POOL_TYPE_RES], sizeof(CbTonemap)))
@@ -454,6 +474,27 @@ bool Renderer::Init(Window* window)
 		}
 	}
 
+	// ImuGUIの初期化
+	{
+		auto pool = RENDERER.GetPool(POOL_TYPE_RES);
+		// Setup Dear ImGui context
+		IMGUI_CHECKVERSION();
+		ImGui::CreateContext();
+		ImGuiIO& io = ImGui::GetIO(); (void)io;
+		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+		io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+
+		// Setup Dear ImGui style
+		ImGui::StyleColorsDark();
+		//ImGui::StyleColorsLight();
+
+		// Setup Platform/Renderer backends
+		ImGui_ImplWin32_Init(m_pWindow->GetHwnd());
+		ImGui_ImplDX12_Init(RENDERER.GetDevice(), 2,
+			DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, pool->GetHeap(),
+			pool->GetHeap()->GetCPUDescriptorHandleForHeapStart(),
+			pool->GetHeap()->GetGPUDescriptorHandleForHeapStart());
+	}
 
 	// 初期化成功
 	return true;
@@ -464,14 +505,34 @@ void Renderer::Begin()
 	// コマンドリストの記録を開始
 	auto pCmd = m_CommandList.Reset();
 
+	ID3D12DescriptorHeap* ppHeaps[] = { RENDERER.GetPool(POOL_TYPE_RES)->GetHeap(), };
+	pCmd->SetDescriptorHeaps(1, ppHeaps);
+
+
+	// ディスクリプタ取得
+	auto handleRTV = m_SceneColorTarget.GetHandleRTV();
+	auto handleDSV = m_SceneDepthTarget.GetHandleDSV();
+
+	// 書き込み用リソースバリア設定
+	RENDERER.TransitionResource(m_SceneColorTarget.GetResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
+
+	// レンダーターゲットを設定
+	pCmd->OMSetRenderTargets(1, &handleRTV->HandleCPU, FALSE, &handleDSV->HandleCPU);
+
+	// クリア
+	m_SceneColorTarget.ClearView(pCmd);
+	m_SceneDepthTarget.ClearView(pCmd);
 }
 
-void Renderer::End(ColorTarget* sceneTarget)
+void Renderer::End()
 {
 	// コマンドリストの取得
 	auto pCmd = m_CommandList.Get();
 
-	// リソースバリアの設定
+	// シーンターゲットのリソースバリアの設定
+	RENDERER.TransitionResource(m_SceneColorTarget.GetResource(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+
+	// バックバッファ用のリソースバリアの設定
 	TransitionResource(m_ColorTarget[m_FrameIndex].GetResource(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
 	// レンダーターゲットビューの取得
@@ -487,9 +548,23 @@ void Renderer::End(ColorTarget* sceneTarget)
 	m_DepthTarget.ClearView(pCmd);
 
 	// トーンマップを適用
-	DrawTonemap(sceneTarget);
+	DrawTonemap();
 
-	// 表示用リソースバリア設定
+	// ImuGUIの描画
+	{
+		ImGui_ImplDX12_NewFrame();
+		ImGui_ImplWin32_NewFrame();
+		ImGui::NewFrame();
+		ImGui::Begin("Hello, world!");
+		double fps = TIMER_MANAGER.GetFPS();
+		ImGui::Text("FPS : %.2f", fps);
+
+		ImGui::End();
+		ImGui::Render();
+		ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), RENDERER.GetCmdList()->Get());
+	}
+
+	// バックバッファ用のリソースバリアを表示設定
 	TransitionResource(m_ColorTarget[m_FrameIndex].GetResource(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 
 	// コマンドリストの記録を終了
@@ -645,7 +720,7 @@ float Renderer::GetBaseLuminance() const
 	return m_BaseLuminance;
 }
 
-void Renderer::DrawTonemap(ColorTarget* sceneTarget)
+void Renderer::DrawTonemap()
 {
 	// コマンドリストの取得
 	auto pCmd = m_CommandList.Get();
@@ -663,7 +738,7 @@ void Renderer::DrawTonemap(ColorTarget* sceneTarget)
 	pCmd->SetGraphicsRootDescriptorTable(0, m_TransformCB[m_FrameIndex].GetHandleGPU());
 	pCmd->SetGraphicsRootDescriptorTable(1, m_MeshCB[m_FrameIndex].GetHandleGPU());
 	pCmd->SetGraphicsRootDescriptorTable(2, m_TonemapCB[m_FrameIndex].GetHandleGPU());
-	pCmd->SetGraphicsRootDescriptorTable(3, sceneTarget->GetHandleSRV()->HandleGPU);
+	pCmd->SetGraphicsRootDescriptorTable(3, m_SceneColorTarget.GetHandleSRV()->HandleGPU);
 
 	pCmd->SetPipelineState(m_pTonemapPSO.Get());
 	pCmd->RSSetViewports(1, &m_Viewport);
@@ -679,6 +754,11 @@ void Renderer::Uninit()
 {
 	// GPU処理の完了を待機.
 	m_Fence.Sync();
+
+	// ImuGUIの解放
+	ImGui_ImplDX12_Shutdown();
+	ImGui_ImplWin32_Shutdown();
+	ImGui::DestroyContext();
 
 	// フェンス破棄.
 	m_Fence.Uninit();
@@ -699,6 +779,12 @@ void Renderer::Uninit()
 
 	// トーンマップ用ルートシグニチャの破棄.
 	m_TonemapRootSig.Uninit();
+
+	// シーン用カラーターゲットの破棄
+	m_SceneColorTarget.Uninit();
+
+	// シーン用深度ターゲットの破棄
+	m_SceneDepthTarget.Uninit();
 
 	// レンダーターゲットビューの破棄.
 	for (auto i = 0u; i < FRAME_BUFFER_COUNT; ++i)
@@ -731,5 +817,42 @@ void Renderer::Uninit()
 	m_pDevice.Reset();
 
 	m_pWindow = nullptr;
+}
+
+void Renderer::Update()
+{
+	// キー入力でトーンマップの種類を変更
+	if (GetAsyncKeyState('1') & 0x8000)
+	{
+		m_TonemapType = TONEMAP_NONE;
+	}
+	else if (GetAsyncKeyState('2') & 0x8000)
+	{
+		m_TonemapType = TONEMAP_REINHARD;
+	}
+	else if (GetAsyncKeyState('3') & 0x8000)
+	{
+		m_TonemapType = TONEMAP_GT;
+	}
+
+	// キー入力でHDRの色空間を変更
+	if (GetAsyncKeyState('4') & 0x8000)
+	{
+		m_ColorSpace = COLOR_SPACE_BT709;
+	}
+	else if (GetAsyncKeyState('5') & 0x8000)
+	{
+		m_ColorSpace = COLOR_SPACE_BT2100_PQ;
+	}
+
+	// キー入力で輝度値を変更
+	if (GetAsyncKeyState(VK_UP) & 0x8000)
+	{
+		m_BaseLuminance += 0.1f;
+	}
+	else if (GetAsyncKeyState(VK_DOWN) & 0x8000)
+	{
+		m_BaseLuminance -= 0.1f;
+	}
 }
 

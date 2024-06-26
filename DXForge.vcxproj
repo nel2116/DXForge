@@ -89,15 +89,15 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <AdditionalIncludeDirectories>$(SolutionDir)Sources\DirectXTex;$(SolitionDir)Library\assimp\build\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Sources\DirectXTex;$(SolitionDir)Library\assimp\build\include;$(SolitionDir)Library\PhysX\include</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>
       </SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)Sources\DirectXTex\$(PlatformTarget)\$(Configuration)_static;$(SolutionDir)Library/assimp/build/lib/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <DelayLoadDLLs>assimp-vc143-mtd.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
+      <AdditionalLibraryDirectories>$(SolutionDir)Sources\DirectXTex\$(PlatformTarget)\$(Configuration)_static;$(SolutionDir)Library/assimp/build/lib/$(Configuration);$(SolutionDir)Library/PhysX/lib/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <DelayLoadDLLs>assimp-vc143-mtd.dll;freeglut.dll;PhysX_64.dll;PhysXCommon_64.dll;PhysXCooking_64.dll;PhysXDevice64.dll;PhysXFoundation_64.dll;PhysXGpu_64.dll;PVDRuntime_64.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
     </Link>
     <FxCompile>
       <ObjectFileOutput>$(SolutionDir)Assets\Shaders\%(Filename).cso</ObjectFileOutput>
@@ -113,7 +113,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <AdditionalIncludeDirectories>$(SolutionDir)Sources\DirectXTex;$(SolitionDir)Library\assimp\build\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Sources\DirectXTex;$(SolitionDir)Library\assimp\build\include;$(SolitionDir)Library\PhysX\include</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -122,7 +122,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)Sources\DirectXTex\$(PlatformTarget)\$(Configuration)_static;$(SolutionDir)Library/assimp/build/lib/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)Sources\DirectXTex\$(PlatformTarget)\$(Configuration)_static;$(SolutionDir)Library/assimp/build/lib/$(Configuration);$(SolutionDir)Library/PhysX/lib/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <DelayLoadDLLs>assimp-vc143-mt.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
     </Link>
     <FxCompile>
@@ -141,15 +141,15 @@
       <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
       <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <AdditionalIncludeDirectories>$(SolutionDir)Sources\DirectXTex;$(SolitionDir)Library\assimp\build\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Sources\DirectXTex;$(SolitionDir)Library\assimp\build\include;$(SolitionDir)Library\PhysX\include</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>
       </SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)Sources\DirectXTex\$(PlatformTarget)\$(Configuration)_static;$(SolutionDir)Library/assimp/build/lib/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <DelayLoadDLLs>assimp-vc143-mtd.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
+      <AdditionalLibraryDirectories>$(SolutionDir)Sources\DirectXTex\$(PlatformTarget)\$(Configuration)_static;$(SolutionDir)Library/assimp/build/lib/$(Configuration);$(SolutionDir)Library/PhysX/lib/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <DelayLoadDLLs>assimp-vc143-mtd.dll;freeglut.dll;PhysX_64.dll;PhysXCommon_64.dll;PhysXCooking_64.dll;PhysXDevice64.dll;PhysXFoundation_64.dll;PhysXGpu_64.dll;PVDRuntime_64.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
     </Link>
     <Bscmake>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -172,7 +172,7 @@
       <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
       <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <AdditionalIncludeDirectories>$(SolutionDir)Sources\DirectXTex;$(SolitionDir)Library\assimp\build\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Sources\DirectXTex;$(SolitionDir)Library\assimp\build\include;$(SolitionDir)Library\PhysX\include</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -181,7 +181,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)Sources\DirectXTex\$(PlatformTarget)\$(Configuration)_static;$(SolutionDir)Library/assimp/build/lib/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)Sources\DirectXTex\$(PlatformTarget)\$(Configuration)_static;$(SolutionDir)Library/assimp/build/lib/$(Configuration);$(SolutionDir)Library/PhysX/lib/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <DelayLoadDLLs>assimp-vc143-mt.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
     </Link>
     <Bscmake>
@@ -194,7 +194,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Sources\Actor\Actor.cpp" />
+    <ClCompile Include="Sources\Actor\TestActor.cpp" />
     <ClCompile Include="Sources\Application\Application.cpp" />
+    <ClCompile Include="Sources\Component\RigidBodyComponent.cpp" />
     <ClCompile Include="Sources\Graphics\Buffer\ConstantBuffer\ConstantBuffer.cpp" />
     <ClCompile Include="Sources\Graphics\Buffer\IndexBuffer\IndexBuffer.cpp" />
     <ClCompile Include="Sources\Graphics\Buffer\VertexBuffer\VertexBuffer.cpp" />
@@ -218,12 +220,17 @@
     <ClCompile Include="Sources\imugui\imgui_impl_win32.cpp" />
     <ClCompile Include="Sources\imugui\imgui_widgets.cpp" />
     <ClCompile Include="Sources\Manager\ActorManager.cpp" />
+    <ClCompile Include="Sources\Manager\SceneManager.cpp" />
+    <ClCompile Include="Sources\Manager\TimerManager.cpp" />
     <ClCompile Include="Sources\Precompils\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Sources\Scene\Scene.cpp" />
+    <ClCompile Include="Sources\Scene\TestScene.cpp" />
     <ClCompile Include="Sources\System\DDSTextureLoader12.cpp" />
     <ClCompile Include="Sources\System\FileUtil.cpp" />
+    <ClCompile Include="Sources\System\Input.cpp" />
     <ClCompile Include="Sources\System\Logger.cpp" />
     <ClCompile Include="Sources\System\main.cpp" />
     <ClCompile Include="Sources\System\SimpleMath.cpp" />
@@ -231,8 +238,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Sources\Actor\Actor.h" />
+    <ClInclude Include="Sources\Actor\TestActor.h" />
     <ClInclude Include="Sources\Application\Application.h" />
     <ClInclude Include="Sources\Component\Component.h" />
+    <ClInclude Include="Sources\Component\RigidBodyComponent.h" />
     <ClInclude Include="Sources\DirectXTex\DirectXTex.h" />
     <ClInclude Include="Sources\GameObject\Actor.h" />
     <ClInclude Include="Sources\Graphics\Buffer\ConstantBuffer\ConstantBuffer.h" />
@@ -262,13 +271,19 @@
     <ClInclude Include="Sources\imugui\imstb_truetype.h" />
     <ClInclude Include="Sources\Manager\ActorManager.h" />
     <ClInclude Include="Sources\Manager\Manager.h" />
+    <ClInclude Include="Sources\Manager\SceneManager.h" />
+    <ClInclude Include="Sources\Manager\TimerManager.h" />
     <ClInclude Include="Sources\Precompils\stdafx.h" />
+    <ClInclude Include="Sources\Scene\Scene.h" />
+    <ClInclude Include="Sources\Scene\TestScene.h" />
     <ClInclude Include="Sources\System\ComPtr.h" />
     <ClInclude Include="Sources\System\d3dx12.h" />
     <ClInclude Include="Sources\System\DDSTextureLoader12.h" />
     <ClInclude Include="Sources\System\FileUtil.h" />
+    <ClInclude Include="Sources\System\Input.h" />
     <ClInclude Include="Sources\System\Logger.h" />
     <ClInclude Include="Sources\System\Macro.h" />
+    <ClInclude Include="Sources\System\MyMath.h" />
     <ClInclude Include="Sources\System\SimpleMath.h" />
     <ClInclude Include="Sources\System\window.h" />
   </ItemGroup>
