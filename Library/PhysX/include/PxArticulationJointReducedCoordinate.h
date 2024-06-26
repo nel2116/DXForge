@@ -52,7 +52,7 @@ namespace physx
 
 		\return The parent link.
 		*/
-		virtual		PxArticulationLink&	getParentArticulationLink() const = 0;
+		virtual		PxArticulationLink& getParentArticulationLink() const = 0;
 
 		/**
 		\brief Sets the joint pose in the parent link actor frame.
@@ -80,7 +80,7 @@ namespace physx
 
 		\return The child link.
 		*/
-		virtual		PxArticulationLink&	getChildArticulationLink() const = 0;
+		virtual		PxArticulationLink& getChildArticulationLink() const = 0;
 
 		/**
 		\brief Sets the joint pose in the child link actor frame.
@@ -116,7 +116,7 @@ namespace physx
 		\see PxArticulationJointType, getJointType
 		*/
 		virtual		void				setJointType(PxArticulationJointType::Enum jointType) = 0;
-		
+
 		/**
 		\brief Gets the joint type.
 
@@ -134,7 +134,7 @@ namespace physx
 
 		\note Setting the motion of joint axes is not allowed while the articulation is in a scene.
 		In order to set the motion, remove and then re-add the articulation to the scene.
-	
+
 		<b>Default:</b> PxArticulationMotion::eLOCKED
 
 		\see PxArticulationAxis, PxArticulationMotion, getMotion
@@ -161,14 +161,14 @@ namespace physx
 
 		\param[in] axis The target axis.
 		\param[in] limit The joint limits.
-		
+
 		\note This call is not allowed while the simulation is running.
 
 		\note For PxArticulationJointType::eSPHERICAL, limit.min and limit.max must both be in range [-Pi, Pi].
 		\note For PxArticulationJointType::eREVOLUTE, limit.min and limit.max must both be in range [-2*Pi, 2*Pi].
 		\note For PxArticulationJointType::eREVOLUTE_UNWRAPPED, limit.min and limit.max must both be in range [-PX_MAX_REAL, PX_MAX_REAL].
 		\note For PxArticulationJointType::ePRISMATIC, limit.min and limit.max must both be in range [-PX_MAX_REAL, PX_MAX_REAL].
-		
+
 		<b>Default:</b> (0,0)
 
 		\see getLimitParams, PxArticulationAxis, PxArticulationLimit
@@ -195,7 +195,7 @@ namespace physx
 		\param[in] drive The drive parameters
 
 		\note This call is not allowed while the simulation is running.
-		
+
 		\see getDriveParams, PxArticulationAxis, PxArticulationDrive
 
 		<b>Default:</b> PxArticulationDrive(0.0f, 0.0f, 0.0f, PxArticulationDriveType::eNONE)
@@ -211,7 +211,7 @@ namespace physx
 		\see setDriveParams, PxArticulationAxis, PxArticulationDrive
 		*/
 		virtual		PxArticulationDrive	getDriveParams(PxArticulationAxis::Enum axis) const = 0;
-		
+
 		/**
 		\brief Sets the joint drive position target for the given axis.
 
@@ -240,13 +240,13 @@ namespace physx
 		\brief Returns the joint drive position target for the given axis.
 
 		\param[in] axis The target axis.
-		
+
 		\return The target position.
 
 		\see PxArticulationAxis, setDriveTarget
 		*/
 		virtual		PxReal				getDriveTarget(PxArticulationAxis::Enum axis) const = 0;
-		
+
 		/**
 		\brief Sets the joint drive velocity target for the given axis.
 
@@ -275,7 +275,7 @@ namespace physx
 		\see PxArticulationAxis, setDriveVelocity
 		*/
 		virtual		PxReal				getDriveVelocity(PxArticulationAxis::Enum axis) const = 0;
-		
+
 		/**
 		\brief Sets the joint armature for the given axis.
 
@@ -438,17 +438,17 @@ namespace physx
 
 		\return The string name.
 		*/
-		virtual	const char*						getConcreteTypeName() const { return "PxArticulationJointReducedCoordinate"; }
+		virtual	const char* getConcreteTypeName() const { return "PxArticulationJointReducedCoordinate"; }
 
 		virtual									~PxArticulationJointReducedCoordinate() {}
 
 		//public variables:
-		void*									userData;	//!< The user can assign this to whatever, usually to create a 1:1 relationship with a user object.
+		void* userData;	//!< The user can assign this to whatever, usually to create a 1:1 relationship with a user object.
 
 	protected:
-		PX_INLINE								PxArticulationJointReducedCoordinate(PxType concreteType, PxBaseFlags baseFlags) : PxBase(concreteType, baseFlags) {}
-		PX_INLINE								PxArticulationJointReducedCoordinate(PxBaseFlags baseFlags) : PxBase(baseFlags) {}
-		
+		PX_INLINE								PxArticulationJointReducedCoordinate(PxType concreteType, PxBaseFlags baseFlags) : PxBase(concreteType, baseFlags), userData(NULL) {}
+		PX_INLINE								PxArticulationJointReducedCoordinate(PxBaseFlags baseFlags) : PxBase(baseFlags), userData(NULL) {}
+
 		virtual	bool							isKindOf(const char* name)	const { PX_IS_KIND_OF(name, "PxArticulationJointReducedCoordinate", PxBase); }
 	};
 

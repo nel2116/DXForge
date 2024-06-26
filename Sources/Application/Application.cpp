@@ -15,33 +15,33 @@ using namespace DirectX::SimpleMath;
 
 struct alignas(256) CbMesh
 {
-	Matrix   World;      //!< ワールド行列です.
+	Matrix   World;      // ワールド行列
 };
 
 struct alignas(256) CbTransform
 {
-	Matrix   View;       //!< ビュー行列です.
-	Matrix   Proj;       //!< 射影行列です.
+	Matrix   View;       // ビュー行列
+	Matrix   Proj;       // 射影行列
 };
 
 struct alignas(256) CbLight
 {
-	Vector3  LightColor;        //!< ライトカラーです.
-	float    LightIntensity;    //!< ライト強度です.
-	Vector3  LightForward;      //!< ライトの照射方向です.
+	Vector3  LightColor;        // ライトカラー
+	float    LightIntensity;    // ライト強度
+	Vector3  LightForward;      // ライトの照射方向
 };
 
 struct alignas(256) CbCamera
 {
-	Vector3  CameraPosition;    //!< カメラ位置です.
+	Vector3  CameraPosition;    // カメラ位置です
 };
 
 struct alignas(256) CbMaterial
 {
-	Vector3 BaseColor;  //!< 基本色.
-	float   Alpha;      //!< 透過度.
-	float   Roughness;  //!< 面の粗さです(範囲は[0,1]).
-	float   Metallic;   //!< 金属度です(範囲は[0,1]).
+	Vector3 BaseColor;  // 基本色
+	float   Alpha;      // 透過度
+	float   Roughness;  // 面の粗さ(範囲は0~1)
+	float   Metallic;   // 金属度(範囲は[0~1])
 };
 
 // ====== メンバ関数 ======
@@ -343,7 +343,7 @@ bool Application::Init()
 			auto upward = Vector3::UnitY;
 
 			// 垂直画角とアスペクト比の設定.
-			auto fovY = DirectX::XMConvertToRadians(90.0f);
+			constexpr auto fovY = DirectX::XMConvertToRadians(90.0f);
 			auto aspect = static_cast<float>(WIDTH) / static_cast<float>(HEIGHT);
 
 			// 変換行列を設定.
@@ -508,12 +508,12 @@ void Application::DrawScene()
 
 	// ライトバッファの更新
 	{
-		Matrix matrix = Matrix::CreateRotationY(m_RotateAngle);
+		Matrix matrix; // = Matrix::CreateRotationY(m_RotateAngle);
 
 		auto ptr = m_LightCB[frameIndex].GetPtr<CbLight>();
 		ptr->LightColor = Vector3(1.0f, 1.0f, 1.0f);
 		ptr->LightForward = Vector3::TransformNormal(Vector3(0.0f, 1.0f, 1.0f), matrix);
-		ptr->LightIntensity = 5.0f;
+		ptr->LightIntensity = 2.0f;
 		m_RotateAngle += 0.01f;
 	}
 	// カメラバッファの更新.
@@ -528,7 +528,7 @@ void Application::DrawScene()
 	}
 	// 変換パラメータの更新
 	{
-		auto fovY = DirectX::XMConvertToRadians(37.5f);
+		constexpr auto fovY = DirectX::XMConvertToRadians(37.5f);
 		auto aspect = static_cast<float>(WIDTH) / static_cast<float>(HEIGHT);
 
 		auto ptr = m_TransformCB[frameIndex].GetPtr<CbTransform>();
@@ -536,16 +536,11 @@ void Application::DrawScene()
 		ptr->Proj = Matrix::CreatePerspectiveFieldOfView(fovY, aspect, 0.1f, 1000.0f);
 	}
 
-	auto viewport = RENDERER.GetViewport();
-	auto scissor = RENDERER.GetScissor();
-
 	pCmd->SetGraphicsRootSignature(m_SceneRootSig.GetPtr());
+	pCmd->SetPipelineState(m_pScenePSO.Get());
 	pCmd->SetGraphicsRootDescriptorTable(0, m_TransformCB[frameIndex].GetHandleGPU());
 	pCmd->SetGraphicsRootDescriptorTable(2, m_LightCB[frameIndex].GetHandleGPU());
 	pCmd->SetGraphicsRootDescriptorTable(3, m_CameraCB[frameIndex].GetHandleGPU());
-	pCmd->SetPipelineState(m_pScenePSO.Get());
-	pCmd->RSSetViewports(1, &viewport);
-	pCmd->RSSetScissorRects(1, &scissor);
 
 	// オブジェクトを描画.
 	{

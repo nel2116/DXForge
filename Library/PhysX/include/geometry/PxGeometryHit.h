@@ -37,152 +37,152 @@ namespace physx
 {
 #endif
 
-/**
-\brief Scene query and geometry query behavior flags.
+	/**
+	\brief Scene query and geometry query behavior flags.
 
-PxHitFlags are used for 3 different purposes:
+	PxHitFlags are used for 3 different purposes:
 
-1) To request hit fields to be filled in by scene queries (such as hit position, normal, face index or UVs).
-2) Once query is completed, to indicate which fields are valid (note that a query may produce more valid fields than requested).
-3) To specify additional options for the narrow phase and mid-phase intersection routines.
+	1) To request hit fields to be filled in by scene queries (such as hit position, normal, face index or UVs).
+	2) Once query is completed, to indicate which fields are valid (note that a query may produce more valid fields than requested).
+	3) To specify additional options for the narrow phase and mid-phase intersection routines.
 
-All these flags apply to both scene queries and geometry queries (PxGeometryQuery).
+	All these flags apply to both scene queries and geometry queries (PxGeometryQuery).
 
-\see PxRaycastHit PxSweepHit PxOverlapHit PxScene.raycast PxScene.sweep PxScene.overlap PxGeometryQuery PxFindFaceIndex
-*/
-struct PxHitFlag
-{
-	enum Enum
+	\see PxRaycastHit PxSweepHit PxOverlapHit PxScene.raycast PxScene.sweep PxScene.overlap PxGeometryQuery PxFindFaceIndex
+	*/
+	struct PxHitFlag
 	{
-		ePOSITION					= (1<<0),	//!< "position" member of #PxQueryHit is valid
-		eNORMAL						= (1<<1),	//!< "normal" member of #PxQueryHit is valid
-		eUV							= (1<<3),	//!< "u" and "v" barycentric coordinates of #PxQueryHit are valid. Not applicable to sweep queries.
-		eASSUME_NO_INITIAL_OVERLAP	= (1<<4),	//!< Performance hint flag for sweeps when it is known upfront there's no initial overlap.
-												//!< NOTE: using this flag may cause undefined results if shapes are initially overlapping.
-		eANY_HIT					= (1<<5),	//!< Report any first hit. Used for geometries that contain more than one primitive. For meshes,
-												//!< if neither eMESH_MULTIPLE nor eANY_HIT is specified, a single closest hit will be reported.
-		eMESH_MULTIPLE				= (1<<6),	//!< Report all hits for meshes rather than just the first. Not applicable to sweep queries.
-		eMESH_ANY					= eANY_HIT,	//!< \deprecated Deprecated, please use eANY_HIT instead.
-		eMESH_BOTH_SIDES			= (1<<7),	//!< Report hits with back faces of mesh triangles. Also report hits for raycast
-												//!< originating on mesh surface and facing away from the surface normal. Not applicable to sweep queries.
-												//!< Please refer to the user guide for heightfield-specific differences.
-		ePRECISE_SWEEP				= (1<<8),	//!< Use more accurate but slower narrow phase sweep tests.
-												//!< May provide better compatibility with PhysX 3.2 sweep behavior.
-		eMTD						= (1<<9),	//!< Report the minimum translation depth, normal and contact point.
-		eFACE_INDEX					= (1<<10),	//!< "face index" member of #PxQueryHit is valid
+		enum Enum
+		{
+			ePOSITION = (1 << 0),	//!< "position" member of #PxQueryHit is valid
+			eNORMAL = (1 << 1),	//!< "normal" member of #PxQueryHit is valid
+			eUV = (1 << 3),	//!< "u" and "v" barycentric coordinates of #PxQueryHit are valid. Not applicable to sweep queries.
+			eASSUME_NO_INITIAL_OVERLAP = (1 << 4),	//!< Performance hint flag for sweeps when it is known upfront there's no initial overlap.
+			//!< NOTE: using this flag may cause undefined results if shapes are initially overlapping.
+			eANY_HIT = (1 << 5),	//!< Report any first hit. Used for geometries that contain more than one primitive. For meshes,
+			//!< if neither eMESH_MULTIPLE nor eANY_HIT is specified, a single closest hit will be reported.
+			eMESH_MULTIPLE = (1 << 6),	//!< Report all hits for meshes rather than just the first. Not applicable to sweep queries.
+			eMESH_ANY = eANY_HIT,	//!< \deprecated Deprecated, please use eANY_HIT instead.
+			eMESH_BOTH_SIDES = (1 << 7),	//!< Report hits with back faces of mesh triangles. Also report hits for raycast
+			//!< originating on mesh surface and facing away from the surface normal. Not applicable to sweep queries.
+			//!< Please refer to the user guide for heightfield-specific differences.
+			ePRECISE_SWEEP = (1 << 8),	//!< Use more accurate but slower narrow phase sweep tests.
+			//!< May provide better compatibility with PhysX 3.2 sweep behavior.
+			eMTD = (1 << 9),	//!< Report the minimum translation depth, normal and contact point.
+			eFACE_INDEX = (1 << 10),	//!< "face index" member of #PxQueryHit is valid
 
-		eDEFAULT					= ePOSITION|eNORMAL|eFACE_INDEX,
+			eDEFAULT = ePOSITION | eNORMAL | eFACE_INDEX,
 
-		/** \brief Only this subset of flags can be modified by pre-filter. Other modifications will be discarded. */
-		eMODIFIABLE_FLAGS			= eMESH_MULTIPLE|eMESH_BOTH_SIDES|eASSUME_NO_INITIAL_OVERLAP|ePRECISE_SWEEP
+			/** \brief Only this subset of flags can be modified by pre-filter. Other modifications will be discarded. */
+			eMODIFIABLE_FLAGS = eMESH_MULTIPLE | eMESH_BOTH_SIDES | eASSUME_NO_INITIAL_OVERLAP | ePRECISE_SWEEP
+		};
 	};
-};
-
-/**
-\brief collection of set bits defined in PxHitFlag.
-
-\see PxHitFlag
-*/
-PX_FLAGS_TYPEDEF(PxHitFlag, PxU16)
-
-/**
-\brief Scene query hit information.
-*/
-struct PxQueryHit
-{
-	PX_INLINE			PxQueryHit() : faceIndex(0xFFFFffff) {}
 
 	/**
-	Face index of touched triangle, for triangle meshes, convex meshes and height fields.
+	\brief collection of set bits defined in PxHitFlag.
 
-	\note This index will default to 0xFFFFffff value for overlap queries.
-	\note Please refer to the user guide for more details for sweep queries.
-	\note This index is remapped by mesh cooking. Use #PxTriangleMesh::getTrianglesRemap() to convert to original mesh index.
-	\note For convex meshes use #PxConvexMesh::getPolygonData() to retrieve touched polygon data.
+	\see PxHitFlag
 	*/
-	PxU32				faceIndex;
-};
+	PX_FLAGS_TYPEDEF(PxHitFlag, PxU16)
 
-/**
-\brief Scene query hit information for raycasts and sweeps returning hit position and normal information.
+		/**
+		\brief Scene query hit information.
+		*/
+		struct PxQueryHit
+	{
+		PX_INLINE			PxQueryHit() : faceIndex(0xFFFFffff) {}
 
-::PxHitFlag flags can be passed to scene query functions, as an optimization, to cause the SDK to
-only generate specific members of this structure.
-*/
-struct PxLocationHit : PxQueryHit
-{
-	PX_INLINE			PxLocationHit() : flags(0), position(PxVec3(0)), normal(PxVec3(0)), distance(PX_MAX_REAL)	{}
+		/**
+		Face index of touched triangle, for triangle meshes, convex meshes and height fields.
+
+		\note This index will default to 0xFFFFffff value for overlap queries.
+		\note Please refer to the user guide for more details for sweep queries.
+		\note This index is remapped by mesh cooking. Use #PxTriangleMesh::getTrianglesRemap() to convert to original mesh index.
+		\note For convex meshes use #PxConvexMesh::getPolygonData() to retrieve touched polygon data.
+		*/
+		PxU32				faceIndex;
+	};
 
 	/**
-	\note For raycast hits: true for shapes overlapping with raycast origin.
-	\note For sweep hits: true for shapes overlapping at zero sweep distance.
+	\brief Scene query hit information for raycasts and sweeps returning hit position and normal information.
 
-	\see PxRaycastHit PxSweepHit
+	::PxHitFlag flags can be passed to scene query functions, as an optimization, to cause the SDK to
+	only generate specific members of this structure.
 	*/
-	PX_INLINE bool		hadInitialOverlap() const { return (distance <= 0.0f); }
+	struct PxLocationHit : PxQueryHit
+	{
+		PX_INLINE			PxLocationHit() : flags(0), position(PxVec3(0)), normal(PxVec3(0)), distance(PX_MAX_REAL) {}
 
-	// the following fields are set in accordance with the #PxHitFlags
-	PxHitFlags			flags;		//!< Hit flags specifying which members contain valid values.
-	PxVec3				position;	//!< World-space hit position (flag: #PxHitFlag::ePOSITION)
-	PxVec3				normal;		//!< World-space hit normal (flag: #PxHitFlag::eNORMAL)
+		/**
+		\note For raycast hits: true for shapes overlapping with raycast origin.
+		\note For sweep hits: true for shapes overlapping at zero sweep distance.
+
+		\see PxRaycastHit PxSweepHit
+		*/
+		PX_INLINE bool		hadInitialOverlap() const { return (distance <= 0.0f); }
+
+		// the following fields are set in accordance with the #PxHitFlags
+		PxHitFlags			flags;		//!< Hit flags specifying which members contain valid values.
+		PxVec3				position;	//!< World-space hit position (flag: #PxHitFlag::ePOSITION)
+		PxVec3				normal;		//!< World-space hit normal (flag: #PxHitFlag::eNORMAL)
+
+		/**
+		\brief	Distance to hit.
+		\note	If the eMTD flag is used, distance will be a negative value if shapes are overlapping indicating the penetration depth.
+		\note	Otherwise, this value will be >= 0 */
+		PxF32				distance;
+	};
 
 	/**
-	\brief	Distance to hit.
-	\note	If the eMTD flag is used, distance will be a negative value if shapes are overlapping indicating the penetration depth.
-	\note	Otherwise, this value will be >= 0 */
-	PxF32				distance;
-};
+	\brief Stores results of raycast queries.
 
-/**
-\brief Stores results of raycast queries.
+	::PxHitFlag flags can be passed to raycast function, as an optimization, to cause the SDK to only compute specified members of this
+	structure.
 
-::PxHitFlag flags can be passed to raycast function, as an optimization, to cause the SDK to only compute specified members of this
-structure.
+	Some members like barycentric coordinates are currently only computed for triangle meshes and height fields, but next versions
+	might provide them in other cases. The client code should check #flags to make sure returned values are valid.
 
-Some members like barycentric coordinates are currently only computed for triangle meshes and height fields, but next versions
-might provide them in other cases. The client code should check #flags to make sure returned values are valid.
+	\see PxScene.raycast
+	*/
+	struct PxGeomRaycastHit : PxLocationHit
+	{
+		PX_INLINE			PxGeomRaycastHit() : u(0.0f), v(0.0f) {}
 
-\see PxScene.raycast 
-*/
-struct PxGeomRaycastHit : PxLocationHit
-{
-	PX_INLINE			PxGeomRaycastHit() : u(0.0f), v(0.0f)	{}
+		// the following fields are set in accordance with the #PxHitFlags
 
-	// the following fields are set in accordance with the #PxHitFlags
+		PxReal	u, v;			//!< barycentric coordinates of hit point, for triangle mesh and height field (flag: #PxHitFlag::eUV)
+	};
 
-	PxReal	u, v;			//!< barycentric coordinates of hit point, for triangle mesh and height field (flag: #PxHitFlag::eUV)
-};
+	/**
+	\brief Stores results of overlap queries.
 
-/**
-\brief Stores results of overlap queries.
+	\see PxScene.overlap
+	*/
+	struct PxGeomOverlapHit : PxQueryHit
+	{
+		PX_INLINE			PxGeomOverlapHit() {}
+	};
 
-\see PxScene.overlap 
-*/
-struct PxGeomOverlapHit : PxQueryHit
-{
-	PX_INLINE			PxGeomOverlapHit() {}
-};
+	/**
+	\brief Stores results of sweep queries.
 
-/**
-\brief Stores results of sweep queries.
+	\see PxScene.sweep
+	*/
+	struct PxGeomSweepHit : PxLocationHit
+	{
+		PX_INLINE			PxGeomSweepHit() {}
+	};
 
-\see PxScene.sweep
-*/
-struct PxGeomSweepHit : PxLocationHit
-{
-	PX_INLINE			PxGeomSweepHit() {}
-};
+	/**
+	\brief Pair of indices, typically either object or triangle indices.
+	*/
+	struct PxGeomIndexPair
+	{
+		PX_FORCE_INLINE PxGeomIndexPair() : id0(0), id1(0) {}
+		PX_FORCE_INLINE PxGeomIndexPair(PxU32 _id0, PxU32 _id1) : id0(_id0), id1(_id1) {}
 
-/**
-\brief Pair of indices, typically either object or triangle indices.
-*/
-struct PxGeomIndexPair
-{
-    PX_FORCE_INLINE PxGeomIndexPair()												{}
-    PX_FORCE_INLINE PxGeomIndexPair(PxU32 _id0, PxU32 _id1) : id0(_id0), id1(_id1)	{}
-
-	PxU32	id0, id1;
-};
+		PxU32	id0, id1;
+	};
 
 #if !PX_DOXYGEN
 } // namespace physx

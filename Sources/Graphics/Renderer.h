@@ -218,6 +218,9 @@ private:	// メンバ変数
 	bool m_IsFullScreen;	// フルスクリーンかどうか
 	bool m_IsVSync;			// 垂直同期を行うかどうか
 
+	// ImGui用のDiscreptorHeapHandle
+	DescriptorHandle* m_pImDescHandle;
+
 private:	// シングルトン関連
 	friend class Manager<Renderer>;
 	Renderer(DXGI_FORMAT format)
@@ -248,6 +251,9 @@ private:	// シングルトン関連
 		, m_pPool()
 		, m_ColorTarget()
 		, m_DepthTarget()
+		, m_SceneColorTarget()
+		, m_SceneDepthTarget()
+		, m_pImDescHandle(nullptr)
 	{
 		for (auto i = 0; i < POOL_COUNT; ++i)
 		{

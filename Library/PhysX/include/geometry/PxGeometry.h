@@ -38,66 +38,66 @@ namespace physx
 {
 #endif
 
-/**
-\brief A geometry type.
+	/**
+	\brief A geometry type.
 
-Used to distinguish the type of a ::PxGeometry object.
-*/
-struct PxGeometryType
-{
-	enum Enum
+	Used to distinguish the type of a ::PxGeometry object.
+	*/
+	struct PxGeometryType
 	{
-		eSPHERE,
-		ePLANE,
-		eCAPSULE,
-		eBOX,
-		eCONVEXMESH,
-		ePARTICLESYSTEM,
-		eTETRAHEDRONMESH,
-		eTRIANGLEMESH,
-		eHEIGHTFIELD,
-		eHAIRSYSTEM,
-		eCUSTOM,
-		
-		eGEOMETRY_COUNT,	//!< internal use only!
-		eINVALID = -1		//!< internal use only!
+		enum Enum
+		{
+			eSPHERE,
+			ePLANE,
+			eCAPSULE,
+			eBOX,
+			eCONVEXMESH,
+			ePARTICLESYSTEM,
+			eTETRAHEDRONMESH,
+			eTRIANGLEMESH,
+			eHEIGHTFIELD,
+			eHAIRSYSTEM,
+			eCUSTOM,
+
+			eGEOMETRY_COUNT,	//!< internal use only!
+			eINVALID = -1		//!< internal use only!
+		};
 	};
-};
-
-/**
-\brief A geometry object.
-
-A geometry object defines the characteristics of a spatial object, but without any information
-about its placement in the world.
-
-\note This is an abstract class.  You cannot create instances directly.  Create an instance of one of the derived classes instead.
-*/
-class PxGeometry
-{
-public:
-	/**
-	\brief Returns the type of the geometry.
-	\return The type of the object.
-	*/
-	PX_CUDA_CALLABLE PX_FORCE_INLINE PxGeometryType::Enum getType() const	{ return mType; }	
 
 	/**
-	\brief Assignment operator
+	\brief A geometry object.
+
+	A geometry object defines the characteristics of a spatial object, but without any information
+	about its placement in the world.
+
+	\note This is an abstract class.  You cannot create instances directly.  Create an instance of one of the derived classes instead.
 	*/
-	PX_INLINE void operator=(const PxGeometry& that)
+	class PxGeometry
 	{
-		mType = that.mType;
-	}
+	public:
+		/**
+		\brief Returns the type of the geometry.
+		\return The type of the object.
+		*/
+		PX_CUDA_CALLABLE PX_FORCE_INLINE PxGeometryType::Enum getType() const { return mType; }
 
-protected:
-	PX_CUDA_CALLABLE PX_FORCE_INLINE PxGeometry(PxGeometryType::Enum type) : mType(type)	{}
-	PX_CUDA_CALLABLE PX_FORCE_INLINE PxGeometry(const PxGeometry& that) : mType(that.mType)	{}
+		/**
+		\brief Assignment operator
+		*/
+		PX_INLINE void operator=(const PxGeometry& that)
+		{
+			mType = that.mType;
+		}
 
-	PxGeometryType::Enum mType;
+	protected:
+		PX_CUDA_CALLABLE PX_FORCE_INLINE PxGeometry(PxGeometryType::Enum type) : mType(type), mTypePadding(0) {}
+		PX_CUDA_CALLABLE PX_FORCE_INLINE PxGeometry(const PxGeometry& that) : mType(that.mType), mTypePadding(0) {}
 
-public:
-	float	mTypePadding;	// PT: padding bytes on x64, used internally
-};
+		PxGeometryType::Enum mType;
+
+	public:
+		float	mTypePadding;	// PT: padding bytes on x64, used internally
+	};
 
 #if !PX_DOXYGEN
 } // namespace physx

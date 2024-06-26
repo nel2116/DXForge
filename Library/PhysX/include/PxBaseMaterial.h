@@ -46,11 +46,11 @@ namespace physx
 	{
 	public:
 		PX_INLINE			PxBaseMaterial(PxType concreteType, PxBaseFlags baseFlags) : PxRefCounted(concreteType, baseFlags), userData(NULL) {}
-		PX_INLINE			PxBaseMaterial(PxBaseFlags baseFlags) : PxRefCounted(baseFlags) {}
+		PX_INLINE			PxBaseMaterial(PxBaseFlags baseFlags) : PxRefCounted(baseFlags), userData(NULL) {}
 		virtual				~PxBaseMaterial() {}
 		virtual		bool	isKindOf(const char* name) const { PX_IS_KIND_OF(name, "PxBaseMaterial", PxRefCounted); }
 
-					void*	userData;	//!< user can assign this to whatever, usually to create a 1:1 relationship with a user object.
+		void* userData;	//!< user can assign this to whatever, usually to create a 1:1 relationship with a user object.
 	};
 
 #if !PX_DOXYGEN

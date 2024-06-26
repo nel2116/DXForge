@@ -46,10 +46,10 @@ namespace physx
 #endif
 
 	PX_ALIGN_PREFIX(16)
-	/**
-	\brief Data structure to represent spatial forces.
-	*/
-	struct PxSpatialForce
+		/**
+		\brief Data structure to represent spatial forces.
+		*/
+		struct PxSpatialForce
 	{
 		PxVec3 force;
 		PxReal pad0;
@@ -59,10 +59,10 @@ namespace physx
 	PX_ALIGN_SUFFIX(16);
 
 	PX_ALIGN_PREFIX(16)
-	/**
-	\brief Data structure to represent spatial velocities.
-	*/
-	struct PxSpatialVelocity
+		/**
+		\brief Data structure to represent spatial velocities.
+		*/
+		struct PxSpatialVelocity
 	{
 		PxVec3 linear;
 		PxReal pad0;
@@ -99,24 +99,24 @@ namespace physx
 	{
 	public:
 		PxArticulationCache() :
-			externalForces			(NULL),
-			denseJacobian			(NULL),
-			massMatrix				(NULL),
-			jointVelocity			(NULL),
-			jointAcceleration		(NULL),
-			jointPosition			(NULL),
-			jointForce				(NULL),
-			jointTargetPositions	(NULL),
-			jointTargetVelocities	(NULL),
-			linkVelocity			(NULL),
-			linkAcceleration		(NULL),
-			linkIncomingJointForce	(NULL),
-			rootLinkData			(NULL),
-			coefficientMatrix		(NULL),
-			lambda					(NULL),
-			scratchMemory			(NULL),
-			scratchAllocator		(NULL),
-			version					(0)
+			externalForces(NULL),
+			denseJacobian(NULL),
+			massMatrix(NULL),
+			jointVelocity(NULL),
+			jointAcceleration(NULL),
+			jointPosition(NULL),
+			jointForce(NULL),
+			jointTargetPositions(NULL),
+			jointTargetVelocities(NULL),
+			linkVelocity(NULL),
+			linkAcceleration(NULL),
+			linkIncomingJointForce(NULL),
+			rootLinkData(NULL),
+			coefficientMatrix(NULL),
+			lambda(NULL),
+			scratchMemory(NULL),
+			scratchAllocator(NULL),
+			version(0)
 		{}
 
 		/**
@@ -137,7 +137,7 @@ namespace physx
 
 		\see PxArticulationReducedCoordinate::computeGeneralizedExternalForce
 		*/
-		PxSpatialForce*				externalForces;
+		PxSpatialForce* externalForces;
 
 		/**
 		\brief Dense Jacobian data.
@@ -149,7 +149,7 @@ namespace physx
 
 		\see PxArticulationReducedCoordinate::computeDenseJacobian
 		*/
-		PxReal*						denseJacobian;
+		PxReal* denseJacobian;
 
 		/**
 		\brief The generalized mass matrix that maps joint accelerations to joint forces.
@@ -159,7 +159,7 @@ namespace physx
 
 		\see PxArticulationReducedCoordinate::computeGeneralizedMassMatrix
 		*/
-		PxReal*						massMatrix;
+		PxReal* massMatrix;
 
 		/**
 		\brief The articulation joint DOF velocities.
@@ -175,7 +175,7 @@ namespace physx
 		For example, assume that low-level link 2 has an inbound spherical joint with two DOFs: eSWING1 and eSWING2. The corresponding low-level joint DOF indices
 		are therefore 1 for eSWING1 and 2 for eSWING2.
 		*/
-		PxReal*						jointVelocity;
+		PxReal* jointVelocity;
 
 		/**
 		\brief The articulation joint DOF accelerations.
@@ -185,7 +185,7 @@ namespace physx
 		- The indexing follows the internal DOF index order, see PxArticulationCache::jointVelocity.
 		- Delta joint DOF velocities can be computed from acceleration * dt.
 		*/
-		PxReal*						jointAcceleration;
+		PxReal* jointAcceleration;
 
 		/**
 		\brief The articulation joint DOF positions.
@@ -193,9 +193,9 @@ namespace physx
 		- N = getDofs().
 		- Read/write using PxArticulationCacheFlag::ePOSITION.
 		- The indexing follows the internal DOF index order, see PxArticulationCache::jointVelocity.
-        - For spherical joints, the joint position for each axis on the joint must be in range [-Pi, Pi].
+		- For spherical joints, the joint position for each axis on the joint must be in range [-Pi, Pi].
 		*/
-		PxReal*						jointPosition;
+		PxReal* jointPosition;
 
 		/**
 		\brief The articulation joint DOF forces.
@@ -205,7 +205,7 @@ namespace physx
 		- The indexing follows the internal DOF index order, see PxArticulationCache::jointVelocity.
 		- Applied joint forces persist and are applied each frame until changed.
 		*/
-		PxReal*						jointForce;
+		PxReal* jointForce;
 
 		/**
 		\brief The articulation joint drive target positions.
@@ -214,7 +214,7 @@ namespace physx
 		- Write using PxArticulationCacheFlag::eJOINT_TARGET_POSITIONS.
 		- The indexing follows the internal DOF index order, see PxArticulationCache::jointVelocity.
 		*/
-		PxReal*						jointTargetPositions;
+		PxReal* jointTargetPositions;
 
 		/**
 		\brief The articulation joint drive target velocities.
@@ -223,7 +223,7 @@ namespace physx
 		- Write using PxArticulationCacheFlag::eJOINT_TARGET_VELOCITIES.
 		- The indexing follows the internal DOF index order, see PxArticulationCache::jointVelocity.
 		 */
-		PxReal*						jointTargetVelocities;
+		PxReal* jointTargetVelocities;
 
 		/**
 		\brief Link spatial velocity.
@@ -235,7 +235,7 @@ namespace physx
 
 		\see PxRigidBody::getCMassLocalPose
 		*/
-		PxSpatialVelocity*			linkVelocity;
+		PxSpatialVelocity* linkVelocity;
 
 		/**
 		\brief Link classical acceleration.
@@ -247,7 +247,7 @@ namespace physx
 
 		\see PxArticulationReducedCoordinate::getLinkAcceleration, PxRigidBody::getCMassLocalPose
 		*/
-		PxSpatialVelocity*			linkAcceleration;
+		PxSpatialVelocity* linkAcceleration;
 
 		/**
 		\brief Link incoming joint force, i.e. the total force transmitted from the parent link to this link.
@@ -260,8 +260,8 @@ namespace physx
 		\see PxArticulationJointReducedCoordinate::getChildPose
 		\note The root link reports a zero spatial force.
 		*/
-		PxSpatialForce*			linkIncomingJointForce;
-		
+		PxSpatialForce* linkIncomingJointForce;
+
 		/**
 		\brief Root link transform, velocities, and accelerations.
 
@@ -270,7 +270,7 @@ namespace physx
 
 		\see PxArticulationRootLinkData
 		*/
-		PxArticulationRootLinkData*	rootLinkData;
+		PxArticulationRootLinkData* rootLinkData;
 
 		// Members and memory below here are not zeroed when zeroCache is called, and are not included in the size returned by PxArticulationReducedCoordinate::getCacheDataSize.
 
@@ -284,7 +284,7 @@ namespace physx
 
 		\see PxArticulationReducedCoordinate::computeCoefficientMatrix
 		*/
-		PX_DEPRECATED PxReal*			coefficientMatrix;
+		PX_DEPRECATED PxReal* coefficientMatrix;
 
 		/**
 		\deprecated The API related to loop joints will be removed in a future version once a replacement is made available.
@@ -296,10 +296,10 @@ namespace physx
 
 		\see PxArticulationReducedCoordinate::computeLambda
 		*/
-		PX_DEPRECATED PxReal*			lambda;
+		PX_DEPRECATED PxReal* lambda;
 
-		void*						scratchMemory;		//!< The scratch memory is used for internal calculations.
-		void*						scratchAllocator;	//!< The scratch allocator is used for internal calculations.
+		void* scratchMemory;		//!< The scratch memory is used for internal calculations.
+		void* scratchAllocator;	//!< The scratch allocator is used for internal calculations.
 		PxU32						version;			//!< The cache version used internally to check compatibility with the articulation, i.e. detect if the articulation configuration changed after the cache was created.
 	};
 
@@ -324,12 +324,12 @@ namespace physx
 #pragma warning(disable : 4435)
 #endif
 
-	/**
-	\brief A tree structure of bodies connected by joints that is treated as a unit by the dynamics solver. Parametrized in reduced (joint) coordinates.
+		/**
+		\brief A tree structure of bodies connected by joints that is treated as a unit by the dynamics solver. Parametrized in reduced (joint) coordinates.
 
-	\see PxArticulationJointReducedCoordinate, PxArticulationLink, PxPhysics::createArticulationReducedCoordinate
-	*/
-	class PxArticulationReducedCoordinate : public PxBase
+		\see PxArticulationJointReducedCoordinate, PxArticulationLink, PxPhysics::createArticulationReducedCoordinate
+		*/
+		class PxArticulationReducedCoordinate : public PxBase
 	{
 	public:
 
@@ -340,7 +340,7 @@ namespace physx
 
 		\see PxScene
 		*/
-		virtual		PxScene*		getScene()	const = 0;
+		virtual		PxScene* getScene()	const = 0;
 
 		/**
 		\brief Sets the solver iteration counts for the articulation.
@@ -356,7 +356,7 @@ namespace physx
 		If intersecting bodies are being depenetrated too violently, increase the number of velocity
 		iterations. More velocity iterations will drive the relative exit velocity of the intersecting
 		objects closer to the correct value given the restitution.
-		
+
 		\param[in] minPositionIters Number of position iterations the solver should perform for this articulation. <b>Range:</b> [1,255]. <b>Default:</b> 4.
 		\param[in] minVelocityIters Number of velocity iterations the solver should perform for this articulation. <b>Range:</b> [0,255]. <b>Default:</b> 1
 
@@ -584,14 +584,14 @@ namespace physx
 		\note Creating a link is not allowed while the articulation is in a scene. In order to add a link,
 		remove and then re-add the articulation to the scene.
 
-		\note  When the articulation is added to a scene, the root link adopts the specified pose. The pose of the 
-		root link is propagated through the ensemble of links from parent to child after accounting for each child's 
+		\note  When the articulation is added to a scene, the root link adopts the specified pose. The pose of the
+		root link is propagated through the ensemble of links from parent to child after accounting for each child's
 		inbound joint frames and the joint positions set by  PxArticulationJointReducedCoordinate::setJointPosition().
 		As a consequence, the pose of each non-root link is automatically overwritten when adding the articulation to the scene.
 
 		\see PxArticulationLink
 		*/
-		virtual		PxArticulationLink*	createLink(PxArticulationLink* parent, const PxTransform& pose) = 0;
+		virtual		PxArticulationLink* createLink(PxArticulationLink* parent, const PxTransform& pose) = 0;
 
 		/**
 		\brief Releases the articulation, and all its links and corresponding joints.
@@ -653,7 +653,7 @@ namespace physx
 
 		\see setName()
 		*/
-		virtual		const char*			getName()			const = 0;
+		virtual		const char* getName()			const = 0;
 
 		/**
 		\brief Returns the axis-aligned bounding box enclosing the articulation.
@@ -676,7 +676,7 @@ namespace physx
 
 		\see PxAggregate
 		*/
-		virtual		PxAggregate*		getAggregate() const = 0;
+		virtual		PxAggregate* getAggregate() const = 0;
 
 		/**
 		\brief Sets flags on the articulation.
@@ -734,7 +734,7 @@ namespace physx
 
 		\see applyCache, copyInternalStateToCache
 		*/
-		virtual		PxArticulationCache*	createCache() const = 0;
+		virtual		PxArticulationCache* createCache() const = 0;
 
 		/**
 		\brief Returns the size of the articulation cache in bytes.
@@ -1064,13 +1064,13 @@ namespace physx
 		in order to update link states for the next simulation frame or querying.
 
 		\param[in] pose The new root link transform.
-		\param[in] autowake If true and the articulation is in a scene, the articulation will be woken up and the wake counter of 
+		\param[in] autowake If true and the articulation is in a scene, the articulation will be woken up and the wake counter of
 		each link will be reset to #PxSceneDesc::wakeCounterResetValue.
 
 		\note This call may not be made during simulation.
 
-		\note PxArticulationCache::rootLinkData similarly allows the root link pose to be updated and potentially offers better performance 
-		if the root link pose is to be updated along with other state variables. 
+		\note PxArticulationCache::rootLinkData similarly allows the root link pose to be updated and potentially offers better performance
+		if the root link pose is to be updated along with other state variables.
 
 		\see getRootGlobalPose, updateKinematic, PxArticulationCache, applyCache
 		*/
@@ -1085,7 +1085,7 @@ namespace physx
 		and in PxContactModifyCallback or in contact report callbacks.
 
 		\note PxArticulationCache::rootLinkData similarly allows the root link pose to be queried and potentially offers better performance if the root
-		link pose is to be queried along with other state variables. 
+		link pose is to be queried along with other state variables.
 
 		\see setRootGlobalPose, PxArticulationCache, copyInternalStateToCache
 		*/
@@ -1105,8 +1105,8 @@ namespace physx
 
 		\note This call may not be made during simulation, except in a split simulation in-between #PxScene::fetchCollision and #PxScene::advance.
 
-		\note PxArticulationCache::rootLinkData similarly allows the root link linear velocity to be updated and potentially offers better performance 
-		if the root link linear velocity is to be updated along with other state variables. 
+		\note PxArticulationCache::rootLinkData similarly allows the root link linear velocity to be updated and potentially offers better performance
+		if the root link linear velocity is to be updated along with other state variables.
 
 		\see updateKinematic, getRootLinearVelocity, setRootAngularVelocity, getRootAngularVelocity, PxRigidBody::getCMassLocalPose, PxArticulationCache, applyCache
 		*/
@@ -1122,8 +1122,8 @@ namespace physx
 		\note This call is not allowed while the simulation is running except in a split simulation during #PxScene::collide() and up to #PxScene::advance(),
 		and in PxContactModifyCallback or in contact report callbacks.
 
-		\note PxArticulationCache::rootLinkData similarly allows the root link linear velocity to be queried and potentially offers better performance 
-		if the root link linear velocity is to be queried along with other state variables. 
+		\note PxArticulationCache::rootLinkData similarly allows the root link linear velocity to be queried and potentially offers better performance
+		if the root link linear velocity is to be queried along with other state variables.
 
 		\see setRootLinearVelocity, setRootAngularVelocity, getRootAngularVelocity, PxRigidBody::getCMassLocalPose, PxArticulationCache, applyCache
 		*/
@@ -1142,8 +1142,8 @@ namespace physx
 
 		\note This call may not be made during simulation, except in a split simulation in-between #PxScene::fetchCollision and #PxScene::advance.
 
-		\note PxArticulationCache::rootLinkData similarly allows the root link angular velocity to be updated and potentially offers better performance 
-		if the root link angular velocity is to be updated along with other state variables. 
+		\note PxArticulationCache::rootLinkData similarly allows the root link angular velocity to be updated and potentially offers better performance
+		if the root link angular velocity is to be updated along with other state variables.
 
 		\see updateKinematic, getRootAngularVelocity, setRootLinearVelocity, getRootLinearVelocity, PxArticulationCache, applyCache
 		*/
@@ -1157,8 +1157,8 @@ namespace physx
 		\note This call is not allowed while the simulation is running except in a split simulation during #PxScene::collide() and up to #PxScene::advance(),
 		and in PxContactModifyCallback or in contact report callbacks.
 
-		\note PxArticulationCache::rootLinkData similarly allows the root link angular velocity to be queried and potentially offers better performance 
-		if the root link angular velocity is to be queried along with other state variables. 
+		\note PxArticulationCache::rootLinkData similarly allows the root link angular velocity to be queried and potentially offers better performance
+		if the root link angular velocity is to be queried along with other state variables.
 
 		\see setRootAngularVelocity, setRootLinearVelocity, getRootLinearVelocity, PxArticulationCache, applyCache
 		*/
@@ -1175,7 +1175,7 @@ namespace physx
 		\return The link's center-of-mass classical acceleration, or 0 if the call is made before the articulation participated in a first simulation step.
 
 		\note This call may only be made on articulations that are in a scene. It is not allowed to use this method while the simulation
-		is running.  The exceptions to this rule are a split simulation during #PxScene::collide() and up to #PxScene::advance(); 
+		is running.  The exceptions to this rule are a split simulation during #PxScene::collide() and up to #PxScene::advance();
 		in PxContactModifyCallback; and in contact report callbacks.
 
 		\see PxArticulationLink::getLinkIndex, PxRigidBody::getCMassLocalPose
@@ -1210,7 +1210,7 @@ namespace physx
 
 		\see PxArticulationSpatialTendon
 		*/
-		virtual		PxArticulationSpatialTendon*	createSpatialTendon() = 0;
+		virtual		PxArticulationSpatialTendon* createSpatialTendon() = 0;
 
 		/**
 		\brief Creates a fixed tendon to attach to the articulation with default attribute values.
@@ -1224,7 +1224,7 @@ namespace physx
 
 		\see PxArticulationFixedTendon
 		*/
-		virtual		PxArticulationFixedTendon*		createFixedTendon() = 0;
+		virtual		PxArticulationFixedTendon* createFixedTendon() = 0;
 
 		/**
 		\brief Returns the spatial tendons attached to the articulation.
@@ -1283,7 +1283,7 @@ namespace physx
 		\note The mimic joint enforces the rule: qA + gearRatio*qB + offset = 0 with qA denoting the joint position of the specified
 		 degree of freedom of jointA and qB denoting the joint position of the specified degree of freedom of jointB.
 		*/
-		virtual		PxArticulationMimicJoint*		createMimicJoint(const PxArticulationJointReducedCoordinate& jointA, PxArticulationAxis::Enum axisA, const PxArticulationJointReducedCoordinate& jointB, PxArticulationAxis::Enum axisB, PxReal gearRatio, PxReal offset) = 0;
+		virtual		PxArticulationMimicJoint* createMimicJoint(const PxArticulationJointReducedCoordinate& jointA, PxArticulationAxis::Enum axisA, const PxArticulationJointReducedCoordinate& jointB, PxArticulationAxis::Enum axisB, PxReal gearRatio, PxReal offset) = 0;
 
 		/**
 		\brief Returns the mimic joints added to the articulation.
@@ -1311,7 +1311,7 @@ namespace physx
 		/**
 		\brief Update link velocities and/or positions in the articulation.
 
-	    An alternative that potentially offers better performance is to use the PxArticulationCache API.
+		An alternative that potentially offers better performance is to use the PxArticulationCache API.
 
 		If the application updates the root state (position and velocity) or joint state via any combination of
 		the non-cache API calls
@@ -1337,7 +1337,7 @@ namespace physx
 
 		The residual represents the current error in this constraint measured as the delta impulse applied in the last velocity or position iteration.
 		If the solver converges perfectly, the residual should approach zero.
-		
+
 		\return The residual for the articulation solver.
 
 		\see PxArticulationResidual
@@ -1346,11 +1346,11 @@ namespace physx
 
 		virtual								~PxArticulationReducedCoordinate() {}
 
-		void*								userData;	//!< user can assign this to whatever, usually to create a 1:1 relationship with a user object.
+		void* userData;	//!< user can assign this to whatever, usually to create a 1:1 relationship with a user object.
 
 	protected:
-		PX_INLINE							PxArticulationReducedCoordinate(PxType concreteType, PxBaseFlags baseFlags) : PxBase(concreteType, baseFlags) {}
-		PX_INLINE							PxArticulationReducedCoordinate(PxBaseFlags baseFlags) : PxBase(baseFlags) {}
+		PX_INLINE							PxArticulationReducedCoordinate(PxType concreteType, PxBaseFlags baseFlags) : PxBase(concreteType, baseFlags), userData(NULL) {}
+		PX_INLINE							PxArticulationReducedCoordinate(PxBaseFlags baseFlags) : PxBase(baseFlags), userData(NULL) {}
 
 	};
 

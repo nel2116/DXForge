@@ -69,11 +69,11 @@ public:	// パブリック関数
 	}
 
 private:	// メンバ変数
-	ComPtr<ID3D12Resource> m_pCB;			// 定数バッファ.
-	DescriptorHandle* m_pHandle;			// ディスクリプタハンドルです.
-	DescriptorPool* m_pPool;				// ディスクリプタプールです.
-	D3D12_CONSTANT_BUFFER_VIEW_DESC m_Desc;	// 定数バッファビューの構成設定.
-	void* m_pMappedPtr;						// マップ済みポインタ.
+	ComPtr<ID3D12Resource> m_pCB;			// 定数バッファ
+	DescriptorHandle* m_pHandle;			// ディスクリプタハンドル
+	DescriptorPool* m_pPool;				// ディスクリプタプール
+	D3D12_CONSTANT_BUFFER_VIEW_DESC m_Desc;	// 定数バッファビューの構成設定
+	void* m_pMappedPtr;						// マップ済みポインタ
 
 private:	// プライベート関数
 	ConstantBuffer(const ConstantBuffer&) = delete;       // アクセス禁止.

@@ -52,14 +52,14 @@ namespace physx
 
 		Creates an empty object with no particles.
 		*/
-		PX_INLINE PxParticleSystemGeometry() : PxGeometry(PxGeometryType::ePARTICLESYSTEM){}
+		PX_INLINE PxParticleSystemGeometry() : PxGeometry(PxGeometryType::ePARTICLESYSTEM), mSolverType() {}
 
 		/**
 		\brief Copy constructor.
 
 		\param[in] that		Other object
 		*/
-		PX_INLINE PxParticleSystemGeometry(const PxParticleSystemGeometry& that) : PxGeometry(that) {}
+		PX_INLINE PxParticleSystemGeometry(const PxParticleSystemGeometry& that) : PxGeometry(that), mSolverType(that.mSolverType) {}
 
 		/**
 		\brief Assignment operator
@@ -79,7 +79,7 @@ namespace physx
 		*/
 		PX_FORCE_INLINE bool isValid() const
 		{
-			if(mType != PxGeometryType::ePARTICLESYSTEM)
+			if (mType != PxGeometryType::ePARTICLESYSTEM)
 				return false;
 
 			return true;

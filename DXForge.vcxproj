@@ -97,7 +97,7 @@
       </SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)Sources\DirectXTex\$(PlatformTarget)\$(Configuration)_static;$(SolutionDir)Library/assimp/build/lib/$(Configuration);$(SolutionDir)Library/PhysX/lib/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <DelayLoadDLLs>assimp-vc143-mtd.dll;freeglut.dll;PhysX_64.dll;PhysXCommon_64.dll;PhysXCooking_64.dll;PhysXDevice64.dll;PhysXFoundation_64.dll;PhysXGpu_64.dll;PVDRuntime_64.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
+      <DelayLoadDLLs>assimp-vc143-mtd.dll;PhysX_64.dll;PhysXCooking_64.dll;PhysXFoundation_64.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
     </Link>
     <FxCompile>
       <ObjectFileOutput>$(SolutionDir)Assets\Shaders\%(Filename).cso</ObjectFileOutput>
@@ -149,7 +149,7 @@
       </SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)Sources\DirectXTex\$(PlatformTarget)\$(Configuration)_static;$(SolutionDir)Library/assimp/build/lib/$(Configuration);$(SolutionDir)Library/PhysX/lib/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <DelayLoadDLLs>assimp-vc143-mtd.dll;freeglut.dll;PhysX_64.dll;PhysXCommon_64.dll;PhysXCooking_64.dll;PhysXDevice64.dll;PhysXFoundation_64.dll;PhysXGpu_64.dll;PVDRuntime_64.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
+      <DelayLoadDLLs>assimp-vc143-mtd.dll;PhysX_64.dll;PhysXCooking_64.dll;PhysXFoundation_64.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
     </Link>
     <Bscmake>
       <SuppressStartupBanner>true</SuppressStartupBanner>

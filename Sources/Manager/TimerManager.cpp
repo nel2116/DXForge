@@ -53,7 +53,7 @@ float TimerManager::UpdateFPS(double Def)
 	m_dwSumTimes += Def - *m_dwDefTimeList.begin();
 
 	// FPS‚ÌXV
-	return FPS;
+	return static_cast<float>(FPS);
 }
 
 double TimerManager::GetFPS()

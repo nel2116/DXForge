@@ -38,17 +38,17 @@ namespace physx
 {
 #endif
 
-class PxActor;
-class PxBVH;
-class PxScene;
+	class PxActor;
+	class PxBVH;
+	class PxScene;
 
 	struct PxAggregateType
 	{
 		enum Enum
 		{
-			eGENERIC	= 0,	//!< Aggregate will contain various actors of unspecified types
-			eSTATIC		= 1,	//!< Aggregate will only contain static actors
-			eKINEMATIC	= 2		//!< Aggregate will only contain kinematic actors
+			eGENERIC = 0,	//!< Aggregate will contain various actors of unspecified types
+			eSTATIC = 1,	//!< Aggregate will only contain static actors
+			eKINEMATIC = 2		//!< Aggregate will only contain kinematic actors
 		};
 	};
 
@@ -59,7 +59,7 @@ class PxScene;
 	PX_CUDA_CALLABLE PX_FORCE_INLINE	PxAggregateFilterHint	PxGetAggregateFilterHint(PxAggregateType::Enum type, bool enableSelfCollision)
 	{
 		const PxU32 selfCollisionBit = enableSelfCollision ? 1 : 0;
-		return PxAggregateFilterHint((PxU32(type)<<1)|selfCollisionBit);
+		return PxAggregateFilterHint((PxU32(type) << 1) | selfCollisionBit);
 	}
 
 	PX_CUDA_CALLABLE PX_FORCE_INLINE	PxU32					PxGetAggregateSelfCollisionBit(PxAggregateFilterHint hint)
@@ -69,175 +69,175 @@ class PxScene;
 
 	PX_CUDA_CALLABLE PX_FORCE_INLINE	PxAggregateType::Enum	PxGetAggregateType(PxAggregateFilterHint hint)
 	{
-		return PxAggregateType::Enum(hint>>1);
+		return PxAggregateType::Enum(hint >> 1);
 	}
 
-/**
-\brief Class to aggregate actors into a single broad-phase entry.
-
-A PxAggregate object is a collection of PxActors, which will exist as a single entry in the
-broad-phase structures. This has 3 main benefits:
-
-1) it reduces "broad phase pollution" by allowing a collection of spatially coherent broad-phase 
-entries to be replaced by a single aggregated entry (e.g. a ragdoll or a single actor with a 
-large number of attached shapes).
-
-2) it reduces broad-phase memory usage
-
-3) filtering can be optimized a lot if self-collisions within an aggregate are not needed. For
-   example if you don't need collisions between ragdoll bones, it's faster to simply disable
-   filtering once and for all, for the aggregate containing the ragdoll, rather than filtering
-   out each bone-bone collision in the filter shader.
-
-\see PxActor, PxPhysics.createAggregate
-*/
-class PxAggregate : public PxBase
-{
-public:
-
 	/**
-	\brief Deletes the aggregate object.
+	\brief Class to aggregate actors into a single broad-phase entry.
 
-	Deleting the PxAggregate object does not delete the aggregated actors. If the PxAggregate object
-	belongs to a scene, the aggregated actors are automatically re-inserted in that scene. If you intend
-	to delete both the PxAggregate and its actors, it is best to release the actors first, then release
-	the PxAggregate when it is empty.
+	A PxAggregate object is a collection of PxActors, which will exist as a single entry in the
+	broad-phase structures. This has 3 main benefits:
+
+	1) it reduces "broad phase pollution" by allowing a collection of spatially coherent broad-phase
+	entries to be replaced by a single aggregated entry (e.g. a ragdoll or a single actor with a
+	large number of attached shapes).
+
+	2) it reduces broad-phase memory usage
+
+	3) filtering can be optimized a lot if self-collisions within an aggregate are not needed. For
+	   example if you don't need collisions between ragdoll bones, it's faster to simply disable
+	   filtering once and for all, for the aggregate containing the ragdoll, rather than filtering
+	   out each bone-bone collision in the filter shader.
+
+	\see PxActor, PxPhysics.createAggregate
 	*/
-	virtual	void	release()	= 0;
+	class PxAggregate : public PxBase
+	{
+	public:
 
-	/**
-	\brief Adds an actor to the aggregate object.
+		/**
+		\brief Deletes the aggregate object.
 
-	A warning is output if the total number of actors is reached, or if the incoming actor already belongs
-	to an aggregate.
+		Deleting the PxAggregate object does not delete the aggregated actors. If the PxAggregate object
+		belongs to a scene, the aggregated actors are automatically re-inserted in that scene. If you intend
+		to delete both the PxAggregate and its actors, it is best to release the actors first, then release
+		the PxAggregate when it is empty.
+		*/
+		virtual	void	release() = 0;
 
-	If the aggregate belongs to a scene, adding an actor to the aggregate also adds the actor to that scene.
+		/**
+		\brief Adds an actor to the aggregate object.
 
-	If the actor already belongs to a scene, a warning is output and the call is ignored. You need to remove
-	the actor from the scene first, before adding it to the aggregate.
+		A warning is output if the total number of actors is reached, or if the incoming actor already belongs
+		to an aggregate.
 
-	\note When a BVH is provided the actor shapes are grouped together. 
-	The scene query pruning structure inside PhysX SDK will store/update one
-	bound per actor. The scene queries against such an actor will query actor
-	bounds and then make a local space query against the provided BVH, which is in actor's local space.
+		If the aggregate belongs to a scene, adding an actor to the aggregate also adds the actor to that scene.
 
-	\param	[in] actor	The actor that should be added to the aggregate
-	\param	[in] bvh	BVH for actor shapes.
-	return	true if success
-	*/
-	virtual	bool	addActor(PxActor& actor, const PxBVH* bvh = NULL)	= 0;
+		If the actor already belongs to a scene, a warning is output and the call is ignored. You need to remove
+		the actor from the scene first, before adding it to the aggregate.
 
-	/**
-	\brief Removes an actor from the aggregate object.
+		\note When a BVH is provided the actor shapes are grouped together.
+		The scene query pruning structure inside PhysX SDK will store/update one
+		bound per actor. The scene queries against such an actor will query actor
+		bounds and then make a local space query against the provided BVH, which is in actor's local space.
 
-	A warning is output if the incoming actor does not belong to the aggregate. Otherwise the actor is
-	removed from the aggregate. If the aggregate belongs to a scene, the actor is reinserted in that
-	scene. If you intend to delete the actor, it is best to call #PxActor::release() directly. That way
-	the actor will be automatically removed from its aggregate (if any) and not reinserted in a scene.
+		\param	[in] actor	The actor that should be added to the aggregate
+		\param	[in] bvh	BVH for actor shapes.
+		return	true if success
+		*/
+		virtual	bool	addActor(PxActor& actor, const PxBVH* bvh = NULL) = 0;
 
-	\param	[in] actor The actor that should be removed from the aggregate
-	return	true if success
-	*/
-	virtual	bool	removeActor(PxActor& actor)		= 0;
+		/**
+		\brief Removes an actor from the aggregate object.
 
-	/**
-	\brief Adds an articulation to the aggregate object.
+		A warning is output if the incoming actor does not belong to the aggregate. Otherwise the actor is
+		removed from the aggregate. If the aggregate belongs to a scene, the actor is reinserted in that
+		scene. If you intend to delete the actor, it is best to call #PxActor::release() directly. That way
+		the actor will be automatically removed from its aggregate (if any) and not reinserted in a scene.
 
-	A warning is output if the total number of actors is reached (every articulation link counts as an actor), 
-	or if the incoming articulation already belongs	to an aggregate.
+		\param	[in] actor The actor that should be removed from the aggregate
+		return	true if success
+		*/
+		virtual	bool	removeActor(PxActor& actor) = 0;
 
-	If the aggregate belongs to a scene, adding an articulation to the aggregate also adds the articulation to that scene.
+		/**
+		\brief Adds an articulation to the aggregate object.
 
-	If the articulation already belongs to a scene, a warning is output and the call is ignored. You need to remove
-	the articulation from the scene first, before adding it to the aggregate.
+		A warning is output if the total number of actors is reached (every articulation link counts as an actor),
+		or if the incoming articulation already belongs	to an aggregate.
 
-	\param	[in] articulation The articulation that should be added to the aggregate
-	return	true if success
-	*/
-	virtual	bool	addArticulation(PxArticulationReducedCoordinate& articulation) = 0;
+		If the aggregate belongs to a scene, adding an articulation to the aggregate also adds the articulation to that scene.
 
-	/**
-	\brief Removes an articulation from the aggregate object.
+		If the articulation already belongs to a scene, a warning is output and the call is ignored. You need to remove
+		the articulation from the scene first, before adding it to the aggregate.
 
-	A warning is output if the incoming articulation does not belong to the aggregate. Otherwise the articulation is
-	removed from the aggregate. If the aggregate belongs to a scene, the articulation is reinserted in that
-	scene. If you intend to delete the articulation, it is best to call #PxArticulationReducedCoordinate::release() directly. That way
-	the articulation will be automatically removed from its aggregate (if any) and not reinserted in a scene.
+		\param	[in] articulation The articulation that should be added to the aggregate
+		return	true if success
+		*/
+		virtual	bool	addArticulation(PxArticulationReducedCoordinate& articulation) = 0;
 
-	\param	[in] articulation The articulation that should be removed from the aggregate
-	return	true if success
-	*/
-	virtual	bool	removeArticulation(PxArticulationReducedCoordinate& articulation) = 0;
+		/**
+		\brief Removes an articulation from the aggregate object.
 
-	/**
-	\brief Returns the number of actors contained in the aggregate.
+		A warning is output if the incoming articulation does not belong to the aggregate. Otherwise the articulation is
+		removed from the aggregate. If the aggregate belongs to a scene, the articulation is reinserted in that
+		scene. If you intend to delete the articulation, it is best to call #PxArticulationReducedCoordinate::release() directly. That way
+		the articulation will be automatically removed from its aggregate (if any) and not reinserted in a scene.
 
-	You can use #getActors() to retrieve the actor pointers.
+		\param	[in] articulation The articulation that should be removed from the aggregate
+		return	true if success
+		*/
+		virtual	bool	removeArticulation(PxArticulationReducedCoordinate& articulation) = 0;
 
-	\return Number of actors contained in the aggregate.
+		/**
+		\brief Returns the number of actors contained in the aggregate.
 
-	\see PxActor getActors()
-	*/
-	virtual PxU32	getNbActors() const = 0;
+		You can use #getActors() to retrieve the actor pointers.
 
-	/**
-	\brief Retrieves max amount of actors that can be contained in the aggregate.
+		\return Number of actors contained in the aggregate.
 
-	\return Max actor size. 
+		\see PxActor getActors()
+		*/
+		virtual PxU32	getNbActors() const = 0;
 
-	\see PxPhysics::createAggregate()
-	*/
-	virtual	PxU32	getMaxNbActors() const = 0;
+		/**
+		\brief Retrieves max amount of actors that can be contained in the aggregate.
 
-	/**
-	\brief Retrieves max amount of shapes that can be contained in the aggregate.
+		\return Max actor size.
 
-	\return Max shape size.
+		\see PxPhysics::createAggregate()
+		*/
+		virtual	PxU32	getMaxNbActors() const = 0;
 
-	\see PxPhysics::createAggregate()
-	*/
-	virtual	PxU32	getMaxNbShapes() const = 0;
+		/**
+		\brief Retrieves max amount of shapes that can be contained in the aggregate.
 
-	/**
-	\brief Retrieve all actors contained in the aggregate.
+		\return Max shape size.
 
-	You can retrieve the number of actor pointers by calling #getNbActors()
+		\see PxPhysics::createAggregate()
+		*/
+		virtual	PxU32	getMaxNbShapes() const = 0;
 
-	\param[out] userBuffer The buffer to store the actor pointers.
-	\param[in] bufferSize Size of provided user buffer.
-	\param[in] startIndex Index of first actor pointer to be retrieved
-	\return Number of actor pointers written to the buffer.
+		/**
+		\brief Retrieve all actors contained in the aggregate.
 
-	\see PxShape getNbShapes()
-	*/
-	virtual PxU32	getActors(PxActor** userBuffer, PxU32 bufferSize, PxU32 startIndex=0) const = 0;
+		You can retrieve the number of actor pointers by calling #getNbActors()
 
-	/**
-	\brief Retrieves the scene which this aggregate belongs to.
+		\param[out] userBuffer The buffer to store the actor pointers.
+		\param[in] bufferSize Size of provided user buffer.
+		\param[in] startIndex Index of first actor pointer to be retrieved
+		\return Number of actor pointers written to the buffer.
 
-	\return Owner Scene. NULL if not part of a scene.
+		\see PxShape getNbShapes()
+		*/
+		virtual PxU32	getActors(PxActor** userBuffer, PxU32 bufferSize, PxU32 startIndex = 0) const = 0;
 
-	\see PxScene
-	*/
-	virtual	PxScene*	getScene()	= 0;
+		/**
+		\brief Retrieves the scene which this aggregate belongs to.
 
-	/**
-	\brief Retrieves aggregate's self-collision flag.
+		\return Owner Scene. NULL if not part of a scene.
 
-	\return self-collision flag
-	*/
-	virtual	bool		getSelfCollision()	const	= 0;
+		\see PxScene
+		*/
+		virtual	PxScene* getScene() = 0;
 
-	virtual	const char*	getConcreteTypeName() const	{ return "PxAggregate"; }
+		/**
+		\brief Retrieves aggregate's self-collision flag.
 
-			void*		userData;	//!< user can assign this to whatever, usually to create a 1:1 relationship with a user object.
+		\return self-collision flag
+		*/
+		virtual	bool		getSelfCollision()	const = 0;
 
-protected:
-	PX_INLINE			PxAggregate(PxType concreteType, PxBaseFlags baseFlags) : PxBase(concreteType, baseFlags), userData(NULL)  {}
-	PX_INLINE			PxAggregate(PxBaseFlags baseFlags) : PxBase(baseFlags) {}
-	virtual				~PxAggregate() {}
-	virtual	bool		isKindOf(const char* name) const { PX_IS_KIND_OF(name, "PxAggregate", PxBase); }
-};
+		virtual	const char* getConcreteTypeName() const { return "PxAggregate"; }
+
+		void* userData;	//!< user can assign this to whatever, usually to create a 1:1 relationship with a user object.
+
+	protected:
+		PX_INLINE			PxAggregate(PxType concreteType, PxBaseFlags baseFlags) : PxBase(concreteType, baseFlags), userData(NULL) {}
+		PX_INLINE			PxAggregate(PxBaseFlags baseFlags) : PxBase(baseFlags), userData(NULL) {}
+		virtual				~PxAggregate() {}
+		virtual	bool		isKindOf(const char* name) const { PX_IS_KIND_OF(name, "PxAggregate", PxBase); }
+	};
 
 #if !PX_DOXYGEN
 } // namespace physx

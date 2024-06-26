@@ -16,6 +16,7 @@ ConstantBuffer::ConstantBuffer()
 	, m_pHandle(nullptr)
 	, m_pPool(nullptr)
 	, m_pMappedPtr(nullptr)
+	, m_Desc()
 {
 }
 
@@ -39,9 +40,9 @@ bool ConstantBuffer::Init(DescriptorPool* pPool, size_t size)
 	m_pPool->AddRef();
 
 	size_t align = D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT;
-	UINT64 sizeAligned = (size + (align - 1)) & ~(align - 1); // alignに切り上げる.
+	UINT64 sizeAligned = (size + (align - 1)) & ~(align - 1); // alignに切り上げる
 
-	// ヒーププロパティ.
+	// ヒーププロパティ
 	D3D12_HEAP_PROPERTIES prop = {};
 	prop.Type = D3D12_HEAP_TYPE_UPLOAD;
 	prop.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
@@ -49,7 +50,7 @@ bool ConstantBuffer::Init(DescriptorPool* pPool, size_t size)
 	prop.CreationNodeMask = 1;
 	prop.VisibleNodeMask = 1;
 
-	// リソースの設定.
+	// リソースの設定
 	D3D12_RESOURCE_DESC desc = {};
 	desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
 	desc.Alignment = 0;
@@ -63,7 +64,7 @@ bool ConstantBuffer::Init(DescriptorPool* pPool, size_t size)
 	desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
 	desc.Flags = D3D12_RESOURCE_FLAG_NONE;
 
-	// リソースを生成.
+	// リソースを生成
 	auto hr = pDevice->CreateCommittedResource(
 		&prop,
 		D3D12_HEAP_FLAG_NONE,
@@ -77,7 +78,7 @@ bool ConstantBuffer::Init(DescriptorPool* pPool, size_t size)
 		return false;
 	}
 
-	// メモリマッピングしておきます.
+	// メモリマッピングしておく
 	hr = m_pCB->Map(0, nullptr, &m_pMappedPtr);
 	if (FAILED(hr))
 	{
@@ -97,21 +98,21 @@ bool ConstantBuffer::Init(DescriptorPool* pPool, size_t size)
 
 void ConstantBuffer::Uninit()
 {
-	// メモリマッピングを解除して，定数バッファを解放します.
+	// メモリマッピングを解除して，定数バッファを解放
 	if (m_pCB != nullptr)
 	{
 		m_pCB->Unmap(0, nullptr);
 		m_pCB.Reset();
 	}
 
-	// ビューを破棄.
+	// ビューを破棄
 	if (m_pPool != nullptr)
 	{
 		m_pPool->FreeHandle(m_pHandle);
 		m_pHandle = nullptr;
 	}
 
-	// ディスクリプタプールを解放.
+	// ディスクリプタプールを解放
 	if (m_pPool != nullptr)
 	{
 		m_pPool->Release();

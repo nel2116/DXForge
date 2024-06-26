@@ -52,185 +52,185 @@ namespace physx
 {
 #endif
 
-typedef PxU16 PxType;
+	typedef PxU16 PxType;
 
-/**
-\brief Flags for PxBase.
-*/
-struct PxBaseFlag
-{	
-	enum Enum
+	/**
+	\brief Flags for PxBase.
+	*/
+	struct PxBaseFlag
 	{
-		eOWNS_MEMORY	= (1<<0),
-		eIS_RELEASABLE	= (1<<1)
+		enum Enum
+		{
+			eOWNS_MEMORY = (1 << 0),
+			eIS_RELEASABLE = (1 << 1)
+		};
 	};
-};
 
-typedef PxFlags<PxBaseFlag::Enum, PxU16> PxBaseFlags;
-PX_FLAGS_OPERATORS(PxBaseFlag::Enum, PxU16)
+	typedef PxFlags<PxBaseFlag::Enum, PxU16> PxBaseFlags;
+	PX_FLAGS_OPERATORS(PxBaseFlag::Enum, PxU16)
 
-/**
-\brief Base class for objects that can be members of a PxCollection.
+		/**
+		\brief Base class for objects that can be members of a PxCollection.
 
-All PxBase sub-classes can be serialized.
+		All PxBase sub-classes can be serialized.
 
-\see PxCollection 
-*/
-class PxBase
-{
-public:
-	/**
-	\brief Releases the PxBase instance, please check documentation of release in derived class.
-	*/
-	virtual     void				release()										= 0;
+		\see PxCollection
+		*/
+		class PxBase
+	{
+	public:
+		/**
+		\brief Releases the PxBase instance, please check documentation of release in derived class.
+		*/
+		virtual     void				release() = 0;
 
-	/**
-	\brief Returns string name of dynamic type.
-	\return	Class name of most derived type of this object.
-	*/
-	virtual		const char*			getConcreteTypeName() const						= 0;
+		/**
+		\brief Returns string name of dynamic type.
+		\return	Class name of most derived type of this object.
+		*/
+		virtual		const char* getConcreteTypeName() const = 0;
 
-	/* brief Implements dynamic cast functionality. 
+		/* brief Implements dynamic cast functionality.
 
-	Example use:
-	
-	if(actor->is<PxRigidDynamic>()) {...}
+		Example use:
 
-	\return A pointer to the specified type if object matches, otherwise NULL
-	*/
-	template<class T> T*			is()											{ return typeMatch<T>() ? static_cast<T*>(this) : NULL; }
+		if(actor->is<PxRigidDynamic>()) {...}
 
-	/* brief Implements dynamic cast functionality for const objects. 
+		\return A pointer to the specified type if object matches, otherwise NULL
+		*/
+		template<class T> T* is() { return typeMatch<T>() ? static_cast<T*>(this) : NULL; }
 
-	Example use:
-	
-	if(actor->is<PxRigidDynamic>()) {...}
+		/* brief Implements dynamic cast functionality for const objects.
 
-	\return A pointer to the specified type if object matches, otherwise NULL
-	*/
-	template<class T> const T*		is() const										{ return typeMatch<T>() ? static_cast<const T*>(this) : NULL; }
+		Example use:
 
-	/**
-	\brief	Returns concrete type of object.
-	\return	PxConcreteType::Enum of serialized object
+		if(actor->is<PxRigidDynamic>()) {...}
 
-	\see PxConcreteType
-	*/
-	PX_FORCE_INLINE	PxType			getConcreteType() const							{ return mConcreteType;	}
-				
-	/**
-	\brief Set PxBaseFlag	
+		\return A pointer to the specified type if object matches, otherwise NULL
+		*/
+		template<class T> const T* is() const { return typeMatch<T>() ? static_cast<const T*>(this) : NULL; }
 
-	\param[in] flag The flag to be set
-	\param[in] value The flags new value
-	*/
-	PX_FORCE_INLINE	void			setBaseFlag(PxBaseFlag::Enum flag, bool value)	{ mBaseFlags = value ? mBaseFlags|flag : mBaseFlags&~flag; }
-	
-	/**
-	\brief Set PxBaseFlags	
+		/**
+		\brief	Returns concrete type of object.
+		\return	PxConcreteType::Enum of serialized object
 
-	\param[in] inFlags The flags to be set
+		\see PxConcreteType
+		*/
+		PX_FORCE_INLINE	PxType			getConcreteType() const { return mConcreteType; }
 
-	\see PxBaseFlags
-	*/
-	PX_FORCE_INLINE	void			setBaseFlags(PxBaseFlags inFlags)				{ mBaseFlags = inFlags; }
-	
-	/**
-	\brief Returns PxBaseFlags 
+		/**
+		\brief Set PxBaseFlag
 
-	\return	PxBaseFlags
+		\param[in] flag The flag to be set
+		\param[in] value The flags new value
+		*/
+		PX_FORCE_INLINE	void			setBaseFlag(PxBaseFlag::Enum flag, bool value) { mBaseFlags = value ? mBaseFlags | flag : mBaseFlags & ~flag; }
 
-	\see PxBaseFlags
-	*/
-	PX_FORCE_INLINE	PxBaseFlags		getBaseFlags() const							{ return mBaseFlags; }
+		/**
+		\brief Set PxBaseFlags
 
-	/**
-	\brief Whether the object is subordinate.
-	
-	A class is subordinate, if it can only be instantiated in the context of another class.
+		\param[in] inFlags The flags to be set
 
-	\return	Whether the class is subordinate
-	
-	\see PxSerialization::isSerializable
-	*/
-	virtual		bool				isReleasable() const							{ return mBaseFlags & PxBaseFlag::eIS_RELEASABLE; }
+		\see PxBaseFlags
+		*/
+		PX_FORCE_INLINE	void			setBaseFlags(PxBaseFlags inFlags) { mBaseFlags = inFlags; }
 
-protected:
-	/**
-	\brief Constructor setting concrete type and base flags.
-	*/
-	PX_INLINE						PxBase(PxType concreteType, PxBaseFlags baseFlags)
-										: mConcreteType(concreteType), mBaseFlags(baseFlags), mBuiltInRefCount(1)	{}
+		/**
+		\brief Returns PxBaseFlags
 
-	/**
-	\brief Deserialization constructor setting base flags.
-	*/
-	PX_INLINE						PxBase(PxBaseFlags baseFlags) : mBaseFlags(baseFlags)
-									{
-										PX_ASSERT(mBuiltInRefCount == 1);
-									}
-	/**
-	\brief Destructor.
-	*/
-	virtual							~PxBase()										{}
+		\return	PxBaseFlags
 
-	/**
-	\brief Returns whether a given type name matches with the type of this instance
-	*/	
-	virtual				bool		isKindOf(const char* superClass) const { return !Pxstrcmp(superClass, "PxBase"); }
+		\see PxBaseFlags
+		*/
+		PX_FORCE_INLINE	PxBaseFlags		getBaseFlags() const { return mBaseFlags; }
 
-	template<class T>	bool		typeMatch() const
-									{
-										return PxU32(PxTypeInfo<T>::eFastTypeId)!=PxU32(PxConcreteType::eUNDEFINED) ? 
-											PxU32(getConcreteType()) == PxU32(PxTypeInfo<T>::eFastTypeId) : isKindOf(PxTypeInfo<T>::name());
-									}
+		/**
+		\brief Whether the object is subordinate.
 
-private:
-	friend				void		getBinaryMetaData_PxBase(PxOutputStream& stream);
+		A class is subordinate, if it can only be instantiated in the context of another class.
 
-protected:
-						PxType		mConcreteType;			// concrete type identifier - see PxConcreteType.
-						PxBaseFlags	mBaseFlags;				// internal flags
-						PxU32		mBuiltInRefCount;
-};
+		\return	Whether the class is subordinate
 
-/**
-\brief Base class for ref-counted objects.
-*/
-class PxRefCounted : public PxBase
-{
-public:
+		\see PxSerialization::isSerializable
+		*/
+		virtual		bool				isReleasable() const { return mBaseFlags & PxBaseFlag::eIS_RELEASABLE; }
+
+	protected:
+		/**
+		\brief Constructor setting concrete type and base flags.
+		*/
+		PX_INLINE						PxBase(PxType concreteType, PxBaseFlags baseFlags)
+			: mConcreteType(concreteType), mBaseFlags(baseFlags), mBuiltInRefCount(1) {}
+
+		/**
+		\brief Deserialization constructor setting base flags.
+		*/
+		PX_INLINE PxBase(PxBaseFlags baseFlags) : mBaseFlags(baseFlags), mBuiltInRefCount(1), mConcreteType(PxConcreteType::eUNDEFINED)
+		{
+			PX_ASSERT(mBuiltInRefCount == 1);
+		}
+		/**
+		\brief Destructor.
+		*/
+		virtual							~PxBase() {}
+
+		/**
+		\brief Returns whether a given type name matches with the type of this instance
+		*/
+		virtual				bool		isKindOf(const char* superClass) const { return !Pxstrcmp(superClass, "PxBase"); }
+
+		template<class T>	bool		typeMatch() const
+		{
+			return PxU32(PxTypeInfo<T>::eFastTypeId) != PxU32(PxConcreteType::eUNDEFINED) ?
+				PxU32(getConcreteType()) == PxU32(PxTypeInfo<T>::eFastTypeId) : isKindOf(PxTypeInfo<T>::name());
+		}
+
+	private:
+		friend				void		getBinaryMetaData_PxBase(PxOutputStream& stream);
+
+	protected:
+		PxType		mConcreteType;			// concrete type identifier - see PxConcreteType.
+		PxBaseFlags	mBaseFlags;				// internal flags
+		PxU32		mBuiltInRefCount;
+	};
 
 	/**
-	\brief Decrements the reference count of the object and releases it if the new reference count is zero.		
+	\brief Base class for ref-counted objects.
 	*/
-	virtual     void				release()					= 0;
+	class PxRefCounted : public PxBase
+	{
+	public:
 
-	/**
-	\brief Returns the reference count of the object.
+		/**
+		\brief Decrements the reference count of the object and releases it if the new reference count is zero.
+		*/
+		virtual     void				release() = 0;
 
-	At creation, the reference count of the object is 1. Every other object referencing this object increments the
-	count by 1.	When the reference count reaches 0, and only then, the object gets destroyed automatically.
+		/**
+		\brief Returns the reference count of the object.
 
-	\return the current reference count.
-	*/
-	virtual				PxU32		getReferenceCount()	const	= 0;
+		At creation, the reference count of the object is 1. Every other object referencing this object increments the
+		count by 1.	When the reference count reaches 0, and only then, the object gets destroyed automatically.
 
-	/**
-	\brief Acquires a counted reference to this object.
+		\return the current reference count.
+		*/
+		virtual				PxU32		getReferenceCount()	const = 0;
 
-	This method increases the reference count of the object by 1. Decrement the reference count by calling release()
-	*/
-	virtual				void		acquireReference()			= 0;
+		/**
+		\brief Acquires a counted reference to this object.
 
-protected:
-	virtual				void		onRefCountZero()	{ delete this;	}
+		This method increases the reference count of the object by 1. Decrement the reference count by calling release()
+		*/
+		virtual				void		acquireReference() = 0;
 
-	PX_INLINE						PxRefCounted(PxType concreteType, PxBaseFlags baseFlags) : PxBase(concreteType, baseFlags)	{}
-	PX_INLINE						PxRefCounted(PxBaseFlags baseFlags) : PxBase(baseFlags)										{}
-	virtual							~PxRefCounted()																				{}
-	virtual				bool		isKindOf(const char* name) const { PX_IS_KIND_OF(name, "PxRefCounted", PxBase); }
-};
+	protected:
+		virtual				void		onRefCountZero() { delete this; }
+
+		PX_INLINE						PxRefCounted(PxType concreteType, PxBaseFlags baseFlags) : PxBase(concreteType, baseFlags) {}
+		PX_INLINE						PxRefCounted(PxBaseFlags baseFlags) : PxBase(baseFlags) {}
+		virtual							~PxRefCounted() {}
+		virtual				bool		isKindOf(const char* name) const { PX_IS_KIND_OF(name, "PxRefCounted", PxBase); }
+	};
 
 #if !PX_DOXYGEN
 } // namespace physx

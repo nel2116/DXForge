@@ -39,100 +39,100 @@ namespace physx
 {
 #endif
 
-class PxArticulationReducedCoordinate;
-class PxArticulationJointReducedCoordinate;
-
-/**
-* \brief A mimic joint enforces a linear relationship between the positions of two joints of the same articulation instance.
-\see PxArticulationReducedCoodinate::createMimicJoint()
-*/
-class PxArticulationMimicJoint : public PxBase
-{
-public:
+	class PxArticulationReducedCoordinate;
+	class PxArticulationJointReducedCoordinate;
 
 	/**
-	\brief Releases the mimic joint.
-
-	\note Releasing a mimic joint is not allowed while the articulation is in a scene. In order to
-	release a mimic joint, remove and then re-add the articulation to the scene.
+	* \brief A mimic joint enforces a linear relationship between the positions of two joints of the same articulation instance.
+	\see PxArticulationReducedCoodinate::createMimicJoint()
 	*/
-	virtual void release() = 0;
+	class PxArticulationMimicJoint : public PxBase
+	{
+	public:
 
-	/**
-	\brief Returns the articulation that this mimic joint is part of.
+		/**
+		\brief Releases the mimic joint.
 
-	\return A reference to the articulation.
-	*/
-	virtual PxArticulationReducedCoordinate& getArticulation() const = 0;
+		\note Releasing a mimic joint is not allowed while the articulation is in a scene. In order to
+		release a mimic joint, remove and then re-add the articulation to the scene.
+		*/
+		virtual void release() = 0;
 
-	/**
-	\brief Get the gear of a mimic joint.
-	\return The gear ratio.
-	*/
-	virtual PxReal getGearRatio() const = 0;
+		/**
+		\brief Returns the articulation that this mimic joint is part of.
 
-	/**
-	\brief Set the gear ratio of a mimic joint.
-	\param[in] gearRatio is the new gear ratio to be used in the next simulation step.
-	*/
-	virtual void setGearRatio(PxReal gearRatio) = 0;
+		\return A reference to the articulation.
+		*/
+		virtual PxArticulationReducedCoordinate& getArticulation() const = 0;
 
-	/**
-	\brief Get the offset of a mimic joint.
-	\return The offset.
-	*/
-	virtual PxReal getOffset() const = 0;
+		/**
+		\brief Get the gear of a mimic joint.
+		\return The gear ratio.
+		*/
+		virtual PxReal getGearRatio() const = 0;
 
-	/**
-	\brief Set the offset of a mimic joint.
-	\param[in] offset is the new offset to be used in the next simulation step.
-	*/
-	virtual void setOffset(PxReal offset) = 0;
+		/**
+		\brief Set the gear ratio of a mimic joint.
+		\param[in] gearRatio is the new gear ratio to be used in the next simulation step.
+		*/
+		virtual void setGearRatio(PxReal gearRatio) = 0;
 
-	/**
-	\brief Return the jointA specified in PxArticulationReducedCoordinate::createMimicJoint()
-	\return The jointA specified in PxArticulationReducedCoordinate::createMimicJoint()
-	\see  PxArticulationReducedCoordinate::createMimicJoint()
-	*/
-	virtual PxArticulationJointReducedCoordinate& getJointA() const = 0;
-	
-	/**
-	\brief Return the jointB specified in PxArticulationReducedCoordinate::createMimicJoint()
-	\return The jointB specified in PxArticulationReducedCoordinate::createMimicJoint()
-	\see  PxArticulationReducedCoordinate::createMimicJoint()
-	*/
-	virtual PxArticulationJointReducedCoordinate& getJointB() const = 0;
+		/**
+		\brief Get the offset of a mimic joint.
+		\return The offset.
+		*/
+		virtual PxReal getOffset() const = 0;
 
-	/**
-	\brief Return the axisA specified in PxArticulationReducedCoordinate::createMimicJoint()
-	\return The axisA specified in PxArticulationReducedCoordinate::createMimicJoint()
-	\see  PxArticulationReducedCoordinate::createMimicJoint()
-	*/
+		/**
+		\brief Set the offset of a mimic joint.
+		\param[in] offset is the new offset to be used in the next simulation step.
+		*/
+		virtual void setOffset(PxReal offset) = 0;
 
-	virtual PxArticulationAxis::Enum getAxisA() const = 0;
+		/**
+		\brief Return the jointA specified in PxArticulationReducedCoordinate::createMimicJoint()
+		\return The jointA specified in PxArticulationReducedCoordinate::createMimicJoint()
+		\see  PxArticulationReducedCoordinate::createMimicJoint()
+		*/
+		virtual PxArticulationJointReducedCoordinate& getJointA() const = 0;
 
-	/**
-	\brief Return the axisB specified in PxArticulationReducedCoordinate::createMimicJoint()
-	\return The axisB specified in PxArticulationReducedCoordinate::createMimicJoint()
-	\see  PxArticulationReducedCoordinate::createMimicJoint()
-	*/
-	virtual PxArticulationAxis::Enum getAxisB() const = 0;
+		/**
+		\brief Return the jointB specified in PxArticulationReducedCoordinate::createMimicJoint()
+		\return The jointB specified in PxArticulationReducedCoordinate::createMimicJoint()
+		\see  PxArticulationReducedCoordinate::createMimicJoint()
+		*/
+		virtual PxArticulationJointReducedCoordinate& getJointB() const = 0;
 
-	/**
-	\brief Returns the string name of the dynamic type.
+		/**
+		\brief Return the axisA specified in PxArticulationReducedCoordinate::createMimicJoint()
+		\return The axisA specified in PxArticulationReducedCoordinate::createMimicJoint()
+		\see  PxArticulationReducedCoordinate::createMimicJoint()
+		*/
 
-	\return The string name.
-	*/
-	virtual	const char*						getConcreteTypeName() const { return "PxArticulationMimicJoint"; }
+		virtual PxArticulationAxis::Enum getAxisA() const = 0;
 
-	virtual									~PxArticulationMimicJoint() {}
+		/**
+		\brief Return the axisB specified in PxArticulationReducedCoordinate::createMimicJoint()
+		\return The axisB specified in PxArticulationReducedCoordinate::createMimicJoint()
+		\see  PxArticulationReducedCoordinate::createMimicJoint()
+		*/
+		virtual PxArticulationAxis::Enum getAxisB() const = 0;
 
-			void*							userData;	//!< user can assign this to whatever, usually to create a 1:1 relationship with a user object.
+		/**
+		\brief Returns the string name of the dynamic type.
 
-protected:
-	PX_INLINE	PxArticulationMimicJoint(PxType concreteType, PxBaseFlags baseFlags) : PxBase(concreteType, baseFlags) {}
-	PX_INLINE	PxArticulationMimicJoint(PxBaseFlags baseFlags) : PxBase(baseFlags) {}
-};
+		\return The string name.
+		*/
+		virtual	const char* getConcreteTypeName() const { return "PxArticulationMimicJoint"; }
+
+		virtual									~PxArticulationMimicJoint() {}
+
+		void* userData;	//!< user can assign this to whatever, usually to create a 1:1 relationship with a user object.
+
+	protected:
+		PX_INLINE	PxArticulationMimicJoint(PxType concreteType, PxBaseFlags baseFlags) : PxBase(concreteType, baseFlags), userData(NULL) {}
+		PX_INLINE	PxArticulationMimicJoint(PxBaseFlags baseFlags) : PxBase(baseFlags), userData(NULL) {}
+	};
 
 #if !PX_DOXYGEN
 } // namespace physx

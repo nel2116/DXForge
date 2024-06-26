@@ -476,7 +476,14 @@ bool Renderer::Init(Window* window)
 
 	// ImuGUIの初期化
 	{
-		auto pool = RENDERER.GetPool(POOL_TYPE_RES);
+		// ImGui用のディスクリプタヒープハンドルを取得
+		m_pPool[POOL_TYPE_RES]->AddRef();
+		m_pImDescHandle = m_pPool[POOL_TYPE_RES]->AllocHandle();
+		if (m_pImDescHandle == nullptr)
+		{
+			return false;
+		}
+
 		// Setup Dear ImGui context
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();
@@ -491,9 +498,9 @@ bool Renderer::Init(Window* window)
 		// Setup Platform/Renderer backends
 		ImGui_ImplWin32_Init(m_pWindow->GetHwnd());
 		ImGui_ImplDX12_Init(RENDERER.GetDevice(), 2,
-			DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, pool->GetHeap(),
-			pool->GetHeap()->GetCPUDescriptorHandleForHeapStart(),
-			pool->GetHeap()->GetGPUDescriptorHandleForHeapStart());
+			DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, m_pPool[POOL_TYPE_RES]->GetHeap(),
+			m_pImDescHandle->HandleCPU,
+			m_pImDescHandle->HandleGPU);
 	}
 
 	// 初期化成功
@@ -522,6 +529,10 @@ void Renderer::Begin()
 	// クリア
 	m_SceneColorTarget.ClearView(pCmd);
 	m_SceneDepthTarget.ClearView(pCmd);
+
+	// ビューポートとシザー矩形を設定
+	pCmd->RSSetViewports(1, &m_Viewport);
+	pCmd->RSSetScissorRects(1, &m_Scissor);
 }
 
 void Renderer::End()
@@ -561,6 +572,7 @@ void Renderer::End()
 
 		ImGui::End();
 		ImGui::Render();
+		// 		pCmd->SetDescriptorHeaps(1, m_pImDescHandle);
 		ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), RENDERER.GetCmdList()->Get());
 	}
 
@@ -756,6 +768,8 @@ void Renderer::Uninit()
 	m_Fence.Sync();
 
 	// ImuGUIの解放
+	m_pPool[POOL_TYPE_RES]->FreeHandle(m_pImDescHandle);
+	m_pPool[POOL_TYPE_RES]->Release();
 	ImGui_ImplDX12_Shutdown();
 	ImGui_ImplWin32_Shutdown();
 	ImGui::DestroyContext();

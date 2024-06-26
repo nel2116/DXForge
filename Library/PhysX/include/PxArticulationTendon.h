@@ -143,14 +143,14 @@ namespace physx
 
 		\return The articulation link that this attachment is attached to.
 		*/
-		virtual		PxArticulationLink*				getLink() const = 0;
+		virtual		PxArticulationLink* getLink() const = 0;
 
 		/**
 		\brief Gets the parent attachment.
 
 		\return The parent attachment.
 		*/
-		virtual		PxArticulationAttachment*		getParent() const = 0;
+		virtual		PxArticulationAttachment* getParent() const = 0;
 
 		/**
 		\brief Indicates that this attachment is a leaf, and thus defines a sub-tendon from the root to this attachment.
@@ -166,7 +166,7 @@ namespace physx
 
 		\see PxArticulationSpatialTendon
 		*/
-		virtual		PxArticulationSpatialTendon*	getTendon() const = 0;
+		virtual		PxArticulationSpatialTendon* getTendon() const = 0;
 
 		/**
 		\brief Releases the attachment.
@@ -178,19 +178,19 @@ namespace physx
 		*/
 		virtual		void							release() = 0;
 
-					void*							userData;	//!< user can assign this to whatever, usually to create a 1:1 relationship with a user object.	
+		void* userData;	//!< user can assign this to whatever, usually to create a 1:1 relationship with a user object.	
 
 		/**
 		\brief Returns the string name of the dynamic type.
 
 		\return The string name.
 		*/
-		virtual	const char*						getConcreteTypeName() const { return "PxArticulationAttachment"; }
+		virtual	const char* getConcreteTypeName() const { return "PxArticulationAttachment"; }
 
 	protected:
 
-		PX_INLINE	PxArticulationAttachment(PxType concreteType, PxBaseFlags baseFlags) : PxBase(concreteType, baseFlags) {}
-		PX_INLINE	PxArticulationAttachment(PxBaseFlags baseFlags) : PxBase(baseFlags) {}
+		PX_INLINE	PxArticulationAttachment(PxType concreteType, PxBaseFlags baseFlags) : PxBase(concreteType, baseFlags), userData(NULL) {}
+		PX_INLINE	PxArticulationAttachment(PxBaseFlags baseFlags) : PxBase(baseFlags), userData(NULL) {}
 	};
 
 
@@ -234,14 +234,14 @@ namespace physx
 
 		\return The articulation link (and its incoming joint in particular) that this tendon joint is associated with.
 		*/
-		virtual		PxArticulationLink*				getLink() const = 0;
+		virtual		PxArticulationLink* getLink() const = 0;
 
 		/**
 		\brief Gets the parent tendon joint.
 
 		\return The parent tendon joint.
 		*/
-		virtual		PxArticulationTendonJoint*		getParent() const = 0;
+		virtual		PxArticulationTendonJoint* getParent() const = 0;
 
 		/**
 		\brief Gets the tendon that the joint is a part of.
@@ -250,7 +250,7 @@ namespace physx
 
 		\see PxArticulationFixedTendon
 		*/
-		virtual		PxArticulationFixedTendon*		getTendon() const = 0;
+		virtual		PxArticulationFixedTendon* getTendon() const = 0;
 
 		/**
 		\brief Releases a tendon joint.
@@ -262,19 +262,19 @@ namespace physx
 		*/
 		virtual		void							release() = 0;
 
-					void*							userData;	//!< user can assign this to whatever, usually to create a 1:1 relationship with a user object.
+		void* userData;	//!< user can assign this to whatever, usually to create a 1:1 relationship with a user object.
 
 		/**
 		\brief Returns the string name of the dynamic type.
 
 		\return The string name.
 		*/
-		virtual	const char*							getConcreteTypeName() const { return "PxArticulationTendonJoint"; }
+		virtual	const char* getConcreteTypeName() const { return "PxArticulationTendonJoint"; }
 
 	protected:
 
-		PX_INLINE	PxArticulationTendonJoint(PxType concreteType, PxBaseFlags baseFlags) : PxBase(concreteType, baseFlags) {}
-		PX_INLINE	PxArticulationTendonJoint(PxBaseFlags baseFlags) : PxBase(baseFlags) {}
+		PX_INLINE	PxArticulationTendonJoint(PxType concreteType, PxBaseFlags baseFlags) : PxBase(concreteType, baseFlags), userData(NULL) {}
+		PX_INLINE	PxArticulationTendonJoint(PxBaseFlags baseFlags) : PxBase(baseFlags), userData(NULL) {}
 	};
 
 
@@ -390,11 +390,11 @@ namespace physx
 
 		virtual										~PxArticulationTendon() {}
 
-					void*							userData;	//!< user can assign this to whatever, usually to create a 1:1 relationship with a user object.
+		void* userData;	//!< user can assign this to whatever, usually to create a 1:1 relationship with a user object.
 
 	protected:
-		PX_INLINE	PxArticulationTendon(PxType concreteType, PxBaseFlags baseFlags) : PxBase(concreteType, baseFlags) {}
-		PX_INLINE	PxArticulationTendon(PxBaseFlags baseFlags) : PxBase(baseFlags) {}
+		PX_INLINE	PxArticulationTendon(PxType concreteType, PxBaseFlags baseFlags) : PxBase(concreteType, baseFlags), userData(NULL) {}
+		PX_INLINE	PxArticulationTendon(PxBaseFlags baseFlags) : PxBase(baseFlags), userData(NULL) {}
 	};
 
 	/**
@@ -425,7 +425,7 @@ namespace physx
 
 		\see releaseAttachment()
 		*/
-		virtual		PxArticulationAttachment*		createAttachment(PxArticulationAttachment* parent, const PxReal coefficient, const PxVec3 relativeOffset, PxArticulationLink* link) = 0;
+		virtual		PxArticulationAttachment* createAttachment(PxArticulationAttachment* parent, const PxReal coefficient, const PxVec3 relativeOffset, PxArticulationLink* link) = 0;
 
 		/**
 		\brief Fills a user-provided buffer of attachment pointers with the set of attachments.
@@ -453,7 +453,7 @@ namespace physx
 
 		\return The string name.
 		*/
-		virtual	const char*						getConcreteTypeName() const { return "PxArticulationSpatialTendon"; }
+		virtual	const char* getConcreteTypeName() const { return "PxArticulationSpatialTendon"; }
 
 		virtual									~PxArticulationSpatialTendon() {}
 
@@ -468,7 +468,7 @@ namespace physx
 
 	Fixed tendons allow the simulation of coupled relationships between joint degrees of freedom in an articulation. Fixed tendons do not allow
 	linking arbitrary joint axes of the articulation: The respective joints must all be directly connected to each other in the articulation structure,
-	i.e. each of the joints in the tendon must be connected by a single articulation link to another joint in the same tendon. This implies both that 
+	i.e. each of the joints in the tendon must be connected by a single articulation link to another joint in the same tendon. This implies both that
 	1) fixed tendons can branch along a branching articulation; and 2) they cannot be used to create relationships between axes in a spherical joint with
 	more than one degree of freedom. Locked joint axes or fixed joints are currently not supported.
 	*/
@@ -495,7 +495,7 @@ namespace physx
 
 		\see PxArticulationTendonJoint PxArticulationAxis
 		*/
-		virtual		PxArticulationTendonJoint*		createTendonJoint(PxArticulationTendonJoint* parent, PxArticulationAxis::Enum axis, const PxReal coefficient, const PxReal recipCoefficient, PxArticulationLink* link) = 0;
+		virtual		PxArticulationTendonJoint* createTendonJoint(PxArticulationTendonJoint* parent, PxArticulationAxis::Enum axis, const PxReal coefficient, const PxReal recipCoefficient, PxArticulationLink* link) = 0;
 
 		/**
 		\brief Fills a user-provided buffer of tendon-joint pointers with the set of tendon joints.
@@ -569,7 +569,7 @@ namespace physx
 
 		\return The string name.
 		*/
-		virtual	const char*						getConcreteTypeName() const { return "PxArticulationFixedTendon"; }
+		virtual	const char* getConcreteTypeName() const { return "PxArticulationFixedTendon"; }
 
 		virtual									~PxArticulationFixedTendon() {}
 
