@@ -25,6 +25,14 @@ using namespace std;
 #define FRAME_BUFFER_COUNT 2	// フレームバッファの数
 
 // 列挙体
+/// <summary
+/// ディスクリプタプールの種類を示す列挙体
+/// </summary>
+/// <param name="POOL_TYPE_RES">CBV/SRV/UAV</param>
+/// <param name="POOL_TYPE_SMP">Sampler</param>
+/// <param name="POOL_TYPE_RTV">RTV</param>
+/// <param name="POOL_TYPE_DSV">DSV</param>
+/// <param name="POOL_COUNT">ディスクリプタプールの種類の数</param>
 enum DescriptorPoolType
 {
 	POOL_TYPE_RES = 0,     // CBV / SRV / UAV
@@ -35,32 +43,37 @@ enum DescriptorPoolType
 };
 
 // ====== クラス定義 ======
+/// <summary>
+/// レンダラークラス
+/// </summary>
+/// <remarks>グラフィックス関連の処理を行う</remarks>
 class Renderer : public Manager<Renderer>
 {
 public:		// パブリック関数
 	/// <summary>
-	/// レンダラーの初期化
+	/// レンダラークラスの初期化
 	/// </summary>
 	/// <param name="window">ウィンドウクラスのポインタ</param>
 	/// <returns>初期化に成功したらtrue</returns>
 	bool Init(Window* window);
 
 	/// <summary>
-	/// レンダラーの終了処理
+	/// レンダラークラスの終了処理
 	/// </summary>
-	/// <returns></returns>
 	void Uninit();
 
+	/// <summary>
+	/// レンダラークラスの更新処理
+	/// </summary>
 	void Update();
 
 	/// <summary>
-	/// レンダラーの描画開始処理
+	/// レンダラークラスの描画処理
 	/// </summary>
-	/// <returns></returns>
 	void Begin();
 
 	/// <summary>
-	///	レンダラーの描画終了処理
+	/// レンダラークラスの終了処理
 	/// </summary>
 	/// <returns></returns>
 	void End();
@@ -68,13 +81,13 @@ public:		// パブリック関数
 	/// <summary>
 	/// リソースの状態遷移
 	/// </summary>
-	/// <param name="resource"></param>
-	/// <param name="stateBefore"></param>
-	/// <param name="stateAfter"></param>
+	/// <param name="resource">遷移するリソース</param>
+	/// <param name="stateBefore">遷移前の状態</param>
+	/// <param name="stateAfter">遷移後の状態</param>
 	void TransitionResource(ID3D12Resource* pResource, D3D12_RESOURCE_STATES stateBefore, D3D12_RESOURCE_STATES stateAfter, UINT subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, D3D12_RESOURCE_BARRIER_FLAGS flags = D3D12_RESOURCE_BARRIER_FLAG_NONE);
 
 	/// <summary>
-	/// GPUの完了を待つ
+	/// GPUの処理の完了を待つ
 	/// </summary>
 	void WaitGpu();
 
@@ -84,24 +97,28 @@ public:		// アクセサ関数
 	/// デバイスの取得
 	/// </summary>
 	/// <returns>デバイス</returns>
+	/// <remarks>DirectX12のデバイスを取得する</remarks>
 	ID3D12Device* GetDevice() const { return m_pDevice.Get(); }
 
 	/// <summary>
 	/// コマンドキューの取得
 	/// </summary>
 	/// <returns>コマンドキュー</returns>
+	/// <remarks>DirectX12のコマンドキューを取得する</remarks>
 	ID3D12CommandQueue* GetCmdQueue() const { return m_pQueue.Get(); }
 
 	/// <summary>
 	/// コマンドリストの取得
 	/// </summary>
 	/// <returns>コマンドリスト</returns>
+	/// <remarks>DirectX12のコマンドリストを取得する</remarks>
 	CommandList* GetCmdList() { return &m_CommandList; }
 
 	/// <summary>
 	/// スワップチェインの取得
 	/// </summary>
 	/// <returns>スワップチェイン</returns>
+	/// <remarks>DirectX12のスワップチェインを取得する</remarks>
 	IDXGISwapChain4* GetSwapChain() const { return m_pSwapChain.Get(); }
 
 	/// <summary>
@@ -112,16 +129,16 @@ public:		// アクセサ関数
 	DescriptorPool* GetPool(DescriptorPoolType type) const { return m_pPool[type]; }
 
 	/// <summary>
-	/// フレーム番号の取得
+	/// 現在のフレーム番号の取得
 	/// </summary>
-	/// <returns>フレーム番号</returns>
+	/// <returns>現在のフレーム番号</returns>
 	uint32_t GetFrameIndex() const { return m_FrameIndex; }
 
 	/// <summary>
-	/// カラーターゲットの取得
+	/// カラーターゲット(バックバッファ)の取得
 	/// </summary>
-	/// <param name="index">インデックス</param>
-	/// <returns>カラーターゲット</returns>
+	/// <param name="index">取得するカラーターゲットの要素番号</param>
+	/// <returns>カラーターゲット(バックバッファ)</returns>
 	ColorTarget* GetColorTarget(uint32_t index) { return &m_ColorTarget[index]; }
 
 	/// <summary>
@@ -131,13 +148,13 @@ public:		// アクセサ関数
 	DepthTarget* GetDepthTarget() { return &m_DepthTarget; }
 
 	/// <summary>
-	/// シーンカラーターゲットの取得
+	/// シーンのカラーターゲットの取得
 	/// </summary>
 	/// <returns>シーンカラーターゲット</returns>
 	ColorTarget* GetSceneColorTarget() { return &m_SceneColorTarget; }
 
 	/// <summary>
-	/// シーンデプスターゲットの取得
+	/// シーンの深度ターゲットの取得
 	/// </summary>
 	/// <returns>シーンデプスターゲット</returns>
 	DepthTarget* GetSceneDepthTarget() { return &m_SceneDepthTarget; }
@@ -155,25 +172,32 @@ public:		// アクセサ関数
 	const D3D12_RECT& GetScissor() const { return m_Scissor; }
 
 	/// <summary>
-	/// windowの取得
+	/// Windowクラスのポインタを取得
 	/// </summary>
-	/// <returns>ウィンドウクラスのポインタ</returns>
+	/// <returns>Windowクラスのポインタ</returns>
 	Window* GetWindow() const { return m_pWindow; }
 
 	/// <summary>
 	/// windowの縦幅の取得
 	/// </summary>
-	/// <returns>ウィンドウの縦幅</returns>
+	/// <returns>windowの縦幅</returns>
 	float GetHeight() const { return static_cast<float>(m_pWindow->GetHeight()); }
 
 	/// <summary>
 	/// windowの横幅の取得
 	/// </summary>
-	/// <returns>ウィンドウの横幅</returns>
+	/// <returns>windowの横幅</returns>
 	float GetWidth() const { return static_cast<float>(m_pWindow->GetWidth()); }
 
 private:	// プライベート関数
+	/// <summary>
+	/// バックバッファを描画
+	/// </summary>
+	/// <param name="interval">VSyncの間隔</param>
 	void Present(uint32_t interval);
+	/// <summary>
+	/// スクリーンがHDRに対応しているかどうかを確認
+	/// </summary>
 	void CheckSupportHDR();
 	bool  IsSupportHDR() const;
 	float GetMaxLuminance() const;
