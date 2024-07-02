@@ -503,12 +503,12 @@ void Application::SetDirectoryAndLoadDll()
 void Application::DrawScene()
 {
 	auto pCmd = RENDERER.GetCmdList()->Get();
-	auto cameraPos = Vector3(-0.5f, 0.0f, 2.0f);
+	auto cameraPos = Vector3(2.0f, 3.0f, 4.0f);
 	auto frameIndex = RENDERER.GetFrameIndex();
 
 	// ライトバッファの更新
 	{
-		Matrix matrix; // = Matrix::CreateRotationY(m_RotateAngle);
+		Matrix matrix = Matrix::CreateRotationY(m_RotateAngle);
 
 		auto ptr = m_LightCB[frameIndex].GetPtr<CbLight>();
 		ptr->LightColor = Vector3(1.0f, 1.0f, 1.0f);

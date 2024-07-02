@@ -59,6 +59,7 @@ float TimerManager::UpdateFPS(double Def)
 double TimerManager::GetFPS()
 {
 	if (m_dwDiffTime == 0.0f) return 0.0;
+	return 1000.0f / m_dwDiffTime;
 	return UpdateFPS(m_dwDiffTime);
 }
 
