@@ -296,41 +296,11 @@ bool Renderer::Init(Window* window)
 
 	// トーンマップ用パイプラインステートの生成.
 	{
-		std::wstring vsPath;
-		std::wstring psPath;
-
-		// 頂点シェーダを検索.
-		if (!SearchFilePathW(L"Assets/Shaders/VS_Tonemap.cso", vsPath))
-		{
-			ELOG("Error : Vertex Shader Not Found.");
-			return false;
-		}
-
-		// ピクセルシェーダを検索.
-		if (!SearchFilePathW(L"Assets/Shaders/PS_Tonemap.cso", psPath))
-		{
-			ELOG("Error : Pixel Shader Node Found.");
-			return false;
-		}
-
-		ComPtr<ID3DBlob> pVSBlob;
-		ComPtr<ID3DBlob> pPSBlob;
-
 		// 頂点シェーダを読み込む.
-		auto hr = D3DReadFileToBlob(vsPath.c_str(), pVSBlob.GetAddressOf());
-		if (FAILED(hr))
-		{
-			ELOG("Error : D3DReadFiledToBlob() Failed. path = %ls", vsPath.c_str());
-			return false;
-		}
+		SHADER_MANAGER.LoadShader("Assets/Shaders/VS_Tonemap.cso", "VS_ToneMap", ShaderManager::ShaderType::Vertex);
 
 		// ピクセルシェーダを読み込む.
-		hr = D3DReadFileToBlob(psPath.c_str(), pPSBlob.GetAddressOf());
-		if (FAILED(hr))
-		{
-			ELOG("Error : D3DReadFileToBlob() Failed. path = %ls", psPath.c_str());
-			return false;
-		}
+		SHADER_MANAGER.LoadShader("Assets/Shaders/PS_Tonemap.cso", "PS_ToneMap", ShaderManager::ShaderType::Pixel);
 
 		D3D12_INPUT_ELEMENT_DESC elements[] = {
 			{ "POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
@@ -377,12 +347,15 @@ bool Renderer::Init(Window* window)
 		dsDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
 		dsDesc.StencilEnable = FALSE;
 
+		auto pVS = SHADER_MANAGER.GetShader("VS_ToneMap");
+		auto pPS = SHADER_MANAGER.GetShader("PS_ToneMap");
+
 		// グラフィックスパイプラインステートを設定.
 		D3D12_GRAPHICS_PIPELINE_STATE_DESC desc = {};
 		desc.InputLayout = { elements, 2 };
 		desc.pRootSignature = m_TonemapRootSig.GetPtr();
-		desc.VS = { pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize() };
-		desc.PS = { pPSBlob->GetBufferPointer(), pPSBlob->GetBufferSize() };
+		desc.VS = { pVS->GetBufferPointer(), pVS->GetBufferSize() };
+		desc.PS = { pPS->GetBufferPointer(), pPS->GetBufferSize() };
 		desc.RasterizerState = rsDesc;
 		desc.BlendState = bsDesc;
 		desc.DepthStencilState = dsDesc;
