@@ -56,7 +56,7 @@ public:		//	パブリック関数
 	/// <param name="name">シェーダの名前</param>
 	/// <returns>シェーダのバッファ</returns>
 	/// <returns>失敗したらnullptr</returns>
-	ID3DBlob* GetShader(const string& name);
+	ComPtr<ID3DBlob> GetShader(const string& name);
 
 	/// <summary>
 	/// 初期化関数

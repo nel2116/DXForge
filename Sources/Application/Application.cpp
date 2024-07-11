@@ -83,7 +83,6 @@ bool Application::Init()
 	// ShaderManagerの初期化
 	SHADER_MANAGER.Init();
 
-
 	// メッシュをロード
 	{
 		std::wstring path;
@@ -216,39 +215,17 @@ bool Application::Init()
 
 	// パイプラインステートの生成
 	{
-		std::wstring vsPath;
-		std::wstring psPath;
-
-		// 頂点シェーダを検索
-		if (!SearchFilePathW(L"Assets/Shaders/VS_Basic.cso", vsPath))
-		{
-			ELOG("[App.cpp]Error : Line236 : 頂点シェーダが見つかりませんでした。");
-			return false;
-		}
-
-		// ピクセルシェーダを検索
-		if (!SearchFilePathW(L"Assets/Shaders/PS_Basic.cso", psPath))
-		{
-			ELOG("[App.cpp]Error : Line243 : ピクセルシェーダが見つかりませんでした。");
-			return false;
-		}
-
-		ComPtr<ID3DBlob> pVS;
-		ComPtr<ID3DBlob> pPS;
-
 		// 頂点シェーダの読み込み
-		auto hr = D3DReadFileToBlob(vsPath.c_str(), pVS.GetAddressOf());
-		if (FAILED(hr))
+		if (!SHADER_MANAGER.LoadShader("Assets/Shaders/VS_Basic.cso", "VS_Basic", ShaderManager::ShaderType::Vertex))
 		{
-			ELOG("[App.cpp]Error : Line254 : 頂点シェーダの読み込みに失敗しました。");
+			ELOG("[App.cpp]Error : Line222 : 頂点シェーダが見つかりませんでした。");
 			return false;
 		}
 
 		// ピクセルシェーダの読み込み
-		hr = D3DReadFileToBlob(psPath.c_str(), pPS.GetAddressOf());
-		if (FAILED(hr))
+		if (!SHADER_MANAGER.LoadShader("Assets/Shaders/PS_Basic.cso", "PS_Basic", ShaderManager::ShaderType::Pixel))
 		{
-			ELOG("[App.cpp]Error : Line262 : ピクセルシェーダの読み込みに失敗しました。");
+			ELOG("[App.cpp]Error : Line229 : ピクセルシェーダが見つかりませんでした。");
 			return false;
 		}
 
@@ -302,6 +279,9 @@ bool Application::Init()
 		};
 
 		// パイプラインステートの設定
+		auto pVS = SHADER_MANAGER.GetShader("VS_Basic");
+		auto pPS = SHADER_MANAGER.GetShader("PS_Basic");
+
 		D3D12_GRAPHICS_PIPELINE_STATE_DESC desc = {};
 		desc.InputLayout = { elements ,4 };
 		desc.pRootSignature = m_SceneRootSig.GetPtr();
@@ -420,8 +400,6 @@ void Application::Uninit()
 	// ====== 終了処理 ======
 	RENDERER.WaitGpu();
 
-	SCENE_MANAGER.Uninit();
-
 	// メッシュの解放
 	for (auto& mesh : m_pMesh)
 	{
@@ -447,6 +425,11 @@ void Application::Uninit()
 
 	// パイプラインステートの解放
 	m_pScenePSO.Reset();
+
+	// マネージャーの解放
+	SHADER_MANAGER.Uninit();
+	SCENE_MANAGER.Uninit();
+	TIMER_MANAGER.Uninit();
 
 	// ----- システムの終了処理 -----
 	UninitInput();	// 入力の終了処理

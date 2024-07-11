@@ -219,7 +219,6 @@
     <ClCompile Include="Sources\Graphics\Camera\Camera.cpp" />
     <ClCompile Include="Sources\Graphics\CommandList\CommandList.cpp" />
     <ClCompile Include="Sources\Graphics\Fence\Fence.cpp" />
-    <ClCompile Include="Sources\Graphics\PSOAndRootSigFactory\Factory.cpp" />
     <ClCompile Include="Sources\Graphics\RootSignature\RootSignature.cpp" />
     <ClCompile Include="Sources\Graphics\Shader\Shader.cpp" />
     <ClCompile Include="Sources\Graphics\Target\ColorTarget.cpp" />
@@ -270,7 +269,6 @@
     <ClInclude Include="Sources\Graphics\Camera\Camera.h" />
     <ClInclude Include="Sources\Graphics\CommandList\CommandList.h" />
     <ClInclude Include="Sources\Graphics\Fence\Fence.h" />
-    <ClInclude Include="Sources\Graphics\PSOAndRootSigFactory\Factory.h" />
     <ClInclude Include="Sources\Graphics\RootSignature\RootSignature.h" />
     <ClInclude Include="Sources\Graphics\Shader\Shader.h" />
     <ClInclude Include="Sources\Graphics\Target\ColorTarget.h" />

@@ -74,7 +74,7 @@ bool ShaderManager::LoadShader(const string& path, const string& name, const Sha
 	return true;
 }
 
-ID3DBlob* ShaderManager::GetShader(const string& name)
+ComPtr<ID3DBlob> ShaderManager::GetShader(const string& name)
 {
 	// シェーダの取得
 	auto itr = m_shaderMap.find(name);
@@ -82,13 +82,12 @@ ID3DBlob* ShaderManager::GetShader(const string& name)
 	{
 		return nullptr;
 	}
-
-	return itr->second.blob.Get();
+	return itr->second.blob;
 }
 
 bool ShaderManager::Init()
 {
-
+	return true;
 }
 
 bool ShaderManager::Uninit()
