@@ -2,7 +2,7 @@
 // 制作者 : 田中ミノル
 // 制作日 : 2024/06/04 16:20
 // 概要   : Actorクラスのヘッダファイル
-// 更新日 
+// 更新日
 // 2024/06/04 16:20 作成
 // _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 #pragma once
@@ -14,27 +14,19 @@ using namespace std;
 
 
 // ====== クラスの定義 ======
-/// <summary>
-/// Actorクラス
-/// </summary>
-/// <remarks>オブジェクトの基底クラス</remarks>
+/// @brief アクタークラス
+/// @details ゲームオブジェクトの基底クラス
 class Actor
 {
 public:	// パブリック関数
-	/// <summary>
-	/// コンストラクタ
-	/// </summary>
+	/// @brief コンストラクタ
 	Actor() : m_bDestroy(false), m_bActive(true), m_sTag("none"), m_nOrder(0), m_bLooping(false) {}
 
-	/// <summary>
-	/// デストラクタ
-	/// </summary>
-	/// <remarks>コンポーネントの破棄</remarks>
+	/// @brief デストラクタ
 	virtual ~Actor() { DestroyComponent(); }
 
-	/// <summary>
-	/// 更新処理の純粋仮想関数
-	/// </summary>
+	/// @brief 更新処理の純粋仮想関数
+
 	virtual void Update() = 0;
 
 	/// <summary>

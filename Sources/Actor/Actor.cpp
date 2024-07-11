@@ -10,7 +10,7 @@ void Actor::BaseUpdate()
 	for (auto cmp = buff.begin(), end = buff.end(); cmp != end; ++cmp)
 	{
 		// 破棄されている場合はリストに移動させて次へ
-		if ((*cmp)->IsDead()) { m_pDeadComponents.push_back(*cmp); continue; }
+		if ((*cmp)->IsDestroy()) { m_pDeadComponents.push_back(*cmp); continue; }
 		// 使われていない場合は次へ
 		if (!(*cmp)->IsActive()) { continue; }
 		// 更新
@@ -46,7 +46,7 @@ void Actor::BaseDraw()
 	for (auto cmp = buff.begin(), end = buff.end(); cmp != end; ++cmp)
 	{
 		// 破棄されている場合はリストに移動させて次へ
-		if ((*cmp)->IsDead()) { m_pDeadComponents.push_back(*cmp); continue; }
+		if ((*cmp)->IsDestroy()) { m_pDeadComponents.push_back(*cmp); continue; }
 		// 使われていない場合は次へ
 		if (!(*cmp)->IsActive()) { continue; }
 		// 描画
