@@ -44,15 +44,15 @@ private:	// メンバ変数
 	Window m_window;
 
 	// テスト用
-	RootSignature m_SceneRootSig;				// ルートシグニチャ
-	ComPtr<ID3D12PipelineState> m_pScenePSO;	// パイプラインステート
-	std::vector<Mesh*> m_pMesh;					// メッシュ
-	ConstantBuffer m_LightCB[FRAME_BUFFER_COUNT];          // ライトバッファです.
-	ConstantBuffer m_CameraCB[FRAME_BUFFER_COUNT];         // カメラバッファです.
-	ConstantBuffer m_TransformCB[FRAME_BUFFER_COUNT];      // 変換用バッファです.
-	ConstantBuffer m_MeshCB[FRAME_BUFFER_COUNT];           // メッシュ用バッファです.
-	Material m_Material;						// マテリアル
-	float m_RotateAngle;						// 回転角
+	RootSignature m_SceneRootSig;						// ルートシグニチャ
+	ComPtr<ID3D12PipelineState> m_pScenePSO;			// パイプラインステート
+	std::vector<Mesh*> m_pMesh;							// メッシュ
+	ConstantBuffer m_LightCB[FRAME_BUFFER_COUNT];		// ライトバッファ
+	ConstantBuffer m_CameraCB[FRAME_BUFFER_COUNT];		// カメラバッファ
+	ConstantBuffer m_TransformCB[FRAME_BUFFER_COUNT];	// 変換用バッファ
+	ConstantBuffer m_MeshCB[FRAME_BUFFER_COUNT];		// メッシュ用バッファ
+	Material m_Material;								// マテリアル
+	float m_RotateAngle;								// 回転角
 
 public:		// シングルトン関連
 	/// <summary>

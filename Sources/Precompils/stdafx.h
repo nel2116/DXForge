@@ -106,6 +106,7 @@
 #include <Manager/SceneManager.h>
 #include <Manager/ActorManager.h>
 #include <Manager/TimerManager.h>
+#include <Manager/ShaderManager.h>
 
 // ====== –¼‘O‹óŠÔ ======
 using namespace std;

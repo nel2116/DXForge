@@ -9,7 +9,6 @@
 #include "stdafx.h"
 #include "Application.h"
 #include <System/Input.h>
-#include <Manager/SceneManager.h>
 
 using namespace DirectX::SimpleMath;
 
@@ -75,11 +74,15 @@ bool Application::Init()
 		return false;
 	}
 
-	// タイマーマネージャの初期化
+	// TimerManagerの初期化
 	TIMER_MANAGER.Init();
 
 	// SceneManagerの初期化
 	SCENE_MANAGER.Init();
+
+	// ShaderManagerの初期化
+	SHADER_MANAGER.Init();
+
 
 	// メッシュをロード
 	{
