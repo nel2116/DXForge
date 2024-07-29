@@ -155,11 +155,14 @@ void SceneManager::ChangeScene(std::string sceneName)
 
 	auto scene = m_pNextScene->GetPhysXScene();
 	// PVDの表示設定
-	physx::PxPvdSceneClient* pvd_client;
-	if (pvd_client = scene->getScenePvdClient(); pvd_client)
+	physx::PxPvdSceneClient* pvd_client = scene->getScenePvdClient();
+	if (pvd_client)
 	{
+		// eTRANSMIT_CONSTRAINTSは制約の情報をPVDに送信するかどうかを設定する
 		pvd_client->setScenePvdFlag(physx::PxPvdSceneFlag::eTRANSMIT_CONSTRAINTS, true);
+		// eTRANSMIT_CONTACTSは接触情報をPVDに送信するかどうかを設定する
 		pvd_client->setScenePvdFlag(physx::PxPvdSceneFlag::eTRANSMIT_CONTACTS, true);
+		// eTRANSMIT_SCENEQUERIESはシーンのクエリ情報をPVDに送信するかどうかを設定する
 		pvd_client->setScenePvdFlag(physx::PxPvdSceneFlag::eTRANSMIT_SCENEQUERIES, true);
 	}
 }

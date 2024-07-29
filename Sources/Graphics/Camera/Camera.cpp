@@ -113,17 +113,17 @@ namespace
 // ====== カメラクラス ======
 // コンストラクタ
 Camera::Camera()
+	: m_Current({ DirectX::SimpleMath::Vector3(0.0f, 0.0f, -1.0f),
+				 DirectX::SimpleMath::Vector3::Zero,
+				 DirectX::SimpleMath::Vector3::UnitY,
+				 DirectX::SimpleMath::Vector3::UnitZ,
+				 {0.0f, 0.0f},
+				 1.0f }),
+	m_Preserve(m_Current),
+	m_DirtyFlag(DirtyPosition)
 {
-	m_Current.Position = DirectX::SimpleMath::Vector3(0.0f, 0.0f, -1.0f);
-	m_Current.Target = DirectX::SimpleMath::Vector3::Zero;
-	m_Current.Upward = DirectX::SimpleMath::Vector3::UnitY;
-	m_Current.Angle = DirectX::XMFLOAT2(0.0f, 0.0f);
-	m_Current.Forward = DirectX::SimpleMath::Vector3::UnitZ;
-	m_Current.Distance = 1.0f;
-	m_DirtyFlag = DirtyPosition;
-
-	m_Preserve = m_Current;
 }
+
 
 // デストラクタ
 Camera::~Camera()
@@ -134,7 +134,7 @@ Camera::~Camera()
 void Camera::SetPosition(const DirectX::SimpleMath::Vector3& value)
 {
 	m_Current.Position = value;
-	ComputeTarget();
+	// ComputeTarget();
 	m_DirtyFlag = DirtyAngle;
 	Update();
 }
@@ -143,7 +143,7 @@ void Camera::SetPosition(const DirectX::SimpleMath::Vector3& value)
 void Camera::SetTarget(const DirectX::SimpleMath::Vector3& value)
 {
 	m_Current.Target = value;
-	ComputePosition();
+	//	ComputePosition();
 	m_DirtyFlag = DirtyAngle;
 	Update();
 }
@@ -181,34 +181,36 @@ void Camera::UpdateEvent(const Event& value)
 }
 
 // 更新処理
+// ビュー行列を再計算する際に、フラグの設定と値の確認を行う
 void Camera::Update()
 {
-	if (m_DirtyFlag == DirtyNone)
+	if (m_DirtyFlag != DirtyNone)
 	{
-		return;
+		// 必要に応じて、フラグごとに再計算を実施
+		if (m_DirtyFlag & DirtyPosition)
+		{
+			ComputePosition();
+		}
+
+		if (m_DirtyFlag & DirtyTarget)
+		{
+			ComputeTarget();
+		}
+
+		if (m_DirtyFlag & DirtyAngle)
+		{
+			ComputeAngle();
+		}
+
+		// ビュー行列を計算
+		m_View = DirectX::SimpleMath::Matrix::CreateLookAt(
+			m_Current.Position,
+			m_Current.Target,
+			m_Current.Upward);
+
+		// フラグをクリア
+		m_DirtyFlag = DirtyNone;
 	}
-
-	if (m_DirtyFlag & DirtyPosition)
-	{
-		ComputePosition();
-	}
-
-	if (m_DirtyFlag & DirtyTarget)
-	{
-		ComputeTarget();
-	}
-
-	if (m_DirtyFlag & DirtyAngle)
-	{
-		ComputeAngle();
-	}
-
-	m_View = DirectX::SimpleMath::Matrix::CreateLookAt(
-		m_Current.Position,
-		m_Current.Target,
-		m_Current.Upward);
-
-	m_DirtyFlag = DirtyNone;
 }
 
 // 現在のカメラパラメータを保存

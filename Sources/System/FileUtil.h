@@ -11,10 +11,17 @@
 #include <string>
 #include <Shlwapi.h>
 
+// wstringに変換
+std::wstring StringToWString(const std::string& str);
+// stringに変換
+std::string WStringToString(const std::wstring& wstr);
+// ファイルパスを検索
 bool SearchFilePathA(const char* filename, std::string& result);
 bool SearchFilePathW(const wchar_t* filename, std::wstring& result);
+// ディレクトリパスを削除
 std::string RemoveDirectoryPathA(const std::string& path);
 std::wstring RemoveDirectoryPathW(const std::wstring& path);
+// ディレクトリパスを取得
 std::string GetDirectoryPathA(const char* path);
 std::wstring GetDirectoryPathW(const wchar_t* path);
 

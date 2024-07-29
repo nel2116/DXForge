@@ -212,6 +212,7 @@
     <ClCompile Include="Sources\Actor\Actor.cpp" />
     <ClCompile Include="Sources\Actor\TestActor.cpp" />
     <ClCompile Include="Sources\Application\Application.cpp" />
+    <ClCompile Include="Sources\Component\ModelComponent.cpp" />
     <ClCompile Include="Sources\Component\RigidBodyComponent.cpp" />
     <ClCompile Include="Sources\Graphics\Buffer\ConstantBuffer\ConstantBuffer.cpp" />
     <ClCompile Include="Sources\Graphics\Buffer\IndexBuffer\IndexBuffer.cpp" />
@@ -219,6 +220,7 @@
     <ClCompile Include="Sources\Graphics\Camera\Camera.cpp" />
     <ClCompile Include="Sources\Graphics\CommandList\CommandList.cpp" />
     <ClCompile Include="Sources\Graphics\Fence\Fence.cpp" />
+    <ClCompile Include="Sources\Graphics\PipelineState\PipelineState.cpp" />
     <ClCompile Include="Sources\Graphics\RootSignature\RootSignature.cpp" />
     <ClCompile Include="Sources\Graphics\Shader\Shader.cpp" />
     <ClCompile Include="Sources\Graphics\Target\ColorTarget.cpp" />
@@ -259,7 +261,7 @@
     <ClInclude Include="Sources\Actor\TestActor.h" />
     <ClInclude Include="Sources\Application\Application.h" />
     <ClInclude Include="Sources\Component\Component.h" />
-    <ClInclude Include="Sources\Component\MeshComponent.h" />
+    <ClInclude Include="Sources\Component\ModelComponent.h" />
     <ClInclude Include="Sources\Component\RigidBodyComponent.h" />
     <ClInclude Include="Sources\DirectXTex\DirectXTex.h" />
     <ClInclude Include="Sources\GameObject\Actor.h" />
@@ -269,6 +271,7 @@
     <ClInclude Include="Sources\Graphics\Camera\Camera.h" />
     <ClInclude Include="Sources\Graphics\CommandList\CommandList.h" />
     <ClInclude Include="Sources\Graphics\Fence\Fence.h" />
+    <ClInclude Include="Sources\Graphics\PipelineState\PipelineState.h" />
     <ClInclude Include="Sources\Graphics\RootSignature\RootSignature.h" />
     <ClInclude Include="Sources\Graphics\Shader\Shader.h" />
     <ClInclude Include="Sources\Graphics\Target\ColorTarget.h" />

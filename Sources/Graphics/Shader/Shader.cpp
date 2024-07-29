@@ -1,17 +1,6 @@
 #include "stdafx.h"
 #include "Shader.h"
 
-namespace
-{
-	std::wstring StringToWString(const std::string& str)
-	{
-		std::wstring wstr;
-		wstr.resize(str.size());
-		std::copy(str.begin(), str.end(), wstr.begin());
-		return wstr;
-	}
-}
-
 void Shader::Load(const std::string& path, ShaderType type)
 {
 	// シェーダの種類を設定

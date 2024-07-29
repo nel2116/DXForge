@@ -9,8 +9,6 @@
 #pragma once
 // ====== インクルード部 ======
 #include <System/ComPtr.h>
-#include <d3d12.h>
-#include <vector>
 
 // ====== 列挙体 ======
 enum ShaderStage

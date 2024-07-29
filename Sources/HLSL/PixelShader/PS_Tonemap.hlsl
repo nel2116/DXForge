@@ -170,8 +170,8 @@ float4 main(const VSOutput input) : SV_TARGET0
 
     // OETF“K—p.
     result = ApplyOETF(result);
-    
+
     result = float4(result.rgb, 1.0f);
-    
+
     return result;
 }

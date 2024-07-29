@@ -1,18 +1,6 @@
 #include "stdafx.h"
 #include "ShaderManager.h"
 
-namespace
-{
-	// stringŒ^‚ğwstringŒ^‚É•ÏŠ·‚·‚éŠÖ”
-	std::wstring StringToWString(const string& str)
-	{
-		std::wstring wstr(str.length(), L' ');
-		std::copy(str.begin(), str.end(), wstr.begin());
-		return wstr;
-
-	}
-}
-
 bool ShaderManager::LoadShader(const string& path, const string& name, const ShaderType& type)
 {
 	// –¼‘O‚ª“o˜^‚³‚ê‚Ä‚¢‚ê‚ÎƒGƒ‰[

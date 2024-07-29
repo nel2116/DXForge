@@ -9,7 +9,6 @@
 // ====== インクルード部 ======
 #include "stdafx.h"
 #include "RootSignature.h"
-#include <System/Logger.h>
 
 // ====== RootSignature::Desc クラス ======
 // コンストラクタ

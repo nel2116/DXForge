@@ -99,6 +99,8 @@
 #include <Graphics/Buffer/ConstantBuffer/ConstantBuffer.h>
 // ルートシグネチャー
 #include <Graphics/RootSignature/RootSignature.h>
+// パイプラインステート
+#include <Graphics/PipelineState/PipelineState.h>
 // マクロ定義
 #include <System/Macro.h>
 
@@ -110,6 +112,7 @@
 
 // ====== 名前空間 ======
 using namespace std;
+using namespace DirectX::SimpleMath;
 
 // ====== 定数定義 ======
 // 円周率

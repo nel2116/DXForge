@@ -24,6 +24,6 @@ public:	// ƒƒ“ƒoŠÖ”
 	void Uninit() override;
 
 private:	// ƒƒ“ƒo•Ï”
-
+	float m_RotateAngle;	// ‰ñ“]Šp“x
 };
 

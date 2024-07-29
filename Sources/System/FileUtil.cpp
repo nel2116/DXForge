@@ -52,6 +52,25 @@ namespace
 }// namespace
 
 
+// wstring‚É•ÏŠ·
+std::wstring StringToWString(const std::string& str)
+{
+	std::wstring wstr;
+	wstr.resize(str.size());
+	std::copy(str.begin(), str.end(), wstr.begin());
+	return wstr;
+}
+
+// string‚É•ÏŠ·
+std::string WStringToString(const std::wstring& wstr)
+{
+	std::string str;
+	str.resize(wstr.size());
+	std::copy(wstr.begin(), wstr.end(), str.begin());
+	return str;
+}
+
+
 bool SearchFilePathA(const char* filename, std::string& result)
 {
 	if (filename == nullptr)
