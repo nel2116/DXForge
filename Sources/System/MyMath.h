@@ -9,6 +9,7 @@
 #pragma once
 // ====== インクルード部 ======
 #include "SimpleMath.h"		// DirectXMathのラッパー
+using namespace DirectX::SimpleMath;
 
 // トランスフォーム
 struct Transform

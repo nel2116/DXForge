@@ -123,7 +123,8 @@ bool PipelineState::Init(const D3D12_GRAPHICS_PIPELINE_STATE_DESC* pDesc)
 	auto hr = pDevice->CreateGraphicsPipelineState(pDesc, IID_PPV_ARGS(m_pPipelineState.GetAddressOf()));
 	if (FAILED(hr))
 	{
-		ELOG("Error : CreateGraphicsPipelineState() Failed. recode = 0x%x", hr);
+		LogHResult(hr);
+		// ELOG("Error : CreateGraphicsPipelineState() Failed. recode = 0x%x", hr);
 		return false;
 	}
 	return true;

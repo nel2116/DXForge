@@ -39,7 +39,6 @@ protected:	// メンバ変数
 	RootSignature* m_pSceneRootSig;						// ルートシグニチャ
 	PipelineState* m_pScenePSO;							// パイプラインステート
 	ConstantBuffer m_LightCB[FRAME_BUFFER_COUNT];		// ライトバッファ
-	ConstantBuffer m_CameraCB[FRAME_BUFFER_COUNT];		// カメラバッファ
 	ConstantBuffer m_TransformCB[FRAME_BUFFER_COUNT];	// 変換用バッファ
 	Camera* m_pCamera;									// カメラ
 	Projector* m_pProjector;							// プロジェクター

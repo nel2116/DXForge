@@ -25,17 +25,14 @@ void ModelComponent::Draw()
 	// モデルを描画.
 	auto pCmd = RENDERER.GetCmdList()->Get();
 	int frameIndex = RENDERER.GetFrameIndex();
-	pCmd->SetGraphicsRootDescriptorTable(1, m_MeshCB[frameIndex].GetHandleGPU());
+	pCmd->SetGraphicsRootDescriptorTable(3, m_MeshCB[frameIndex].GetHandleGPU());
 	for (size_t i = 0; i < m_pMesh.size(); ++i)
 	{
 		// マテリアルIDを取得.
 		auto id = m_pMesh[i]->GetMaterialId();
 
 		// テクスチャを設定.
-		pCmd->SetGraphicsRootDescriptorTable(4, m_Material.GetTextureHandle(id, TU_BASE_COLOR));
-		pCmd->SetGraphicsRootDescriptorTable(5, m_Material.GetTextureHandle(id, TU_METALLIC));
-		pCmd->SetGraphicsRootDescriptorTable(6, m_Material.GetTextureHandle(id, TU_ROUGHNESS));
-		pCmd->SetGraphicsRootDescriptorTable(7, m_Material.GetTextureHandle(id, TU_NORMAL));
+		pCmd->SetGraphicsRootDescriptorTable(4, m_Material.GetTextureHandle(id, TU_DIFFUSE));
 
 		// メッシュを描画.
 		m_pMesh[i]->Draw();
@@ -60,7 +57,6 @@ void ModelComponent::LoadModel(std::string fileName)
 {
 	// メッシュをロード
 	{
-
 		std::wstring path;
 		std::wstring filePath = StringToWString(fileName);
 		// ファイルパスを検索
@@ -120,16 +116,17 @@ void ModelComponent::LoadModel(std::string fileName)
 
 		// テクスチャとマテリアルを設定.
 		{
-			/* ここではマテリアルが決め打ちであることを前提にハードコーディングしています. */
-			m_Material.SetTexture(0, TU_BASE_COLOR, dir + L"wall_bc.dds");
-			m_Material.SetTexture(0, TU_METALLIC, dir + L"wall_m.dds");
-			m_Material.SetTexture(0, TU_ROUGHNESS, dir + L"wall_r.dds");
-			m_Material.SetTexture(0, TU_NORMAL, dir + L"wall_n.dds");
+			for (size_t i = 0; i < resMaterial.size(); ++i)
+			{
+				auto ptr = m_Material.GetBufferPtr<CbMaterial>(i);
+				ptr->BaseColor = resMaterial[i].Diffuse;
+				ptr->Alpha = resMaterial[i].Alpha;
+				ptr->Roughness = 0.2f;
+				ptr->Metallic = 0.5f;
 
-			m_Material.SetTexture(1, TU_BASE_COLOR, dir + L"matball_bc.dds");
-			m_Material.SetTexture(1, TU_METALLIC, dir + L"matball_m.dds");
-			m_Material.SetTexture(1, TU_ROUGHNESS, dir + L"matball_r.dds");
-			m_Material.SetTexture(1, TU_NORMAL, dir + L"matball_n.dds");
+				std::wstring path = dir + resMaterial[i].DiffuseMap;
+				m_Material.SetTexture(i, TU_DIFFUSE, path);
+			}
 		}
 	}
 

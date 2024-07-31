@@ -213,7 +213,7 @@ bool Renderer::Init(Window* window)
 	// レンダーターゲットビューの生成.
 	{
 		// クリアカラー
-		float clearColor[] = { 0.3f, 0.3f, 0.3f, 1.0f };
+		float clearColor[] = { 0.0f, 0.0f, 0.3f, 1.0f };
 		for (auto i = 0u; i < FRAME_BUFFER_COUNT; ++i)
 		{
 			if (!m_ColorTarget[i].InitFromBackBuffer(m_pPool[POOL_TYPE_RTV], i, true))

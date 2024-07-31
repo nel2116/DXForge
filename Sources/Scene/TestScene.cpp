@@ -7,20 +7,15 @@
 
 struct alignas(256) CbLight
 {
-	DirectX::SimpleMath::Vector3  LightColor;   // ライトカラー
-	float    LightIntensity;					// ライト強度
-	DirectX::SimpleMath::Vector3  LightForward; // ライトの照射方向
+	Vector4  LightPosition;     // ライト位置
+	Color    LightColor;        // ライトカラー
+	Vector4  CameraPosition;    // カメラ位置
 };
 
 struct alignas(256) CbTransform
 {
-	DirectX::SimpleMath::Matrix   View;			// ビュー行列
-	DirectX::SimpleMath::Matrix   Proj;			// 射影行列
-};
-
-struct alignas(256) CbCamera
-{
-	DirectX::SimpleMath::Vector3  CameraPosition;    // カメラ位置です
+	Matrix   View;			// ビュー行列
+	Matrix   Proj;			// 射影行列
 };
 
 void TestScene::Update()
@@ -59,23 +54,6 @@ void TestScene::Draw()
 	auto pCmd = RENDERER.GetCmdList()->Get();
 	auto frameIndex = RENDERER.GetFrameIndex();
 
-	// ライトバッファの更新
-	{
-		Matrix matrix = Matrix::CreateRotationY(m_RotateAngle);
-
-		auto ptr = m_LightCB[frameIndex].GetPtr<CbLight>();
-		ptr->LightColor = Vector3(1.0f, 1.0f, 1.0f);
-		ptr->LightForward = Vector3::TransformNormal(Vector3(0.0f, 1.0f, 1.0f), matrix);
-		ptr->LightIntensity = 2.0f;
-		m_RotateAngle += 0.01f;
-	}
-
-	// カメラバッファの更新.
-	{
-		auto ptr = m_CameraCB[frameIndex].GetPtr<CbCamera>();
-		ptr->CameraPosition = m_pCamera->GetPosition();
-	}
-
 	// 変換パラメータの更新
 	{
 		auto ptr = m_TransformCB[frameIndex].GetPtr<CbTransform>();
@@ -87,7 +65,6 @@ void TestScene::Draw()
 	pCmd->SetPipelineState(m_pScenePSO->GetPtr());
 	pCmd->SetGraphicsRootDescriptorTable(0, m_TransformCB[frameIndex].GetHandleGPU());
 	pCmd->SetGraphicsRootDescriptorTable(2, m_LightCB[frameIndex].GetHandleGPU());
-	pCmd->SetGraphicsRootDescriptorTable(3, m_CameraCB[frameIndex].GetHandleGPU());
 }
 
 void TestScene::Init()
@@ -118,7 +95,16 @@ void TestScene::Init()
 	body->SetRigidBody(RigidBodyComponent::ActorType::Dynamic, RigidBodyComponent::ShapeType::Box);
 
 	auto model = pActor->AddComponent<ModelComponent>();
-	model->LoadModel("Assets/Models/material/material_test.obj");
+	model->LoadModel("Assets/Models/teapot/teapot.obj");
+
+	// カメラバッファの設定.
+	{
+		m_pCamera = NEW Camera();
+		m_pCamera->SetPosition(Vector3(0.0f, 10.0f, 20.0f));
+
+		m_pProjector = NEW Projector();
+		m_pProjector->SetPerspective(DirectX::XMConvertToRadians(90.0f), static_cast<float>(1280) / 720, 0.1f, 1000.0f);
+	}
 
 	// ライトバッファの設定
 	{
@@ -129,24 +115,12 @@ void TestScene::Init()
 			{
 				ELOG("Error : Line159 : ConstantBuffer::Init() Failed.");
 			}
-		}
-	}
 
-	// カメラバッファの設定.
-	{
-		m_pCamera = NEW Camera();
-		m_pCamera->SetPosition(Vector3(0.2f, 0.3f, 0.4f));
-
-		m_pProjector = NEW Projector();
-		m_pProjector->SetPerspective(DirectX::XMConvertToRadians(90.0f), static_cast<float>(1280) / 720, 0.1f, 1000.0f);
-
-		DescriptorPool* pPool = RENDERER.GetPool(POOL_TYPE_RES);
-		for (auto i = 0; i < FRAME_BUFFER_COUNT; ++i)
-		{
-			if (!m_CameraCB[i].Init(pPool, sizeof(CbCamera)))
-			{
-				ELOG("Error : ConstantBuffer::Init() Failed.");
-			}
+			auto ptr = m_LightCB[i].GetPtr<CbLight>();
+			ptr->LightPosition = Vector4(0.0f, 50.0f, 100.0f, 0.0f);
+			ptr->LightColor = Color(1.0f, 1.0f, 1.0f, 1.0f);
+			Vector3 campos = m_pCamera->GetPosition();
+			ptr->CameraPosition = Vector4(campos.x, campos.y, campos.z, 0.0f);
 		}
 	}
 
@@ -154,19 +128,13 @@ void TestScene::Init()
 	{
 		m_pSceneRootSig = NEW RootSignature();
 		RootSignature::Desc desc;
-		desc.Begin(8)
-			.SetCBV(ShaderStage::VS, 0, 0)
-			.SetCBV(ShaderStage::VS, 1, 1)
-			.SetCBV(ShaderStage::PS, 2, 1)
-			.SetCBV(ShaderStage::PS, 3, 2)
-			.SetSRV(ShaderStage::PS, 4, 0)
-			.SetSRV(ShaderStage::PS, 5, 1)
-			.SetSRV(ShaderStage::PS, 6, 2)
-			.SetSRV(ShaderStage::PS, 7, 3)
+		desc.Begin(5)
+			.SetCBV(ShaderStage::VS, 0, 0) // CbTransform
+			.SetCBV(ShaderStage::VS, 1, 1) // CbMesh
+			.SetCBV(ShaderStage::PS, 2, 2) // LightBuffer
+			.SetCBV(ShaderStage::PS, 3, 3) // MaterialBuffer
+			.SetSRV(ShaderStage::PS, 4, 0) // Texture
 			.AddStaticSmp(ShaderStage::PS, 0, SamplerState::LinearWrap)
-			.AddStaticSmp(ShaderStage::PS, 1, SamplerState::LinearWrap)
-			.AddStaticSmp(ShaderStage::PS, 2, SamplerState::LinearWrap)
-			.AddStaticSmp(ShaderStage::PS, 3, SamplerState::LinearWrap)
 			.AllowIL()
 			.End();
 
@@ -260,7 +228,6 @@ void TestScene::Uninit()
 	for (auto i = 0; i < FRAME_BUFFER_COUNT; ++i)
 	{
 		m_LightCB[i].Uninit();
-		m_CameraCB[i].Uninit();
 		m_TransformCB[i].Uninit();
 	}
 

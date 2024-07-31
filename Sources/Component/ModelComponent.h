@@ -13,12 +13,12 @@
 
 struct alignas(256) CbMesh
 {
-	DirectX::SimpleMath::Matrix   World;      // ワールド行列
+	Matrix   World;      // ワールド行列
 };
 
 struct alignas(256) CbMaterial
 {
-	DirectX::SimpleMath::Vector3 BaseColor;  // 基本色
+	Vector3 BaseColor;  // 基本色
 	float   Alpha;      // 透過度
 	float   Roughness;  // 面の粗さ(範囲は0~1)
 	float   Metallic;   // 金属度(範囲は[0~1])

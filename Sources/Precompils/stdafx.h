@@ -112,7 +112,6 @@
 
 // ====== –¼‘O‹óŠÔ ======
 using namespace std;
-using namespace DirectX::SimpleMath;
 
 // ====== ’è”’è‹` ======
 // ‰~ü—¦
